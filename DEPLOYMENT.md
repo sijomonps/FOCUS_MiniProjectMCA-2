@@ -39,11 +39,11 @@ pip install -r requirements.txt
 5. Once created, scroll down to **Virtualenv**:
    - Enter the path: `/home/yourusername/.virtualenvs/my-env` (check the path in your console if unsure).
 
-### Step 5: Configure WSGI
+### Step 5: Configure WSGI /
 1. In the **Code** section of the Web tab, click the link to edit the **WSGI configuration file**.
 2. Delete everything and paste this (replace `yourusername` and paths if different):
    ```python
-   import os
+   import os 
    import sys
 
    # path to your project folder (change 'YOUR_REPO_NAME' to the actual folder name)
