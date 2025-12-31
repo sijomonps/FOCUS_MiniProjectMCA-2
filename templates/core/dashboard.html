@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - FOCUS{% endblock %}
+
+{% block favicon %}
+<link rel="icon"
+    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg>'>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Quick Action Cards - Clean hover state without gradients */
+    .quick-action-card {
+        text-decoration: none;
+        display: block;
+        transition: border-color var(--transition-base);
+    }
+
+    .quick-action-card:hover {
+        border-color: var(--border-color-light);
+    }
+
+    .quick-action-icon {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+        display: block;
+        opacity: 0.9;
+    }
+
+    /* Assignment Preview Cards */
+    .assignment-preview {
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
+        transition: border-color var(--transition-fast);
+    }
+
+    .assignment-preview:hover {
+        border-color: var(--border-color-light);
+    }
+
+    .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+
+    @media (max-width: 1024px) {
+        .grid-4 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .grid-4 {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Header - Clean and minimal -->
+    <div class="page-header" style="text-align: center; margin-bottom: var(--spacing-2xl);">
+        <h1 class="page-title"
+            style="font-family: 'Times New Roman', serif; font-style: italic; font-size: 3rem; margin-bottom: 0;">
+            {{ greeting }}
+        </h1>
+        <p class="quote-text"
+            style="color: var(--text-secondary); font-size: 1.1rem; font-style: italic; max-width: 600px; margin: 0 auto;">
+            "{{ quote }}"
+        </p>
+    </div>
+
+    <!-- Stats Grid - Card-based stats display -->
+    <div class="grid grid-4 mb-4">
+        <div class="stat-card">
+            <span class="stat-icon"><i class="mdi mdi-clock-time-four-outline"></i></span>
+            <div class="stat-value">{{ today_total }}</div>
+            <div class="stat-label">Minutes Today</div>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon"><i class="mdi mdi-calendar-month"></i></span>
+            <div class="stat-value">{{ monthly_total_hours }}</div>
+            <div class="stat-label">Hours This Month</div>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon"><i class="mdi mdi-fire"></i></span>
+            <div class="stat-value" style="color: var(--color-green);">{{ streak }}</div>
+            <div class="stat-label">Day Streak</div>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon"><i class="mdi mdi-format-list-checks"></i></span>
+            <div class="stat-value">{{ assignments|length }}</div>
+            <div class="stat-label">Pending Tasks</div>
+        </div>
+    </div>
+
+    <!-- Weekly Study Chart -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">
+                <span><i class="mdi mdi-chart-line"></i></span>
+                <span>Weekly Study Time</span>
+            </h3>
+            <span style="color: var(--text-tertiary); font-size: 0.85rem;">Last 7 days</span>
+        </div>
+        <div class="card-body">
+            <canvas id="weeklyChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Monthly Subject Breakdown -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">
+                <span><i class="mdi mdi-chart-pie"></i></span>
+                <span>Subject Focus (This Month)</span>
+            </h3>
+        </div>
+        <div class="card-body">
+            {% if subject_breakdown %}
+            <div class="subject-stats">
+                {% for item in subject_breakdown %}
+                <div class="subject-stat-item" style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span style="font-weight: 500;">{{ item.subject }}</span>
+                        <span style="color: var(--text-secondary); font-size: 0.9em;">{{ item.hours }}h</span>
+                    </div>
+                    <div class="progress-bar"
+                        style="background: var(--bg-secondary); height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
+                        <div
+                            style="background: var(--primary-color); width: {{ item.percentage }}%; height: 100%; border-radius: 4px;">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-tertiary" style="font-style: italic;">No study sessions recorded this month.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Subjects Management -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">
+                <span><i class="mdi mdi-notebook-multiple"></i></span>
+                <span>My Subjects</span>
+            </h3>
+        </div>
+        <div class="card-body">
+            <div id="subjectsList" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                {% for subject in subjects %}
+                <span class="subject-tag"
+                    style="background: var(--bg-secondary); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.9rem;">
+                    {{ subject.name }}
+                </span>
+                {% empty %}
+                <span class="text-tertiary" style="font-style: italic;">No subjects added yet.</span>
+                {% endfor %}
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="newSubjectName" class="form-control" placeholder="Add new subject..."
+                    style="flex: 1; padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius); color: var(--text-primary);">
+                <button onclick="addSubject()" class="btn-primary"
+                    style="background: var(--primary-color); border: none; padding: 0 20px; border-radius: var(--border-radius); color: white; cursor: pointer;">
+                    Add
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // Weekly study chart with enhanced styling
+    const chartLabels = {{ chart_labels| safe }};
+    const chartData = {{ chart_data| safe }};
+
+    const ctx = document.getElementById('weeklyChart').getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(96, 165, 250, 0.5)');
+    gradient.addColorStop(1, 'rgba(96, 165, 250, 0.05)');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                label: 'Study Time (minutes)',
+                data: chartData,
+                backgroundColor: gradient,
+                borderColor: 'rgba(96, 165, 250, 0.8)',
+                borderWidth: 2,
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(31, 31, 31, 0.95)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#9b9b9b',
+                    borderColor: '#313131',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
+                    titleFont: {
+                        size: 13,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        size: 12
+                    },
+                    callbacks: {
+                        label: function (context) {
+                            return context.parsed.y + ' minutes studied';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#6b6b6b',
+                        font: {
+                            size: 11
+                        },
+                        callback: function (value) {
+                            return value + 'm';
+                        }
+                    },
+                    grid: {
+                        color: '#313131',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#9b9b9b',
+                        font: {
+                            size: 11,
+                            weight: '500'
+                        }
+                    },
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+
+    async function addSubject() {
+        const input = document.getElementById('newSubjectName');
+        const name = input.value.trim();
+        if (!name) return;
+
+        try {
+            const response = await fetch("{% url 'create_subject_folder' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ name: name })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                // Add to list visually
+                const list = document.getElementById('subjectsList');
+                // Remove 'no subjects' msg if present
+                if (list.querySelector('.text-tertiary')) {
+                    list.querySelector('.text-tertiary').remove();
+                }
+
+                const span = document.createElement('span');
+                span.className = 'subject-tag';
+                span.style = "background: var(--bg-secondary); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.9rem;";
+                span.textContent = data.folder_name;
+                list.appendChild(span);
+
+                input.value = '';
+            } else {
+                alert(data.error);
+            }
+        } catch (error) {
+            console.error('Error adding subject:', error);
+        }
+    }
+</script>
+{% endblock %}

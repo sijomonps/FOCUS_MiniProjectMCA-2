@@ -1,0 +1,547 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Quick Notes - FOCUS{% endblock %}
+
+{% block favicon %}
+<link rel="icon"
+    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M17,3H7C5.9,3 5,3.9 5,5V21C5,22.1 5.9,23 7,23H17C18.1,23 19,22.1 19,21V5C19,3.9 18.1,3 17,3M17,21H7V5H17V21M13,7H7V9H13V7Z" /></svg>'>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notes-container {
+        display: flex;
+        gap: var(--spacing-xl);
+        height: calc(100vh - 140px);
+    }
+
+    /* Left Sidebar - Subjects */
+    .notes-sidebar {
+        width: 260px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--border-color);
+        padding-right: var(--spacing-md);
+    }
+
+    .notes-sidebar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        padding-left: var(--spacing-xs);
+    }
+
+    .sidebar-heading {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .btn-icon-add {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: color 0.2s;
+        padding: 4px;
+        border-radius: 4px;
+    }
+
+    .btn-icon-add:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .subject-list {
+        list-style: none;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .subject-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 12px;
+        margin-bottom: 2px;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: background-color 0.1s;
+        font-size: 0.95rem;
+    }
+
+    .subject-item:hover {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .subject-item.active {
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .subject-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .delete-subject-btn {
+        opacity: 0;
+        margin-left: auto;
+        padding: 2px;
+        color: var(--text-tertiary);
+        cursor: pointer;
+    }
+
+    .subject-item:hover .delete-subject-btn {
+        opacity: 1;
+    }
+
+    .delete-subject-btn:hover {
+        color: var(--color-red);
+    }
+
+    /* Right Side - Content */
+    .notes-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .notes-main-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .current-subject-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    /* List Layout for Notes */
+    .notes-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        overflow-y: auto;
+        padding-bottom: var(--spacing-xl);
+    }
+
+    /* Simple row list item style */
+    .note-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: background 0.1s ease;
+        border-bottom: 1px solid transparent;
+    }
+
+    .note-item:hover {
+        background-color: var(--bg-tertiary);
+    }
+
+    .note-item-title {
+        font-weight: 500;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-right: var(--spacing-md);
+    }
+
+    .note-item-preview {
+        color: var(--text-tertiary);
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 300px;
+        margin-right: var(--spacing-md);
+        display: none;
+        /* Hidden on small screens or simple view */
+    }
+
+    @media (min-width: 900px) {
+        .note-item-preview {
+            display: block;
+        }
+    }
+
+    .note-item-date {
+        color: var(--text-tertiary);
+        font-size: 0.8rem;
+        min-width: 80px;
+        text-align: right;
+    }
+
+    .note-delete-btn {
+        opacity: 0;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        padding: 4px;
+        margin-left: var(--spacing-sm);
+        transition: opacity 0.2s;
+    }
+
+    .note-item:hover .note-delete-btn {
+        opacity: 1;
+    }
+
+    .note-delete-btn:hover {
+        color: var(--color-red);
+    }
+
+    /* Document Editor Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+    .modal-box {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xl);
+        width: 100%;
+        max-width: 500px;
+        transform: scale(0.95);
+        transition: transform 0.2s;
+    }
+
+    /* Full Page Editor Style */
+    .editor-modal {
+        width: 800px;
+        max-width: 90%;
+        height: 80vh;
+        max-height: 800px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-overlay.active .modal-box {
+        transform: scale(1);
+    }
+
+    .editor-title {
+        width: 100%;
+        background: transparent !important;
+        border: none;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-sm);
+        padding: 0;
+        outline: none;
+        text-transform: uppercase;
+    }
+
+    .editor-title::placeholder {
+        color: var(--text-tertiary);
+        font-weight: 700;
+        /* Bold placeholder */
+        text-transform: none;
+    }
+
+    .editor-textarea {
+        flex: 1;
+        width: 100%;
+        background: transparent;
+        border: none;
+        resize: none;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        padding: var(--spacing-md) 0;
+        outline: none;
+    }
+
+    .editor-textarea::placeholder {
+        color: var(--text-tertiary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="notes-container">
+
+        <!-- Sidebar -->
+        <div class="notes-sidebar">
+            <div class="notes-sidebar-header">
+                <span class="sidebar-heading">Subjects</span>
+                <button class="btn-icon-add" onclick="openModal('folderModal')" title="New Subject">
+                    <i class="mdi mdi-plus"></i>
+                </button>
+            </div>
+
+            <ul class="subject-list">
+                <!-- User Folders Only (No All Notes tab) -->
+                {% for folder in folders %}
+                <li class="subject-item {% if selected_folder and selected_folder.id == folder.id %}active{% endif %}"
+                    onclick="window.location.href='{% url 'notes' %}?folder={{ folder.id }}'">
+                    <span class="subject-name">
+                        <i class="mdi mdi-folder-outline"></i> {{ folder.name }}
+                    </span>
+                    <i class="mdi mdi-trash-can-outline delete-subject-btn"
+                        onclick="event.stopPropagation(); deleteFolder({{ folder.id }}, '{{ folder.name }}')"></i>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <main class="notes-main">
+            <div class="notes-main-header">
+                <div class="current-subject-title">
+                    {% if selected_folder %}
+                    {{ selected_folder.name }}
+                    {% else %}
+                    Select a Subject
+                    {% endif %}
+                </div>
+                {% if selected_folder %}
+                <button class="btn-theme btn-sm" onclick="openModal('noteModal')">
+                    <i class="mdi mdi-plus"></i> New Note
+                </button>
+                {% endif %}
+            </div>
+
+            {% if notes %}
+            <div class="notes-list">
+                {% for note in notes %}
+                <!-- Added onclick to view/edit note -->
+                <div class="note-item"
+                    onclick="viewNote({{ note.id }}, '{{ note.title|escapejs }}', '{{ note.content|escapejs|linebreaksbr }}')">
+                    <div class="note-item-title">{{ note.title }}</div>
+                    <div class="note-item-preview">{{ note.content|truncatechars:100 }}</div>
+                    <div class="note-item-date">{{ note.created_at|date:"M d" }}</div>
+                    <i class="mdi mdi-trash-can-outline note-delete-btn"
+                        onclick="event.stopPropagation(); deleteNote({{ note.id }})"></i>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="mdi mdi-pencil-outline"></i>
+                </div>
+                <h3>{% if selected_folder %}No notes here yet{% else %}Select a subject{% endif %}</h3>
+                <p>{% if selected_folder %}Go ahead, write something down!{% else %}Create a subject folder to start
+                    organizing your thoughts.{% endif %}</p>
+                {% if not selected_folder %}
+                <button class="btn btn-secondary mt-2" onclick="openModal('folderModal')">
+                    Create Subject
+                </button>
+                {% endif %}
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+
+<!-- Create Folder Modal -->
+<div id="folderModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="mb-2">New Subject</h3>
+        <input type="text" id="folderNameInput" class="form-input mb-3" placeholder="e.g. Mathematics, Ideas..."
+            autofocus>
+        <div class="flex gap-2" style="justify-content: flex-end;">
+            <button class="btn btn-ghost" onclick="closeModal('folderModal')">Cancel</button>
+            <button class="btn-theme" onclick="createFolder()">Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Note Document Editor -->
+<div id="noteModal" class="modal-overlay">
+    <div class="modal-box editor-modal">
+        <div class="flex-between mb-2">
+            <span style="color: var(--text-tertiary); font-size: 0.85rem;" id="modalTitleLabel">New Note</span>
+            <div class="flex gap-2">
+                <button class="btn btn-ghost btn-sm" onclick="closeModal('noteModal')">Cancel</button>
+                <button class="btn-theme btn-sm" onclick="saveNote()">Save</button>
+            </div>
+        </div>
+        <div class="divider"></div>
+
+        <!-- Two Inputs for Title and Body -->
+        <input type="text" id="noteTitleInput" class="editor-title" placeholder="Title">
+        <textarea id="noteContentInput" class="editor-textarea" placeholder=""></textarea>
+        <!-- Hidden input to store Note ID for editing -->
+        <input type="hidden" id="editingNoteId" value="">
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Use the global 'csrf' variable from base.html
+
+    // Auto-focus body when hitting enter on title
+    document.getElementById('noteTitleInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('noteContentInput').focus();
+        }
+    });
+
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
+        if (id === 'folderModal') setTimeout(() => document.getElementById('folderNameInput').focus(), 50);
+        if (id === 'noteModal') {
+            // Focus title if empty, else content
+            const title = document.getElementById('noteTitleInput').value;
+            if (!title) setTimeout(() => document.getElementById('noteTitleInput').focus(), 50);
+        }
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+        // Clear inputs
+        if (id === 'folderModal') document.getElementById('folderNameInput').value = '';
+        if (id === 'noteModal') {
+            document.getElementById('noteTitleInput').value = '';
+            document.getElementById('noteContentInput').value = '';
+            document.getElementById('editingNoteId').value = ''; // Reset ID
+            document.getElementById('modalTitleLabel').innerText = 'New Note';
+        }
+    }
+
+    // Function to Populate and View Note
+    function viewNote(id, title, rawContent) {
+        // rawContent is escaped JS string but contains <br> from linebreaksbr. 
+        // We need to replace <br> with newline for textarea.
+        const content = rawContent.replace(/<br\s*\/?>/gi, '\n');
+
+        document.getElementById('noteTitleInput').value = title;
+        document.getElementById('noteContentInput').value = content;
+        document.getElementById('editingNoteId').value = id;
+        document.getElementById('modalTitleLabel').innerText = 'Editing Note';
+
+        openModal('noteModal');
+    }
+
+    async function createFolder() {
+        const name = document.getElementById('folderNameInput').value;
+        if (!name) return;
+
+        try {
+            const res = await fetch('{% url "create_subject_folder" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                body: JSON.stringify({ name })
+            });
+            if (res.ok) window.location.reload();
+        } catch (e) { console.error(e); }
+    }
+
+    async function saveNote() {
+        let titleInput = document.getElementById('noteTitleInput').value.trim();
+        const content = document.getElementById('noteContentInput').value;
+        const noteId = document.getElementById('editingNoteId').value;
+        const folderId = "{{ selected_folder.id }}";
+
+        if (!titleInput && !content) return; // Don't save empty
+
+        let title = 'Untitled';
+        if (titleInput) {
+            title = titleInput.charAt(0).toUpperCase() + titleInput.slice(1);
+        }
+
+        // Decide URL based on ID existence
+        const url = noteId ? '{% url "edit_note" %}' : '{% url "create_note" %}';
+
+        const payload = {
+            folder_id: folderId,
+            title: title,
+            content: content
+        };
+        if (noteId) payload.note_id = noteId;
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) window.location.reload();
+        } catch (e) { console.error(e); }
+    }
+
+    async function deleteFolder(id, name) {
+        // Removed confirmation alert as requested
+        try {
+            const res = await fetch('{% url "delete_folder" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                body: JSON.stringify({ folder_id: id })
+            });
+            if (res.ok) window.location.href = '{% url "notes" %}';
+        } catch (e) { console.error(e); }
+    }
+
+    async function deleteNote(id) {
+        // Removed confirmation alert as requested
+        try {
+            const res = await fetch('{% url "delete_note" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+                body: JSON.stringify({ note_id: id })
+            });
+            if (res.ok) window.location.reload();
+        } catch (e) { console.error(e); }
+    }
+
+    // Close modal on outside click
+    window.onclick = function (event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            event.target.classList.remove('active');
+        }
+    }
+</script>
+{% endblock %}

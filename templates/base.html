@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FOCUS{% endblock %}</title>
+
+    <!-- Favicon -->
+    <!-- Dynamic Favicon (MDI) -->
+    {% block favicon %}
+    <link rel="icon"
+        href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M18,12H22V14H18V12M2,12H6V14H2V12M11,2V6H13V2H11M11,18V22H13V18H11" /></svg>'>
+    {% endblock %}
+
+    <!-- Material Design Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+
+    <!-- Material Symbols -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <!-- Additional CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    {% if user.is_authenticated and not hide_sidebar %}
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="material-symbols-outlined">center_focus_strong</span>
+                FOCUS
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li>
+                        <a href="{% url 'dashboard' %}" class="{% if request.path == '/dashboard/' %}active{% endif %}">
+                            <span class="icon"><i class="mdi mdi-home-outline"></i></span>
+                            <span>Home</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'study' %}" class="{% if request.path == '/study/' %}active{% endif %}">
+                            <span class="icon"><i class="mdi mdi-timer-outline"></i></span>
+                            <span>Study Timer</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'assignments' %}"
+                            class="{% if request.path == '/assignments/' %}active{% endif %}">
+                            <span class="icon"><i class="mdi mdi-clipboard-text-outline"></i></span>
+                            <span>Assignments</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'notes' %}" class="{% if request.path == '/notes/' %}active{% endif %}">
+                            <span class="icon"><i class="mdi mdi-notebook-outline"></i></span>
+                            <span>Quick Notes</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-profile-label">Logged in as</div>
+                    <div class="user-profile-name">{{ user.username }}</div>
+                </div>
+                <a href="{% url 'logout' %}" class="btn btn-secondary btn-sm"
+                    style="width: 100%; font-size: 0.75rem; padding: 6px 10px;">
+                    <span><i class="mdi mdi-logout"></i></span>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Messages -->
+            {% if messages %}
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <div class="content-container">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% else %}
+    <!-- Login/Signup Page (No Sidebar) -->
+    <div>
+        {% if messages %}
+        <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;">
+            {% for message in messages %}
+            <div class="message message-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block auth_content %}{% endblock %}
+    </div>
+    {% endif %}
+
+    <!-- Include JavaScript -->
+    <script src="{% static 'js/app.js' %}"></script>
+    <script>
+        // CSRF Token for AJAX requests
+        const csrfToken = '{{ csrf_token }}';
+
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrf = getCookie('csrftoken');
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

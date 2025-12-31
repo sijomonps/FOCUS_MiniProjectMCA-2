@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - FOCUS{% endblock %}
+
+{% block favicon %}
+<link rel="icon"
+    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M10,17V14H3V10H10V7L15,12L10,17M10,2H19A2,2 0 0,1 21,4V20A2,2 0 0,1 19,22H10A2,2 0 0,1 8,20V18H10V20H19V4H10V6H8V4A2,2 0 0,1 10,2Z" /></svg>'>
+{% endblock %}
+
+{% block auth_content %}
+<div class="flex-center" style="min-height: 100vh; padding: var(--spacing-lg); background-color: var(--bg-primary);">
+    <div class="card" style="max-width: 450px; width: 100%;">
+        <div class="text-center mb-4">
+            <div style="font-size: 2.5rem; margin-bottom: var(--spacing-md); opacity: 0.9;"><span
+                    class="material-symbols-outlined" style="font-size: 2.5rem;">center_focus_strong</span></div>
+            <h1 style="font-size: 2rem; margin-bottom: var(--spacing-sm); font-weight: 500;">FOCUS</h1>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Your calm, habit-building learning companion</p>
+        </div>
+
+        <h2 class="text-center" style="margin-bottom: var(--spacing-xl); font-size: 1.35rem; font-weight: 500;">Welcome
+            Back</h2>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="message message-error mb-2">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                <div style="color: var(--color-red); font-size: 0.85rem; margin-top: var(--spacing-xs);">
+                    {{ form.username.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                <div style="color: var(--color-red); font-size: 0.85rem; margin-top: var(--spacing-xs);">
+                    {{ form.password.errors }}
+                </div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: var(--spacing-md);">
+                <span><i class="mdi mdi-login"></i></span>
+                <span>Login</span>
+            </button>
+        </form>
+
+        <div class="divider"></div>
+
+        <div class="text-center">
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                Don't have an account?
+                <a href="{% url 'signup' %}"
+                    style="color: var(--color-blue); font-weight: 500; text-decoration: none;">Sign up →</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Style Django form widgets for clean minimal look */
+    #id_username,
+    #id_password {
+        width: 100%;
+        padding: 11px 14px;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-family: 'Inter', sans-serif;
+        transition: all var(--transition-fast);
+    }
+
+    #id_username:hover,
+    #id_password:hover {
+        border-color: var(--border-color-light);
+    }
+
+    #id_username:focus,
+    #id_password:focus {
+        outline: none;
+        border-color: var(--text-secondary);
+        background-color: var(--bg-tertiary);
+    }
+</style>
+{% endblock %}

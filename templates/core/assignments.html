@@ -1,0 +1,609 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assignments - FOCUS{% endblock %}
+
+{% block favicon %}
+<link rel="icon"
+    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3M7,7H17V5H19V19H5V5H7V7M9,11H15V13H9V11M9,15H15V17H9V15Z" /></svg>'>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Assignment Treemap Grid - True Bento Layout */
+    .treemap-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-auto-rows: 160px;
+        grid-auto-flow: dense;
+        /* Essential for bento packing */
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    /* Assignment Cube */
+    .assignment-cube {
+        background-color: var(--bg-secondary);
+        border: none;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        transition: all var(--transition-base);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        animation: fadeIn 0.4s ease-out backwards;
+    }
+
+    /* Grid Spans for Bento Effect */
+    .span-1x1 {
+        grid-column: span 1;
+        grid-row: span 1;
+    }
+
+    .span-1x2 {
+        grid-column: span 1;
+        grid-row: span 2;
+    }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 600px) {
+        .span-1x2 {
+            grid-column: span 1;
+            grid-row: span 1;
+        }
+
+        .treemap-container {
+            grid-auto-rows: 140px;
+        }
+    }
+
+    .assignment-cube:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: var(--shadow-lg);
+        z-index: 5;
+    }
+
+    .assignment-cube.completed {
+        opacity: 0;
+        transform: scale(0.8);
+        pointer-events: none;
+    }
+
+    /* Typography */
+    .assignment-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        line-height: 1.2;
+        z-index: 1;
+        /* Dynamic font size based on box size handled in utility class or just CSS? 
+           Let's keep it responsive. */
+        font-size: 1.1rem;
+    }
+
+    .span-1x2 .assignment-title {
+        font-size: 1.3rem;
+        /* Slightly larger for urgent */
+    }
+
+    .assignment-subject {
+        font-size: 0.85rem;
+        color: rgba(0, 0, 0, 0.6);
+        font-weight: 500;
+        z-index: 1;
+    }
+
+    /* Time Display */
+    .time-container {
+        margin-top: auto;
+    }
+
+    .time-remaining-large {
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .span-1x1 .time-remaining-large {
+        font-size: 1.5rem;
+    }
+
+    .span-1x2 .time-remaining-large {
+        font-size: 2.2rem;
+    }
+
+    .time-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        opacity: 0.8;
+        text-transform: uppercase;
+    }
+
+    /* Action Buttons */
+    .assignment-actions {
+        position: absolute;
+        top: var(--spacing-sm);
+        right: var(--spacing-sm);
+        display: flex;
+        gap: 6px;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .assignment-cube:hover .assignment-actions {
+        opacity: 1;
+    }
+
+    .action-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.95);
+        color: var(--text-primary);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s;
+    }
+
+    .action-btn:hover {
+        transform: scale(1.15);
+    }
+
+    .btn-complete {
+        color: var(--color-green);
+    }
+
+    .btn-delete {
+        color: var(--color-red);
+    }
+
+    /* Bento Colors (Reversed Logic: Urgent = Big & Dark) */
+    /* URGENT (Big, <24h) */
+    .cube-urgent {
+        background: #D32F2F;
+        /* Dark Red */
+        color: #ffffff !important;
+        /* White text for contrast */
+    }
+
+    .cube-urgent .assignment-title,
+    .cube-urgent .time-remaining-large,
+    .cube-urgent .time-label,
+    .cube-urgent .assignment-subject {
+        color: #ffffff;
+    }
+
+    .cube-urgent .action-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .cube-urgent .action-btn:hover {
+        background: rgba(255, 255, 255, 0.4);
+    }
+
+    /* SOON (< 3 Days) */
+    .cube-soon {
+        background: #E65100;
+        /* Dark Orange */
+        color: #ffffff !important;
+    }
+
+    .cube-soon .assignment-title,
+    .cube-soon .time-remaining-large,
+    .cube-soon .time-label,
+    .cube-soon .assignment-subject {
+        color: #ffffff;
+    }
+
+    /* UPCOMING (< 1 Week) */
+    .cube-upcoming {
+        background: #FBC02D;
+        /* Dark Yellow/Gold */
+        color: #3e2723;
+    }
+
+    .cube-upcoming .assignment-title,
+    .cube-upcoming .time-remaining-large {
+        color: #3e2723;
+    }
+
+    /* FUTURE (> 1 Week) */
+    .cube-future {
+        background: #C8E6C9;
+        /* Light Green */
+        color: #1b5e20;
+    }
+
+    .cube-future .assignment-title,
+    .cube-future .time-remaining-large {
+        color: #1b5e20;
+    }
+
+    /* FAR FUTURE (> 2 Weeks) */
+    .cube-far {
+        background: #E1F5FE;
+        /* Light Blue */
+        color: #01579b;
+    }
+
+    .cube-far .assignment-title,
+    .cube-far .time-remaining-large {
+        color: #01579b;
+    }
+
+    /* Completed List */
+    .completed-item {
+        padding: var(--spacing-md);
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: border-color var(--transition-fast);
+    }
+
+    /* Fade In Animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="page-header flex-between">
+        <div>
+            <h1 class="page-title"><i class="mdi mdi-clipboard-text-outline"></i> Assignments</h1>
+            <p class="page-subtitle">Manage your deadlines</p>
+        </div>
+        <button id="addAssignmentBtn" class="btn btn-primary btn-lg">
+            <span>+</span>
+            <span>Add Assignment</span>
+        </button>
+    </div>
+
+    <!-- Treemap View -->
+    {% if pending_assignments %}
+    <div class="card mb-4" style="background: transparent; border: none; padding: 0;">
+        <div class="treemap-container" id="treemapContainer">
+            <!-- Assignments will be rendered here -->
+        </div>
+    </div>
+    {% else %}
+    <div class="card mb-4">
+        <div class="card-body text-center" style="padding: var(--spacing-3xl);">
+            <div style="font-size: 4.5rem; margin-bottom: var(--spacing-lg);"><i class="mdi mdi-party-popper"></i></div>
+            <h3 style="color: var(--text-primary); margin-bottom: var(--spacing-sm); font-size: 1.5rem;">All Clear!</h3>
+            <p style="color: var(--text-secondary); margin: 0;">No pending assignments. You're doing great!</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Completed Assignments -->
+    <div class="card" id="completedSection" {% if not completed_assignments %}style="display: none;" {% endif %}>
+        <div class="card-header">
+            <h3 class="card-title">
+                <span><i class="mdi mdi-check-circle"></i></span>
+                <span>Recently Completed</span>
+            </h3>
+        </div>
+        <div class="card-body">
+            <div id="completedList" style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+                {% for assignment in completed_assignments %}
+                <div class="completed-item" data-id="{{ assignment.id }}">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-xs);">{{
+                            assignment.title }}</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">{{ assignment.subject }}</div>
+                    </div>
+                    <div style="text-align: right; font-size: 0.85rem; color: var(--text-tertiary);">
+                        <span style="color: var(--color-green); margin-right: var(--spacing-sm);"><i
+                                class="mdi mdi-check"></i></span>
+                        {{ assignment.completed_at|date:"M d, Y" }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Assignment Modal -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Add New Assignment</h2>
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+        </div>
+        <form id="addAssignmentForm">
+            <div class="form-group">
+                <label for="assignmentTitle" class="form-label">Assignment Name</label>
+                <input type="text" id="assignmentTitle" class="form-input"
+                    placeholder="e.g., Math Homework, Essay Draft" required>
+            </div>
+
+            <div class="form-group">
+                <label for="assignmentDeadline" class="form-label">Deadline Date</label>
+                <input type="date" id="assignmentDeadline" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+                <label for="assignmentTime" class="form-label">Deadline Time</label>
+                <input type="time" id="assignmentTime" class="form-input" value="23:59" required>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" id="cancelBtn" class="btn btn-secondary" style="flex: 1;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    Add Assignment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Assignment data from Django
+    let assignments = {{ assignments_json| safe }};
+
+    // Elements
+    const treemapContainer = document.getElementById('treemapContainer');
+    const addModal = document.getElementById('addModal');
+    const addAssignmentBtn = document.getElementById('addAssignmentBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const addAssignmentForm = document.getElementById('addAssignmentForm');
+    const dateInput = document.getElementById('assignmentDeadline');
+    const timeInput = document.getElementById('assignmentTime');
+    const completedSection = document.getElementById('completedSection');
+    const completedList = document.getElementById('completedList');
+
+    // Setup Date Input Min Value (Prevent Past Dates)
+    function setupDateValidation() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+
+        dateInput.min = `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Render Grid
+    function renderTreemap() {
+        if (!treemapContainer) return;
+
+        treemapContainer.innerHTML = '';
+
+        // Sort: Urgent assignments (less time) first
+        assignments.sort((a, b) => {
+            const timeA = calculateHoursRemaining(a.deadline);
+            const timeB = calculateHoursRemaining(b.deadline);
+            return timeA - timeB;
+        });
+
+        assignments.forEach((assignment, index) => {
+            const cube = document.createElement('div');
+            const hoursRemaining = calculateHoursRemaining(assignment.deadline);
+
+            // Logic: GUARANTEE 3 IN A ROW
+            // All items must be width=1.
+            // Urgent (<24h) -> TALL (Height=2, Width=1) -> span-1x2
+            // Others -> STANDARD (Height=1, Width=1) -> span-1x1
+
+            let colorClass, spanClass;
+
+            if (hoursRemaining < 24) {
+                // URGENT: Tall, Dark Red
+                colorClass = 'cube-urgent';
+                spanClass = 'span-1x2';
+            } else if (hoursRemaining < 72) {
+                // SOON: Wide, Dark Orange
+                colorClass = 'cube-soon';
+                spanClass = 'span-1x1';
+            } else if (hoursRemaining < 168) { // 1 Week
+                // Upcoming: Wide, Yellow
+                colorClass = 'cube-upcoming';
+                spanClass = 'span-1x1';
+            } else {
+                // Future: Small, Light
+                colorClass = 'cube-future';
+                spanClass = 'span-1x1';
+            }
+
+            // Animation delay for nice effect
+            cube.style.animationDelay = `${index * 0.05}s`;
+
+            cube.className = `assignment-cube ${colorClass} ${spanClass}`;
+            cube.dataset.id = assignment.id;
+
+            cube.innerHTML = `
+                <div class="assignment-actions">
+                    <button class="action-btn btn-complete" onclick="completeAssignment(${assignment.id}, this.closest('.assignment-cube'))" title="Complete">
+                        <i class="mdi mdi-check"></i>
+                    </button>
+                    <button class="action-btn btn-delete" onclick="deleteAssignment(${assignment.id}, this.closest('.assignment-cube'))" title="Delete">
+                        <i class="mdi mdi-trash-can-outline"></i>
+                    </button>
+                </div>
+
+                <div style="z-index: 2;">
+                    <div class="assignment-title">${assignment.title}</div>
+                    <div class="assignment-subject">${formatDate(assignment.deadline)}</div>
+                </div>
+                
+                <div class="time-container">
+                    <div class="time-remaining-large">${formatHoursRemainingShort(hoursRemaining)}</div>
+                    <div class="time-label">${hoursRemaining < 0 ? 'Overdue' : 'Left'}</div>
+                </div>
+            `;
+
+            treemapContainer.appendChild(cube);
+        });
+    }
+
+    // Calc functions
+    function calculateHoursRemaining(deadlineStr) {
+        const deadline = new Date(deadlineStr);
+        const now = new Date();
+        const diff = deadline - now;
+        return diff / (1000 * 60 * 60); // Can be negative if overdue
+    }
+
+    function formatHoursRemainingShort(hours) {
+        if (hours < 0) return "Late";
+        if (hours < 1) {
+            return `${Math.round(hours * 60)}m`;
+        } else if (hours < 24) {
+            return `${Math.round(hours)}h`;
+        } else {
+            const days = Math.floor(hours / 24);
+            return `${days}d`;
+        }
+    }
+
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // Actions - NO CONFIRMATION
+    async function completeAssignment(assignmentId, element) {
+        event.stopPropagation();
+
+        try {
+            // Visual feedback immediately
+            element.style.opacity = '0.5';
+
+            const response = await fetch(`/api/assignment/${assignmentId}/complete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrf }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                element.classList.add('completed');
+                setTimeout(() => {
+                    assignments = assignments.filter(a => a.id !== assignmentId);
+                    // Don't full re-render, just remove element?? 
+                    // Grid packing works best with re-render or Masonry lib.
+                    // Let's re-render to repack the bento box.
+                    renderTreemap();
+                    if (assignments.length === 0) location.reload();
+                }, 400);
+            }
+        } catch (error) {
+            console.error(error);
+            element.style.opacity = '1'; // Revert on failure
+        }
+    }
+
+    async function deleteAssignment(assignmentId, element) {
+        event.stopPropagation();
+
+        try {
+            element.style.opacity = '0.5';
+
+            const response = await fetch(`/api/assignment/delete/${assignmentId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrf }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                element.style.transform = "scale(0.5)";
+                element.style.opacity = "0";
+
+                setTimeout(() => {
+                    assignments = assignments.filter(a => a.id !== assignmentId);
+                    renderTreemap();
+                    if (assignments.length === 0) location.reload();
+                }, 300);
+            }
+        } catch (error) {
+            console.error(error);
+            element.style.opacity = '1';
+        }
+    }
+
+    // Modal Events
+    addAssignmentBtn.addEventListener('click', () => {
+        setupDateValidation();
+        addModal.classList.add('active');
+    });
+
+    function closeModal() {
+        addModal.classList.remove('active');
+        addAssignmentForm.reset();
+    }
+
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    addAssignmentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Final backend validation usually needed, but front-end constraint is here
+        const dateVal = dateInput.value;
+        const timeVal = timeInput.value;
+        const deadline = `${dateVal}T${timeVal}`;
+
+        // Basic past check
+        if (new Date(deadline) < new Date()) {
+            alert("Please select a future date and time.");
+            return;
+        }
+
+        const formData = {
+            title: document.getElementById('assignmentTitle').value,
+            deadline: deadline
+        };
+
+        try {
+            const response = await fetch("{% url 'add_assignment' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrf
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                assignments.push(data.assignment);
+                renderTreemap();
+                closeModal();
+                if (assignments.length === 1) location.reload();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    });
+
+    renderTreemap();
+</script>
+{% endblock %}

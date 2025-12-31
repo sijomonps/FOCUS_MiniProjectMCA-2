@@ -1,0 +1,648 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Focus - StudyFlow{% endblock %}
+
+{% block favicon %}
+<link rel="icon"
+    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M12 20C16.4 20 20 16.4 20 12S16.4 4 12 4 4 7.6 4 12 7.6 20 12 20M12 2C17.5 2 22 6.5 22 12S17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2M11 14H13V8H11V14Z" /></svg>'>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Minimal Timer Layout */
+    .timer-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    /* Mode Switcher (Pill Buttons) */
+    .mode-switcher {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-2xl);
+        background: var(--bg-secondary);
+        padding: 6px;
+        border-radius: 50px;
+        /* Fully rounded pill */
+        border: 1px solid var(--border-color);
+    }
+
+    .mode-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding: 8px 20px;
+        border-radius: 40px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+        background: var(--bg-tertiary);
+        /* Highlight active mode */
+        color: var(--text-primary);
+        font-weight: 600;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .mode-btn:hover:not(.active) {
+        color: var(--text-primary);
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Huge Timer Display */
+    .timer-display {
+        font-size: 7rem;
+        /* Very large */
+        font-weight: 700;
+        color: var(--text-primary);
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+        margin-bottom: var(--spacing-xl);
+        letter-spacing: -3px;
+    }
+
+    /* Custom Subject Select */
+    .custom-select-wrapper {
+        position: relative;
+        user-select: none;
+        width: 100%;
+        max-width: 320px;
+        margin-bottom: var(--spacing-2xl);
+        z-index: 100;
+        /* Ensure it floats above text */
+    }
+
+    .custom-select {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .custom-select-trigger {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 28px;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .custom-select-trigger:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .custom-select.open .custom-select-trigger {
+        border-color: var(--primary-color);
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom: 1px solid transparent;
+        /* Meld with dropdown */
+        background: var(--bg-tertiary);
+    }
+
+    .custom-options {
+        position: absolute;
+        display: block;
+        top: 100%;
+        left: 0;
+        right: 0;
+        border: 1px solid var(--border-color);
+        border-top: none;
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+        background: var(--bg-tertiary);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(-10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    .custom-select.open .custom-options {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: all;
+        transform: translateY(0);
+    }
+
+    .custom-option {
+        position: relative;
+        display: block;
+        padding: 12px 28px;
+        font-size: 1rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+    }
+
+    .custom-option:hover {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.05);
+        border-left-color: var(--primary-color);
+        padding-left: 32px;
+    }
+
+    .custom-option.selected {
+        color: var(--primary-color);
+        font-weight: 600;
+        background: rgba(var(--primary-rgb), 0.1);
+    }
+
+    .arrow {
+        position: relative;
+        height: 10px;
+        width: 10px;
+        margin-left: 10px;
+    }
+
+    .arrow::before,
+    .arrow::after {
+        content: '';
+        position: absolute;
+        bottom: 0px;
+        width: 2px;
+        height: 100%;
+        background-color: var(--text-secondary);
+        transition: all 0.3s;
+    }
+
+    .arrow::before {
+        left: -2px;
+        transform: rotate(45deg);
+    }
+
+    .arrow::after {
+        left: 3px;
+        transform: rotate(-45deg);
+    }
+
+    .custom-select.open .arrow::before {
+        transform: rotate(-45deg);
+    }
+
+    .custom-select.open .arrow::after {
+        transform: rotate(45deg);
+    }
+
+    /* Scrollbar for options */
+    .custom-options::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-options::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-options::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in timer-container">
+
+    <!-- Mode Switcher -->
+    <div class="mode-switcher">
+        <button class="mode-btn active" onclick="switchMode('timer')" id="btn-timer">timer</button>
+        <button class="mode-btn" onclick="switchMode('short')" id="btn-short">short break</button>
+        <button class="mode-btn" onclick="switchMode('long')" id="btn-long">long break</button>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-display" id="timerDisplay">00:00</div>
+
+    <!-- Custom Subject Select -->
+    <div class="custom-select-wrapper" id="subjectWrapper">
+        <select id="subjectInput" style="display: none;">
+            {% if not subjects %}
+            <option value="General Study">General Study</option>
+            {% else %}
+            <option value="" disabled selected>Select a subject...</option>
+            {% for subject in subjects %}
+            <option value="{{ subject.name }}">{{ subject.name }}</option>
+            {% endfor %}
+            <option value="General Study">General Study</option>
+            {% endif %}
+        </select>
+        <div class="custom-select" id="customSelect">
+            <div class="custom-select-trigger" id="customTrigger">
+                <span id="triggerText">Select a subject...</span>
+                <div class="arrow"></div>
+            </div>
+            <div class="custom-options" id="customOptions">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Action Button -->
+    <style>
+        .main-action-btn {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border: none;
+            padding: 16px 48px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .main-action-btn:active {
+            transform: translateY(0);
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+
+    <div class="controls-row">
+        <button class="main-action-btn" id="mainBtn" onclick="toggleTimer()">START</button>
+    </div>
+
+</div>
+
+<!-- Audio for notification (Optional subtle sound) -->
+<!-- <audio id="alarmSound" src="{% static 'audio/alarm.mp3' %}"></audio> -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Configuration
+    const MODES = {
+        'timer': 0, // Starts at 0, counts up
+        'short': 5 * 60, // Counts down
+        'long': 10 * 60 // Counts down (10 mins)
+    };
+
+    let currentMode = 'timer';
+    let currentTime = 0; // Tracks elapsed time for 'timer' or remaining time for breaks
+    let timerInterval = null;
+    let isRunning = false;
+    let syncedTime = 0; // New variable to track what we've already synced to DB
+
+    // DOM Elements
+    const timerDisplay = document.getElementById('timerDisplay');
+    const mainBtn = document.getElementById('mainBtn');
+    const subjectInput = document.getElementById('subjectInput');
+    const subjectWrapper = document.getElementById('subjectWrapper'); // Wrapper for visibility toggle
+
+    // Persistence Keys
+    const KEY_START_TIME = 'focus_startTime';
+    const KEY_ELAPSED = 'focus_elapsed';
+    const KEY_IS_RUNNING = 'focus_isRunning';
+    const KEY_MODE = 'focus_mode';
+    const KEY_SUBJECT = 'focus_subject';
+    const KEY_SYNCED = 'focus_syncedTime';
+
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function updateDisplay() {
+        timerDisplay.textContent = formatTime(currentTime);
+        document.title = isRunning ? `(${formatTime(currentTime)}) Focus` : 'Focus - StudyFlow';
+    }
+
+    function saveState() {
+        localStorage.setItem(KEY_MODE, currentMode);
+        localStorage.setItem(KEY_SUBJECT, subjectInput.value);
+        localStorage.setItem(KEY_ELAPSED, currentTime);
+        localStorage.setItem(KEY_IS_RUNNING, isRunning);
+        localStorage.setItem(KEY_SYNCED, syncedTime);
+
+        // If running, save the timestamp to calc delta on refresh
+        if (isRunning) {
+            localStorage.setItem(KEY_START_TIME, Date.now());
+        } else {
+            localStorage.removeItem(KEY_START_TIME);
+        }
+    }
+
+    function loadState() {
+        const savedMode = localStorage.getItem(KEY_MODE);
+        const savedSubject = localStorage.getItem(KEY_SUBJECT);
+        const savedElapsed = parseInt(localStorage.getItem(KEY_ELAPSED));
+        const savedRunning = localStorage.getItem(KEY_IS_RUNNING) === 'true';
+        const savedStartTime = parseInt(localStorage.getItem(KEY_START_TIME));
+        const savedSynced = parseInt(localStorage.getItem(KEY_SYNCED));
+
+        if (savedMode && MODES.hasOwnProperty(savedMode)) {
+            // Restore visual mode
+            currentMode = savedMode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${currentMode}`).classList.add('active');
+
+            if (currentMode === 'timer') {
+                subjectWrapper.style.display = 'block';
+                // Sync custom dropdown logic here if needed
+                if (savedSubject) {
+                    subjectInput.value = savedSubject;
+                    updateCustomSelectDisplay(savedSubject);
+                }
+            } else {
+                subjectWrapper.style.display = 'none';
+            }
+        }
+
+        if (!isNaN(savedElapsed)) {
+            currentTime = savedElapsed;
+        }
+
+        if (!isNaN(savedSynced)) {
+            syncedTime = savedSynced;
+        }
+
+        // If it was running, calculate missed time
+        if (savedRunning && !isNaN(savedStartTime)) {
+            const now = Date.now();
+            const diffSeconds = Math.floor((now - savedStartTime) / 1000);
+
+            if (currentMode === 'timer') {
+                currentTime += diffSeconds;
+            } else {
+                currentTime = Math.max(0, currentTime - diffSeconds);
+            }
+
+            // Resume automatically
+            startTimer(false); // false = don't reset state, just resume
+        }
+
+        updateDisplay();
+    }
+
+    // Clear state when done/reset
+    function clearState() {
+        localStorage.removeItem(KEY_START_TIME);
+        localStorage.removeItem(KEY_ELAPSED);
+        localStorage.removeItem(KEY_IS_RUNNING);
+        localStorage.removeItem(KEY_SYNCED);
+        // We keep subject/mode for convenience usually, but let's clear running flags
+    }
+
+    async function attemptSave() {
+        // Calculate new minutes to save
+        const deltaSeconds = currentTime - syncedTime;
+        if (deltaSeconds < 60) return; // Don't save tiny fragments < 1 min
+
+        const durationMins = Math.round(deltaSeconds / 60);
+        if (durationMins <= 0) return;
+
+        const subject = subjectInput.value.trim() || 'General Study';
+
+        try {
+            const response = await fetch("{% url 'save_study_session' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    subject: subject,
+                    duration: durationMins
+                })
+            });
+
+            if (response.ok) {
+                console.log(`Saved ${durationMins} minutes.`);
+                syncedTime = currentTime; // Mark these seconds as saved
+                saveState(); // Update local storage with new syncedTime
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function switchMode(mode) {
+        if (isRunning) {
+            if (!confirm("Stop current timer and switch?")) return;
+            pauseTimer();
+        } else {
+            // Even if not running, if we have unsaved time in timer mode, save it
+            if (currentMode === 'timer' && currentTime > syncedTime) {
+                attemptSave();
+            }
+        }
+
+        // Update styling
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`btn-${mode}`).classList.add('active');
+
+        currentMode = mode;
+        syncedTime = 0; // Reset sync tracker for new mode
+
+        // Reset time based on mode
+        if (mode === 'timer') {
+            currentTime = 0;
+            subjectWrapper.style.display = 'block';
+            if (localStorage.getItem(KEY_SUBJECT)) {
+                const s = localStorage.getItem(KEY_SUBJECT);
+                subjectInput.value = s;
+                updateCustomSelectDisplay(s);
+            }
+        } else {
+            currentTime = MODES[mode];
+            subjectWrapper.style.display = 'none';
+        }
+
+        updateDisplay();
+        saveState();
+    }
+
+    function toggleTimer() {
+        if (isRunning) {
+            pauseTimer();
+        } else {
+            startTimer();
+        }
+    }
+
+    function startTimer(isNewStart = true) {
+        if (!isRunning) {
+            isRunning = true;
+            mainBtn.textContent = 'PAUSE';
+            mainBtn.style.opacity = '0.8';
+
+            if (isNewStart) saveState(); // Save initial running state
+
+            timerInterval = setInterval(() => {
+                if (currentMode === 'timer') {
+                    // Count UP
+                    currentTime++;
+                    updateDisplay();
+                } else {
+                    // Count DOWN
+                    if (currentTime > 0) {
+                        currentTime--;
+                        updateDisplay();
+                    } else {
+                        completeTimer();
+                    }
+                }
+
+                // Save state periodically (e.g., every second)
+                saveState();
+
+            }, 1000);
+        }
+    }
+
+    function pauseTimer() {
+        if (isRunning) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            mainBtn.textContent = 'START';
+            mainBtn.style.opacity = '1';
+
+            saveState(); // Save paused state
+
+            // Attempt to save progress if in timer mode
+            if (currentMode === 'timer') {
+                attemptSave();
+            }
+        }
+    }
+
+    function completeTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        mainBtn.textContent = 'START';
+
+        clearState(); // Clear running state
+        localStorage.setItem(KEY_MODE, currentMode); // Preserve mode preference
+
+        // Reset for next break
+        if (currentMode !== 'timer') {
+            currentTime = MODES[currentMode];
+            alert("Time's up!");
+            updateDisplay();
+        }
+    }
+
+    // Auto-save on page leave warning
+    window.addEventListener('beforeunload', (e) => {
+        if (isRunning) {
+            // Standard way to trigger browser warning
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // Save subject input changes
+    subjectInput.addEventListener('input', () => {
+        saveState();
+    });
+
+    // Initialize Custom Select
+    function setupCustomSelect() {
+        const select = document.getElementById('subjectInput');
+        const customSelect = document.getElementById('customSelect');
+        const trigger = document.getElementById('customTrigger');
+        const triggerText = document.getElementById('triggerText');
+        const optionsList = document.getElementById('customOptions');
+
+        // Populate options
+        Array.from(select.options).forEach(option => {
+            if (option.disabled) return; // Skip placeholder
+
+            const div = document.createElement('div');
+            div.className = 'custom-option';
+            div.textContent = option.text;
+            div.dataset.value = option.value;
+
+            div.addEventListener('click', () => {
+                select.value = option.value;
+                triggerText.textContent = option.text;
+
+                // Update selected state
+                document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+                div.classList.add('selected');
+
+                // Close dropdown
+                customSelect.classList.remove('open');
+
+                // Trigger change event for persistence
+                select.dispatchEvent(new Event('input'));
+            });
+
+            optionsList.appendChild(div);
+        });
+
+        // Toggle dropdown
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent document click from closing immediately
+            customSelect.classList.toggle('open');
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!customSelect.contains(e.target)) {
+                customSelect.classList.remove('open');
+            }
+        });
+    }
+
+    // Helper to update display when loading from storage
+    function updateCustomSelectDisplay(value) {
+        const option = document.querySelector(`.custom-option[data-value="${value}"]`);
+        if (option) {
+            document.getElementById('triggerText').textContent = option.textContent;
+            document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+        } else {
+            // Fallback
+            document.getElementById('triggerText').textContent = value || "Select a subject...";
+        }
+    }
+
+    // Initialize
+    setupCustomSelect();
+    loadState(); // Restore from local storage
+    if (!isRunning && currentTime === 0) {
+        updateDisplay(); // Default display if nothing loaded
+    }
+</script>
+{% endblock %}
