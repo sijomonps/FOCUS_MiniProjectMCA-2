@@ -10,35 +10,85 @@
 
 {% block extra_css %}
 <style>
-    /* Quick Action Cards - Clean hover state without gradients */
-    .quick-action-card {
-        text-decoration: none;
-        display: block;
-        transition: border-color var(--transition-base);
+    /* Greeting Section */
+    .greeting-section {
+        margin-bottom: 2.5rem;
     }
 
-    .quick-action-card:hover {
-        border-color: var(--border-color-light);
+    .greeting-title {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 2.8rem;
+        font-weight: 600;
+        font-style: italic;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+        line-height: 1.2;
     }
 
-    .quick-action-icon {
-        font-size: 3rem;
-        margin-bottom: var(--spacing-md);
-        display: block;
-        opacity: 0.9;
+    .greeting-quote {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--text-secondary);
+        font-size: 1.05rem;
+        font-style: italic;
+        opacity: 0.75;
+        max-width: 500px;
+        line-height: 1.6;
     }
 
-    /* Assignment Preview Cards */
-    .assignment-preview {
-        background-color: var(--bg-tertiary);
+
+    /* Styling for the new layout */
+
+    .dashboard-container-v2 {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        /* Main content + Fixed sidebar */
+        gap: var(--spacing-xl);
+    }
+
+    @media (max-width: 1024px) {
+        .dashboard-container-v2 {
+            grid-template-columns: 1fr;
+            /* Stack on smaller screens */
+        }
+    }
+
+    /* Main Content Area */
+    .dashboard-main {
+        min-width: 0;
+        /* Fix grid overflow */
+    }
+
+    /* Sidebar area */
+    .dashboard-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    /* Cards and Quick Actions */
+    .stat-card {
+        background: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: var(--border-radius);
-        padding: var(--spacing-md);
-        transition: border-color var(--transition-fast);
+        padding: var(--spacing-lg);
+        text-align: center;
+        transition: border-color 0.2s;
     }
 
-    .assignment-preview:hover {
+    .stat-card:hover {
         border-color: var(--border-color-light);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 600;
+        margin: var(--spacing-xs) 0;
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
     }
 
     .grid-4 {
@@ -47,134 +97,360 @@
         gap: 1rem;
     }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 768px) {
         .grid-4 {
             grid-template-columns: repeat(2, 1fr);
         }
     }
 
-    @media (max-width: 640px) {
-        .grid-4 {
-            grid-template-columns: 1fr;
-        }
+    /* Calendar Styling */
+    :root {
+        --primary-color: #4f46e5;
+    }
+
+    .calendar-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .calendar-month-year {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .calendar-nav-btn {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-primary);
+    }
+
+    .calendar-days-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        text-align: center;
+        margin-bottom: 0.5rem;
+        color: var(--text-tertiary);
+        font-size: 0.8rem;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.3rem;
+    }
+
+    .calendar-day {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 0.9rem;
+        position: relative;
+        color: var(--text-secondary);
+    }
+
+    .calendar-day:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .calendar-day.active {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .calendar-day.current-day {
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .calendar-day.active.current-day {
+        color: white;
+        border: none;
+    }
+
+    .calendar-day.has-event::after {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        width: 4px;
+        height: 4px;
+        background: currentColor;
+        border-radius: 50%;
+        opacity: 0.7;
+    }
+
+    .calendar-day.empty {
+        cursor: default;
+    }
+
+    /* Schedule Styling */
+    .schedule-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .schedule-header {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .schedule-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .schedule-item {
+        background: var(--bg-tertiary);
+        padding: 0.8rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .ring-container {
+        position: relative;
+        width: 36px;
+        height: 36px;
+    }
+
+    .ring-svg {
+        transform: rotate(-90deg);
+        width: 100%;
+        height: 100%;
+    }
+
+    .ring-circle-bg {
+        fill: none;
+        stroke: var(--bg-primary);
+        stroke-width: 3;
+    }
+
+    .ring-circle-progress {
+        fill: none;
+        stroke: var(--primary-color);
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-dasharray: 100;
+        stroke-dashoffset: 0;
+        transition: stroke-dashoffset 0.5s ease;
+    }
+
+    .ring-dot {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 5px;
+        height: 5px;
+        background: var(--primary-color);
+        border-radius: 50%;
+    }
+
+    .schedule-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .schedule-title {
+        font-weight: 500;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .schedule-meta {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    /* Chart Toggle */
+    .chart-toggle-btn {
+        padding: 4px 12px;
+        font-size: 0.8rem;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text-secondary);
+        transition: all 0.2s;
+    }
+
+    .chart-toggle-btn.active {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--border-color);
+        font-weight: 500;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="fade-in">
-    <!-- Header - Clean and minimal -->
-    <div class="page-header" style="text-align: center; margin-bottom: var(--spacing-2xl);">
-        <h1 class="page-title"
-            style="font-family: 'Times New Roman', serif; font-style: italic; font-size: 3rem; margin-bottom: 0;">
-            {{ greeting }}
-        </h1>
-        <p class="quote-text"
-            style="color: var(--text-secondary); font-size: 1.1rem; font-style: italic; max-width: 600px; margin: 0 auto;">
-            "{{ quote }}"
-        </p>
-    </div>
+    <div class="dashboard-container-v2">
+        <!-- Left: Main Content -->
+        <div class="dashboard-main">
+            <!-- Greeting & Quote -->
+            <div class="greeting-section">
+                <h1 class="greeting-title">{{ greeting }}</h1>
+                <p class="greeting-quote">"{{ quote }}"</p>
+            </div>
 
-    <!-- Stats Grid - Card-based stats display -->
-    <div class="grid grid-4 mb-4">
-        <div class="stat-card">
-            <span class="stat-icon"><i class="mdi mdi-clock-time-four-outline"></i></span>
-            <div class="stat-value">{{ today_total }}</div>
-            <div class="stat-label">Minutes Today</div>
-        </div>
 
-        <div class="stat-card">
-            <span class="stat-icon"><i class="mdi mdi-calendar-month"></i></span>
-            <div class="stat-value">{{ monthly_total_hours }}</div>
-            <div class="stat-label">Hours This Month</div>
-        </div>
+            <!-- Stats Grid -->
+            <div class="grid grid-4 mb-4">
+                <div class="stat-card">
+                    <div class="stat-value">{{ today_total }}</div>
+                    <div class="stat-label">Minutes Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ monthly_total_hours }}</div>
+                    <div class="stat-label">Hours Month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color: var(--color-green);">{{ streak }}</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ assignments|length }}</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
 
-        <div class="stat-card">
-            <span class="stat-icon"><i class="mdi mdi-fire"></i></span>
-            <div class="stat-value" style="color: var(--color-green);">{{ streak }}</div>
-            <div class="stat-label">Day Streak</div>
-        </div>
-
-        <div class="stat-card">
-            <span class="stat-icon"><i class="mdi mdi-format-list-checks"></i></span>
-            <div class="stat-value">{{ assignments|length }}</div>
-            <div class="stat-label">Pending Tasks</div>
-        </div>
-    </div>
-
-    <!-- Weekly Study Chart -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3 class="card-title">
-                <span><i class="mdi mdi-chart-line"></i></span>
-                <span>Weekly Study Time</span>
-            </h3>
-            <span style="color: var(--text-tertiary); font-size: 0.85rem;">Last 7 days</span>
-        </div>
-        <div class="card-body">
-            <canvas id="weeklyChart" height="80"></canvas>
-        </div>
-    </div>
-
-    <!-- Monthly Subject Breakdown -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3 class="card-title">
-                <span><i class="mdi mdi-chart-pie"></i></span>
-                <span>Subject Focus (This Month)</span>
-            </h3>
-        </div>
-        <div class="card-body">
-            {% if subject_breakdown %}
-            <div class="subject-stats">
-                {% for item in subject_breakdown %}
-                <div class="subject-stat-item" style="margin-bottom: 15px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                        <span style="font-weight: 500;">{{ item.subject }}</span>
-                        <span style="color: var(--text-secondary); font-size: 0.9em;">{{ item.hours }}h</span>
-                    </div>
-                    <div class="progress-bar"
-                        style="background: var(--bg-secondary); height: 8px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
-                        <div
-                            style="background: var(--primary-color); width: {{ item.percentage }}%; height: 100%; border-radius: 4px;">
-                        </div>
+            <!-- Charts Section -->
+            <div class="card mb-4">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="card-title" id="chartTitle"><i class="mdi mdi-chart-line" style="margin-right: 8px;"></i>
+                        Weekly Activity</h3>
+                    <div
+                        style="background: var(--bg-secondary); padding: 2px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <button class="chart-toggle-btn active" id="btnWeekly"
+                            onclick="toggleChart('weekly')">Weekly</button>
+                        <button class="chart-toggle-btn" id="btnMonthly"
+                            onclick="toggleChart('monthly')">Monthly</button>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="text-tertiary" style="font-style: italic;">No study sessions recorded this month.</p>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Subjects Management -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3 class="card-title">
-                <span><i class="mdi mdi-notebook-multiple"></i></span>
-                <span>My Subjects</span>
-            </h3>
-        </div>
-        <div class="card-body">
-            <div id="subjectsList" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
-                {% for subject in subjects %}
-                <span class="subject-tag"
-                    style="background: var(--bg-secondary); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.9rem;">
-                    {{ subject.name }}
-                </span>
-                {% empty %}
-                <span class="text-tertiary" style="font-style: italic;">No subjects added yet.</span>
-                {% endfor %}
+                <div class="card-body">
+                    <canvas id="activityChart" height="100"></canvas>
+                </div>
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="newSubjectName" class="form-control" placeholder="Add new subject..."
-                    style="flex: 1; padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius); color: var(--text-primary);">
-                <button onclick="addSubject()" class="btn-primary"
-                    style="background: var(--primary-color); border: none; padding: 0 20px; border-radius: var(--border-radius); color: white; cursor: pointer;">
-                    Add
-                </button>
+            <!-- Subject Breakdown -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="mdi mdi-chart-pie" style="margin-right: 8px;"></i> Focus Areas</h3>
+                </div>
+                <div class="card-body">
+                    {% if subject_breakdown %}
+                    <div class="subject-stats">
+                        {% for item in subject_breakdown %}
+                        <div class="subject-stat-item" style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-size: 0.9rem; font-weight: 500;">{{ item.subject }}</span>
+                                <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ item.hours }}h</span>
+                            </div>
+                            <div
+                                style="background: var(--bg-secondary); height: 6px; border-radius: 3px; overflow: hidden;">
+                                <div
+                                    style="background: var(--primary-color); width: {{ item.percentage }}%; height: 100%; border-radius: 3px;">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-tertiary">No study data yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Subjects Management -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="mdi mdi-notebook-multiple" style="margin-right: 8px;"></i> Subjects
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div id="subjectsList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+                        {% for subject in subjects %}
+                        <span class="subject-tag"
+                            style="background: var(--bg-secondary); padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border-color); font-size: 0.85rem;">
+                            {{ subject.name }}
+                        </span>
+                        {% empty %}
+                        <span class="text-tertiary">No subjects added.</span>
+                        {% endfor %}
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="newSubjectName" class="form-input" placeholder="New subject..."
+                            style="padding: 8px 12px;">
+                        <button onclick="addSubject()" class="btn btn-primary btn-sm">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Sidebar (Calendar & Schedule) -->
+        <div class="dashboard-sidebar">
+            <div class="calendar-card">
+                <div class="calendar-header">
+                    <div class="calendar-month-year" id="calendarMonthYear"></div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="calendar-nav-btn" onclick="changeMonth(-1)"><i
+                                class="mdi mdi-chevron-left"></i></button>
+                        <button class="calendar-nav-btn" onclick="changeMonth(1)"><i
+                                class="mdi mdi-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="calendar-days-header">
+                    <div>Mo</div>
+                    <div>Tu</div>
+                    <div>We</div>
+                    <div>Th</div>
+                    <div>Fr</div>
+                    <div>Sa</div>
+                    <div>Su</div>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+
+            <div class="schedule-card">
+                <div class="schedule-header">
+                    <span>Tasks</span>
+                    <span id="selectedDateDisplay"
+                        style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">Today</span>
+                </div>
+                <div class="schedule-list" id="scheduleList"></div>
             </div>
         </div>
     </div>
@@ -184,96 +460,82 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
-    // Weekly study chart with enhanced styling
-    const chartLabels = {{ chart_labels| safe }};
-    const chartData = {{ chart_data| safe }};
+    // --- Chart Logic ---
+    const weeklyLabels = {{ chart_labels| safe }};
+    const weeklyData = {{ chart_data| safe }};
+    const monthlyLabels = {{ chart_labels_monthly| safe }};
+    const monthlyData = {{ chart_data_monthly| safe }};
 
-    const ctx = document.getElementById('weeklyChart').getContext('2d');
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(96, 165, 250, 0.5)');
-    gradient.addColorStop(1, 'rgba(96, 165, 250, 0.05)');
+    let activityChart = null;
 
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: chartLabels,
-            datasets: [{
-                label: 'Study Time (minutes)',
-                data: chartData,
-                backgroundColor: gradient,
-                borderColor: 'rgba(96, 165, 250, 0.8)',
-                borderWidth: 2,
-                borderRadius: 6,
-                borderSkipped: false,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(31, 31, 31, 0.95)',
-                    titleColor: '#ffffff',
-                    bodyColor: '#9b9b9b',
-                    borderColor: '#313131',
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: false,
-                    titleFont: {
-                        size: 13,
-                        weight: '600'
-                    },
-                    bodyFont: {
-                        size: 12
-                    },
-                    callbacks: {
-                        label: function (context) {
-                            return context.parsed.y + ' minutes studied';
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: '#6b6b6b',
-                        font: {
-                            size: 11
-                        },
-                        callback: function (value) {
-                            return value + 'm';
-                        }
-                    },
-                    grid: {
-                        color: '#313131',
-                        drawBorder: false
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: '#9b9b9b',
-                        font: {
-                            size: 11,
-                            weight: '500'
-                        }
-                    },
-                    grid: {
-                        display: false,
-                        drawBorder: false
-                    }
-                }
-            },
-            interaction: {
-                intersect: false,
-                mode: 'index'
-            }
+    function initChart(type) {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(79, 70, 229, 0.4)');
+        gradient.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
+
+        // Destroy old if exists
+        if (activityChart) {
+            activityChart.destroy();
         }
-    });
 
+        let labels = type === 'weekly' ? weeklyLabels : monthlyLabels;
+        let data = type === 'weekly' ? weeklyData : monthlyData;
+
+        activityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Minutes',
+                    data: data,
+                    backgroundColor: gradient,
+                    borderColor: '#4f46e5',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#4f46e5',
+                    pointRadius: type === 'weekly' ? 4 : 2,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#333' } },
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            maxTicksLimit: type === 'weekly' ? 7 : 10,
+                            autoSkip: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function toggleChart(type) {
+        const btnWeekly = document.getElementById('btnWeekly');
+        const btnMonthly = document.getElementById('btnMonthly');
+        const title = document.getElementById('chartTitle');
+
+        if (type === 'weekly') {
+            btnWeekly.classList.add('active');
+            btnMonthly.classList.remove('active');
+            title.innerHTML = '<i class="mdi mdi-chart-line" style="margin-right: 8px;"></i> Weekly Activity';
+        } else {
+            btnWeekly.classList.remove('active');
+            btnMonthly.classList.add('active');
+            title.innerHTML = '<i class="mdi mdi-calendar-month" style="margin-right: 8px;"></i> Monthly Activity';
+        }
+        initChart(type);
+    }
+
+    // Initialize chart
+    initChart('weekly');
+
+    // --- Subject Management ---
     async function addSubject() {
         const input = document.getElementById('newSubjectName');
         const name = input.value.trim();
@@ -282,35 +544,149 @@
         try {
             const response = await fetch("{% url 'create_subject_folder' %}", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
                 body: JSON.stringify({ name: name })
             });
-
             const data = await response.json();
             if (response.ok) {
-                // Add to list visually
                 const list = document.getElementById('subjectsList');
-                // Remove 'no subjects' msg if present
-                if (list.querySelector('.text-tertiary')) {
-                    list.querySelector('.text-tertiary').remove();
-                }
-
+                if (list.querySelector('.text-tertiary')) list.querySelector('.text-tertiary').remove();
                 const span = document.createElement('span');
                 span.className = 'subject-tag';
-                span.style = "background: var(--bg-secondary); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.9rem;";
+                span.style = "background: var(--bg-secondary); padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border-color); font-size: 0.85rem;";
                 span.textContent = data.folder_name;
                 list.appendChild(span);
-
                 input.value = '';
-            } else {
-                alert(data.error);
             }
-        } catch (error) {
-            console.error('Error adding subject:', error);
+        } catch (error) { console.error(error); }
+    }
+
+    // --- Calendar & Schedule Logic ---
+    const calendarAssignments = JSON.parse('{{ calendar_assignments_json|escapejs }}');
+    let currentDate = new Date();
+    let selectedDate = new Date();
+
+    function initCalendar() {
+        renderCalendar();
+        renderSchedule(selectedDate);
+    }
+
+    function changeMonth(delta) {
+        currentDate.setMonth(currentDate.getMonth() + delta);
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        document.getElementById('calendarMonthYear').textContent = `${monthNames[month]} ${year}`;
+
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // Empty slots
+        for (let i = 0; i < adjustedFirstDay; i++) {
+            const div = document.createElement('div');
+            div.className = 'calendar-day empty';
+            grid.appendChild(div);
+        }
+
+        const today = new Date();
+        for (let i = 1; i <= daysInMonth; i++) {
+            const div = document.createElement('div');
+            div.className = 'calendar-day';
+            div.textContent = i;
+
+            // Event check
+            const hasEvent = calendarAssignments.some(t => {
+                const d = new Date(t.deadline);
+                return d.getFullYear() === year && d.getMonth() === month && d.getDate() === i;
+            });
+            if (hasEvent) div.classList.add('has-event');
+
+            // Today check
+            if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) div.classList.add('current-day');
+
+            // Selected check
+            if (year === selectedDate.getFullYear() && month === selectedDate.getMonth() && i === selectedDate.getDate()) div.classList.add('active');
+
+            div.onclick = () => {
+                selectedDate = new Date(year, month, i);
+                renderCalendar();
+                renderSchedule(selectedDate);
+            };
+            grid.appendChild(div);
         }
     }
+
+    function renderSchedule(date) {
+        const list = document.getElementById('scheduleList');
+        const display = document.getElementById('selectedDateDisplay');
+
+        // Format display date: "May 15"
+        const options = { month: 'short', day: 'numeric' };
+        if (date.toDateString() === new Date().toDateString()) {
+            display.textContent = "Today";
+        } else {
+            display.textContent = date.toLocaleDateString('en-US', options);
+        }
+
+        list.innerHTML = '';
+
+        const dayTasks = calendarAssignments.filter(t => {
+            const d = new Date(t.deadline);
+            return d.getFullYear() === date.getFullYear() && d.getMonth() === date.getMonth() && d.getDate() === date.getDate();
+        });
+
+        if (dayTasks.length === 0) {
+            list.innerHTML = `<div class="text-tertiary" style="text-align: center; padding: 20px; font-size: 0.9rem;">No tasks</div>`;
+            return;
+        }
+
+        dayTasks.forEach(task => {
+            const item = document.createElement('div');
+            item.className = 'schedule-item';
+
+            let ringColor = 'var(--primary-color)';
+            if (task.urgency === 'high') ringColor = '#ef4444';
+            else if (task.urgency === 'medium') ringColor = '#f59e0b';
+            if (task.status === 'completed') ringColor = '#10b981';
+
+            const deadline = new Date(task.deadline);
+            const now = new Date();
+            const hoursLeft = (deadline - now) / (1000 * 60 * 60);
+
+            // Ring Calculation
+            let percent = 0;
+            if (hoursLeft > 0) percent = Math.min(100, (hoursLeft / 48) * 100);
+            if (task.status === 'completed') percent = 100;
+
+            const circumference = 100;
+            const offset = circumference - (percent / 100 * circumference);
+            const showDot = hoursLeft > 0 && task.status !== 'completed';
+
+            item.innerHTML = `
+                <div class="ring-container">
+                    <svg class="ring-svg" viewBox="0 0 36 36">
+                        <path class="ring-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                        <path class="ring-circle-progress" stroke-dasharray="${circumference}, 100" stroke-dashoffset="${offset}" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style="stroke: ${ringColor};"/>
+                    </svg>
+                    <div class="ring-dot" style="background: ${ringColor}; display: ${showDot ? 'block' : 'none'};"></div>
+                </div>
+                <div class="schedule-info">
+                    <div class="schedule-title">${task.title}</div>
+                    <div class="schedule-meta">${task.subject} • ${deadline.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initCalendar);
 </script>
 {% endblock %}

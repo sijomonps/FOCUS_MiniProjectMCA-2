@@ -75,15 +75,36 @@ def dashboard_view(request):
     # Get weekly data for chart
     weekly_data = StudySession.get_weekly_data(user)
     
-    # Prepare chart data
+    # Prepare chart data (Weekly)
     chart_labels = []
     chart_data = []
     for date, minutes in sorted(weekly_data.items()):
         chart_labels.append(date.strftime('%a'))  # Mon, Tue, etc.
         chart_data.append(minutes)
+
+    # Get monthly data for chart
+    monthly_chart_data_raw = StudySession.get_monthly_data(user)
+    chart_labels_monthly = []
+    chart_data_monthly = []
+    for date, minutes in sorted(monthly_chart_data_raw.items()):
+        chart_labels_monthly.append(date.strftime('%d')) # Just day number
+        chart_data_monthly.append(minutes)
     
-    # Get pending assignments (up to 6 for preview)
+    # Get pending assignments (up to 6 for preview list)
     assignments = Assignment.objects.filter(user=user, status='pending')[:6]
+    
+    # Get all pending assignments for calendar
+    all_assignments = Assignment.objects.filter(user=user, status='pending')
+    calendar_assignments = []
+    for assignment in all_assignments:
+        calendar_assignments.append({
+            'id': assignment.id,
+            'title': assignment.title,
+            'subject': assignment.subject,
+            'deadline': assignment.deadline.isoformat(),
+            'urgency': assignment.urgency,
+            'status': assignment.status
+        })
     
     # Greeting message
     hour = datetime.now().hour
@@ -145,7 +166,10 @@ def dashboard_view(request):
         'streak': streak,
         'chart_labels': json.dumps(chart_labels),
         'chart_data': json.dumps(chart_data),
+        'chart_labels_monthly': json.dumps(chart_labels_monthly),
+        'chart_data_monthly': json.dumps(chart_data_monthly),
         'assignments': assignments,
+        'calendar_assignments_json': json.dumps(calendar_assignments),
         'subjects': subjects,
         'monthly_total_hours': monthly_total_hours,
         'subject_breakdown': subject_breakdown,

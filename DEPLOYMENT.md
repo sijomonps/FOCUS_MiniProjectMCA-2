@@ -15,10 +15,10 @@ This option is free forever and keeps your dadabase safe (unlike Render's free t
 In the console, run:
 ```bash
 # Clone your repository (replace URL with YOUR github link)
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+git clone https://github.com/sijomonps/FOCUS_MiniProjectMCA-2.git
 
 # Go into the folder
-cd YOUR_REPO_NAME
+cd FOCUS_MiniProjectMCA-2
 ```
 
 ### Step 3: Install Dependencies
