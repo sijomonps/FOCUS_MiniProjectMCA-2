@@ -1,547 +1,710 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Quick Notes - FOCUS{% endblock %}
-
-{% block favicon %}
-<link rel="icon"
-    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M17,3H7C5.9,3 5,3.9 5,5V21C5,22.1 5.9,23 7,23H17C18.1,23 19,22.1 19,21V5C19,3.9 18.1,3 17,3M17,21H7V5H17V21M13,7H7V9H13V7Z" /></svg>'>
-{% endblock %}
+{% block title %}Quick Notes - StudyFlow{% endblock %}
 
 {% block extra_css %}
 <style>
-    .notes-container {
-        display: flex;
-        gap: var(--spacing-xl);
-        height: calc(100vh - 140px);
+    .notes-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: calc(var(--spacing) * 3);
+        height: calc(100vh - 200px);
     }
-
-    /* Left Sidebar - Subjects */
-    .notes-sidebar {
-        width: 260px;
-        flex-shrink: 0;
-        display: flex;
-        flex-direction: column;
-        border-right: 1px solid var(--border-color);
-        padding-right: var(--spacing-md);
+    
+    /* Folders Sidebar */
+    .folders-sidebar {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: calc(var(--spacing) * 2);
+        overflow-y: auto;
     }
-
-    .notes-sidebar-header {
+    
+    .sidebar-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: var(--spacing-md);
-        padding-left: var(--spacing-xs);
+        margin-bottom: calc(var(--spacing) * 2);
     }
-
-    .sidebar-heading {
-        font-size: 0.85rem;
+    
+    .sidebar-title {
+        font-size: 0.9rem;
         font-weight: 600;
-        color: var(--text-tertiary);
+        color: var(--text-secondary);
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.5px;
     }
-
-    .btn-icon-add {
-        background: transparent;
+    
+    .btn-add-folder {
+        background: var(--color-blue);
+        color: white;
         border: none;
-        color: var(--text-secondary);
-        cursor: pointer;
-        transition: color 0.2s;
-        padding: 4px;
-        border-radius: 4px;
-    }
-
-    .btn-icon-add:hover {
-        background-color: var(--bg-tertiary);
-        color: var(--text-primary);
-    }
-
-    .subject-list {
-        list-style: none;
-        overflow-y: auto;
-        flex: 1;
-    }
-
-    .subject-item {
+        width: 32px;
+        height: 32px;
+        border-radius: calc(var(--border-radius) * 1.5);
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 6px 12px;
-        margin-bottom: 2px;
+        justify-content: center;
+        cursor: pointer;
+        transition: all var(--transition-base);
+    }
+    
+    .btn-add-folder:hover {
+        background: #1976d2;
+        transform: scale(1.05);
+    }
+    
+    .folder-list {
+        display: flex;
+        flex-direction: column;
+        gap: calc(var(--spacing) / 2);
+    }
+    
+    .folder-item {
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing) * 1.5);
+        padding: calc(var(--spacing) * 1.5);
         border-radius: var(--border-radius);
         cursor: pointer;
-        color: var(--text-secondary);
-        transition: background-color 0.1s;
+        transition: all var(--transition-fast);
+        border: 1px solid transparent;
+    }
+    
+    .folder-item:hover {
+        background-color: rgba(255, 255, 255, 0.03);
+        border-color: var(--border-color);
+    }
+    
+    .folder-item.active {
+        background-color: rgba(33, 150, 243, 0.1);
+        border-color: var(--color-blue);
+    }
+    
+    .folder-icon {
+        color: var(--color-orange);
+        font-size: 1.3rem;
+    }
+    
+    .folder-info {
+        flex: 1;
+    }
+    
+    .folder-name {
         font-size: 0.95rem;
-    }
-
-    .subject-item:hover {
-        background-color: var(--bg-tertiary);
-        color: var(--text-primary);
-    }
-
-    .subject-item.active {
-        background-color: var(--bg-tertiary);
         color: var(--text-primary);
         font-weight: 500;
     }
-
-    .subject-name {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .delete-subject-btn {
-        opacity: 0;
-        margin-left: auto;
-        padding: 2px;
+    
+    .folder-count {
+        font-size: 0.75rem;
         color: var(--text-tertiary);
-        cursor: pointer;
     }
-
-    .subject-item:hover .delete-subject-btn {
+    
+    .folder-delete {
+        opacity: 0;
+        color: var(--text-tertiary);
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .folder-item:hover .folder-delete {
         opacity: 1;
     }
-
-    .delete-subject-btn:hover {
+    
+    .folder-delete:hover {
         color: var(--color-red);
     }
-
-    /* Right Side - Content */
-    .notes-main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
+    
+    /* Notes Content Area */
+    .notes-content {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: calc(var(--spacing) * 3);
+        overflow-y: auto;
     }
-
-    .notes-main-header {
+    
+    .notes-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: var(--spacing-lg);
-        padding-bottom: var(--spacing-sm);
-        border-bottom: 1px solid var(--border-color);
+        margin-bottom: calc(var(--spacing) * 3);
     }
-
-    .current-subject-title {
+    
+    .notes-title {
         font-size: 1.5rem;
-        font-weight: 700;
+        font-weight: 600;
         color: var(--text-primary);
         display: flex;
         align-items: center;
-        gap: var(--spacing-sm);
+        gap: calc(var(--spacing) * 1.5);
     }
-
-    /* List Layout for Notes */
-    .notes-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-xs);
-        overflow-y: auto;
-        padding-bottom: var(--spacing-xl);
-    }
-
-    /* Simple row list item style */
-    .note-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 16px;
+    
+    .btn-add-note {
+        background: var(--color-green);
+        color: white;
+        border: none;
+        padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
         border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing));
         cursor: pointer;
-        transition: background 0.1s ease;
-        border-bottom: 1px solid transparent;
-    }
-
-    .note-item:hover {
-        background-color: var(--bg-tertiary);
-    }
-
-    .note-item-title {
         font-weight: 500;
+        transition: all var(--transition-base);
+    }
+    
+    .btn-add-note:hover {
+        background: #388e3c;
+        transform: translateY(-2px);
+    }
+    
+    /* Note Cards */
+    .notes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: calc(var(--spacing) * 2);
+    }
+    
+    .note-card {
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: calc(var(--spacing) * 2);
+        transition: all var(--transition-base);
+        position: relative;
+    }
+    
+    .note-card:hover {
+        border-color: var(--border-color-light);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .note-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: calc(var(--spacing) * 1.5);
+    }
+    
+    .note-title {
+        font-size: 1.05rem;
+        font-weight: 600;
         color: var(--text-primary);
-        font-size: 0.95rem;
         flex: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-right: var(--spacing-md);
     }
-
-    .note-item-preview {
+    
+    .note-delete {
         color: var(--text-tertiary);
-        font-size: 0.85rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 300px;
-        margin-right: var(--spacing-md);
-        display: none;
-        /* Hidden on small screens or simple view */
-    }
-
-    @media (min-width: 900px) {
-        .note-item-preview {
-            display: block;
-        }
-    }
-
-    .note-item-date {
-        color: var(--text-tertiary);
-        font-size: 0.8rem;
-        min-width: 80px;
-        text-align: right;
-    }
-
-    .note-delete-btn {
-        opacity: 0;
-        color: var(--text-tertiary);
+        font-size: 1.1rem;
         cursor: pointer;
-        padding: 4px;
-        margin-left: var(--spacing-sm);
-        transition: opacity 0.2s;
+        opacity: 0;
+        transition: all var(--transition-fast);
     }
-
-    .note-item:hover .note-delete-btn {
+    
+    .note-card:hover .note-delete {
         opacity: 1;
     }
-
-    .note-delete-btn:hover {
+    
+    .note-delete:hover {
         color: var(--color-red);
     }
-
-    /* Document Editor Modal */
+    
+    .note-content {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        font-size: 0.9rem;
+        margin-bottom: calc(var(--spacing) * 1.5);
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .note-footer {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        display: flex;
+        align-items: center;
+        gap: calc(var(--spacing));
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: calc(var(--spacing) * 6) calc(var(--spacing) * 3);
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-tertiary);
+        margin-bottom: calc(var(--spacing) * 2);
+    }
+    
+    .empty-title {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: calc(var(--spacing));
+    }
+    
+    .empty-text {
+        color: var(--text-tertiary);
+        margin-bottom: calc(var(--spacing) * 3);
+    }
+    
+    /* Modal */
     .modal-overlay {
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
         z-index: 1000;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s;
+        align-items: center;
+        justify-content: center;
     }
-
+    
     .modal-overlay.active {
-        opacity: 1;
-        pointer-events: all;
+        display: flex;
     }
-
-    .modal-box {
-        background: var(--bg-secondary);
+    
+    .modal-content {
+        background-color: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: var(--border-radius-lg);
-        padding: var(--spacing-xl);
-        width: 100%;
-        max-width: 500px;
-        transform: scale(0.95);
-        transition: transform 0.2s;
+        padding: calc(var(--spacing) * 3);
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
     }
-
-    /* Full Page Editor Style */
-    .editor-modal {
-        width: 800px;
-        max-width: 90%;
-        height: 80vh;
-        max-height: 800px;
+    
+    .modal-header {
         display: flex;
-        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: calc(var(--spacing) * 3);
     }
-
-    .modal-overlay.active .modal-box {
-        transform: scale(1);
-    }
-
-    .editor-title {
-        width: 100%;
-        background: transparent !important;
-        border: none;
+    
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
         color: var(--text-primary);
-        font-family: inherit;
-        font-size: 1.8rem;
-        font-weight: 700;
-        margin-bottom: var(--spacing-sm);
-        padding: 0;
-        outline: none;
-        text-transform: uppercase;
     }
-
-    .editor-title::placeholder {
+    
+    .modal-close {
         color: var(--text-tertiary);
-        font-weight: 700;
-        /* Bold placeholder */
-        text-transform: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color var(--transition-fast);
     }
-
-    .editor-textarea {
-        flex: 1;
+    
+    .modal-close:hover {
+        color: var(--text-primary);
+    }
+    
+    .form-group {
+        margin-bottom: calc(var(--spacing) * 2);
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: calc(var(--spacing));
+    }
+    
+    .form-input, .form-textarea {
         width: 100%;
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: calc(var(--spacing) * 1.5);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: border-color var(--transition-fast);
+    }
+    
+    .form-input:focus, .form-textarea:focus {
+        outline: none;
+        border-color: var(--color-blue);
+    }
+    
+    .form-textarea {
+        min-height: 200px;
+        resize: vertical;
+    }
+    
+    .modal-actions {
+        display: flex;
+        gap: calc(var(--spacing) * 1.5);
+        justify-content: flex-end;
+        margin-top: calc(var(--spacing) * 3);
+    }
+    
+    .btn-cancel {
         background: transparent;
-        border: none;
-        resize: none;
-        color: var(--text-primary);
-        font-family: inherit;
-        font-size: 1.1rem;
-        line-height: 1.6;
-        padding: var(--spacing-md) 0;
-        outline: none;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 500;
+        transition: all var(--transition-fast);
     }
-
-    .editor-textarea::placeholder {
-        color: var(--text-tertiary);
+    
+    .btn-cancel:hover {
+        border-color: var(--text-secondary);
+        color: var(--text-primary);
+    }
+    
+    .btn-submit {
+        background: var(--color-blue);
+        color: white;
+        border: none;
+        padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 500;
+        transition: all var(--transition-base);
+    }
+    
+    .btn-submit:hover {
+        background: #1976d2;
+    }
+    
+    @media (max-width: 768px) {
+        .notes-layout {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+        
+        .folders-sidebar {
+            max-height: 300px;
+        }
+        
+        .notes-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="fade-in">
-    <div class="notes-container">
-
-        <!-- Sidebar -->
-        <div class="notes-sidebar">
-            <div class="notes-sidebar-header">
-                <span class="sidebar-heading">Subjects</span>
-                <button class="btn-icon-add" onclick="openModal('folderModal')" title="New Subject">
+    <div class="page-header">
+        <h1 class="page-title"><i class="mdi mdi-notebook-outline"></i> Quick Notes</h1>
+        <p class="page-subtitle">Organize your notes by subject</p>
+    </div>
+    
+    <div class="notes-layout">
+        <!-- Folders Sidebar -->
+        <div class="folders-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Subjects</div>
+                <button class="btn-add-folder" onclick="showAddFolderModal()" title="Add Subject">
                     <i class="mdi mdi-plus"></i>
                 </button>
             </div>
-
-            <ul class="subject-list">
-                <!-- User Folders Only (No All Notes tab) -->
+            
+            <div class="folder-list">
+                <!-- All Notes (unorganized) -->
+                <div class="folder-item {% if not selected_folder %}active{% endif %}" onclick="selectFolder(null)">
+                    <i class="mdi mdi-file-document-multiple-outline folder-icon"></i>
+                    <div class="folder-info">
+                        <div class="folder-name">All Notes</div>
+                        <div class="folder-count">Unorganized</div>
+                    </div>
+                </div>
+                
                 {% for folder in folders %}
-                <li class="subject-item {% if selected_folder and selected_folder.id == folder.id %}active{% endif %}"
-                    onclick="window.location.href='{% url 'notes' %}?folder={{ folder.id }}'">
-                    <span class="subject-name">
-                        <i class="mdi mdi-folder-outline"></i> {{ folder.name }}
-                    </span>
-                    <i class="mdi mdi-trash-can-outline delete-subject-btn"
-                        onclick="event.stopPropagation(); deleteFolder({{ folder.id }}, '{{ folder.name }}')"></i>
-                </li>
+                <div class="folder-item {% if selected_folder and selected_folder.id == folder.id %}active{% endif %}" 
+                     onclick="selectFolder({{ folder.id }})">
+                    <i class="mdi mdi-folder folder-icon"></i>
+                    <div class="folder-info">
+                        <div class="folder-name">{{ folder.name }}</div>
+                        <div class="folder-count">{{ folder.note_count }} note{{ folder.note_count|pluralize }}</div>
+                    </div>
+                    <i class="mdi mdi-delete-outline folder-delete" 
+                       onclick="event.stopPropagation(); deleteFolder({{ folder.id }}, '{{ folder.name }}')"></i>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
-
-        <!-- Main Content -->
-        <main class="notes-main">
-            <div class="notes-main-header">
-                <div class="current-subject-title">
-                    {% if selected_folder %}
-                    {{ selected_folder.name }}
-                    {% else %}
-                    Select a Subject
-                    {% endif %}
+        
+        <!-- Notes Content -->
+        <div class="notes-content">
+            <div class="notes-header">
+                <div class="notes-title">
+                    <i class="mdi mdi-{% if selected_folder %}folder-open{% else %}file-document-multiple{% endif %}"></i>
+                    {{ selected_folder.name|default:"All Notes" }}
                 </div>
                 {% if selected_folder %}
-                <button class="btn-theme btn-sm" onclick="openModal('noteModal')">
-                    <i class="mdi mdi-plus"></i> New Note
+                <button class="btn-add-note" onclick="showAddNoteModal()">
+                    <i class="mdi mdi-plus"></i>
+                    <span>Add Note</span>
                 </button>
                 {% endif %}
             </div>
-
+            
             {% if notes %}
-            <div class="notes-list">
+            <div class="notes-grid">
                 {% for note in notes %}
-                <!-- Added onclick to view/edit note -->
-                <div class="note-item"
-                    onclick="viewNote({{ note.id }}, '{{ note.title|escapejs }}', '{{ note.content|escapejs|linebreaksbr }}')">
-                    <div class="note-item-title">{{ note.title }}</div>
-                    <div class="note-item-preview">{{ note.content|truncatechars:100 }}</div>
-                    <div class="note-item-date">{{ note.created_at|date:"M d" }}</div>
-                    <i class="mdi mdi-trash-can-outline note-delete-btn"
-                        onclick="event.stopPropagation(); deleteNote({{ note.id }})"></i>
+                <div class="note-card">
+                    <div class="note-card-header">
+                        <div class="note-title">{{ note.title }}</div>
+                        <i class="mdi mdi-delete-outline note-delete" 
+                           onclick="deleteNote({{ note.id }}, '{{ note.title }}')"></i>
+                    </div>
+                    <div class="note-content">{{ note.content }}</div>
+                    <div class="note-footer">
+                        <i class="mdi mdi-clock-outline"></i>
+                        <span>{{ note.created_at|date:"M d, Y" }}</span>
+                        {% if note.updated_at != note.created_at %}
+                        <span>• Edited</span>
+                        {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <!-- Empty State -->
             <div class="empty-state">
-                <div class="empty-state-icon">
-                    <i class="mdi mdi-pencil-outline"></i>
+                <div class="empty-icon">
+                    <i class="mdi mdi-{% if selected_folder %}note-plus-outline{% else %}folder-plus-outline{% endif %}"></i>
                 </div>
-                <h3>{% if selected_folder %}No notes here yet{% else %}Select a subject{% endif %}</h3>
-                <p>{% if selected_folder %}Go ahead, write something down!{% else %}Create a subject folder to start
-                    organizing your thoughts.{% endif %}</p>
+                <div class="empty-title">
+                    {% if selected_folder %}
+                    No notes yet
+                    {% else %}
+                    No unorganized notes
+                    {% endif %}
+                </div>
+                <div class="empty-text">
+                    {% if selected_folder %}
+                    Click "Add Note" to create your first note in this subject.
+                    {% else %}
+                    Create a subject folder and start organizing your notes!
+                    {% endif %}
+                </div>
                 {% if not selected_folder %}
-                <button class="btn btn-secondary mt-2" onclick="openModal('folderModal')">
-                    Create Subject
+                <button class="btn-add-folder" onclick="showAddFolderModal()" style="width: auto; padding: 12px 24px;">
+                    <i class="mdi mdi-folder-plus"></i>
+                    <span style="margin-left: 8px;">Create Subject Folder</span>
                 </button>
                 {% endif %}
             </div>
             {% endif %}
-        </main>
-    </div>
-</div>
-
-<!-- Create Folder Modal -->
-<div id="folderModal" class="modal-overlay">
-    <div class="modal-box">
-        <h3 class="mb-2">New Subject</h3>
-        <input type="text" id="folderNameInput" class="form-input mb-3" placeholder="e.g. Mathematics, Ideas..."
-            autofocus>
-        <div class="flex gap-2" style="justify-content: flex-end;">
-            <button class="btn btn-ghost" onclick="closeModal('folderModal')">Cancel</button>
-            <button class="btn-theme" onclick="createFolder()">Create</button>
         </div>
     </div>
 </div>
 
-<!-- Create/Edit Note Document Editor -->
-<div id="noteModal" class="modal-overlay">
-    <div class="modal-box editor-modal">
-        <div class="flex-between mb-2">
-            <span style="color: var(--text-tertiary); font-size: 0.85rem;" id="modalTitleLabel">New Note</span>
-            <div class="flex gap-2">
-                <button class="btn btn-ghost btn-sm" onclick="closeModal('noteModal')">Cancel</button>
-                <button class="btn-theme btn-sm" onclick="saveNote()">Save</button>
+<!-- Add Folder Modal -->
+<div class="modal-overlay" id="addFolderModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">Create Subject Folder</div>
+            <i class="mdi mdi-close modal-close" onclick="closeModal('addFolderModal')"></i>
+        </div>
+        <form id="addFolderForm" onsubmit="createFolder(event)">
+            <div class="form-group">
+                <label class="form-label">Subject Name</label>
+                <input type="text" class="form-input" id="folderName" 
+                       placeholder="e.g., Mathematics, History, Science..." required>
             </div>
-        </div>
-        <div class="divider"></div>
-
-        <!-- Two Inputs for Title and Body -->
-        <input type="text" id="noteTitleInput" class="editor-title" placeholder="Title">
-        <textarea id="noteContentInput" class="editor-textarea" placeholder=""></textarea>
-        <!-- Hidden input to store Note ID for editing -->
-        <input type="hidden" id="editingNoteId" value="">
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('addFolderModal')">Cancel</button>
+                <button type="submit" class="btn-submit">Create Folder</button>
+            </div>
+        </form>
     </div>
 </div>
 
-{% endblock %}
+<!-- Add Note Modal -->
+<div class="modal-overlay" id="addNoteModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">Create New Note</div>
+            <i class="mdi mdi-close modal-close" onclick="closeModal('addNoteModal')"></i>
+        </div>
+        <form id="addNoteForm" onsubmit="createNote(event)">
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-input" id="noteTitle" 
+                       placeholder="Note title..." required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Content</label>
+                <textarea class="form-textarea" id="noteContent" 
+                          placeholder="Write your note here..." required></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('addNoteModal')">Cancel</button>
+                <button type="submit" class="btn-submit">Save Note</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-{% block extra_js %}
 <script>
-    // Use the global 'csrf' variable from base.html
+const csrftoken = '{{ csrf_token }}';
+let currentFolderId = {{ selected_folder.id|default:"null" }};
 
-    // Auto-focus body when hitting enter on title
-    document.getElementById('noteTitleInput').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            document.getElementById('noteContentInput').focus();
+function selectFolder(folderId) {
+    const url = folderId ? `?folder=${folderId}` : '';
+    window.location.href = '{% url "notes" %}' + url;
+}
+
+function showAddFolderModal() {
+    document.getElementById('addFolderModal').classList.add('active');
+    document.getElementById('folderName').focus();
+}
+
+function showAddNoteModal() {
+    if (!currentFolderId) {
+        alert('Please select a folder first');
+        return;
+    }
+    document.getElementById('addNoteModal').classList.add('active');
+    document.getElementById('noteTitle').focus();
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+    if (modalId === 'addFolderModal') {
+        document.getElementById('addFolderForm').reset();
+    } else if (modalId === 'addNoteModal') {
+        document.getElementById('addNoteForm').reset();
+    }
+}
+
+async function createFolder(event) {
+    event.preventDefault();
+    const folderName = document.getElementById('folderName').value.trim();
+    
+    try {
+        const response = await fetch('{% url "create_subject_folder" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ name: folderName })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Failed to create folder');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to create folder');
+    }
+}
+
+async function createNote(event) {
+    event.preventDefault();
+    const title = document.getElementById('noteTitle').value.trim();
+    const content = document.getElementById('noteContent').value.trim();
+    
+    try {
+        const response = await fetch('{% url "create_note" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                folder_id: currentFolderId,
+                title: title,
+                content: content
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Failed to create note');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to create note');
+    }
+}
+
+async function deleteNote(noteId, noteTitle) {
+    if (!confirm(`Delete note "${noteTitle}"?`)) return;
+    
+    try {
+        const response = await fetch('{% url "delete_note" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ note_id: noteId })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Failed to delete note');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to delete note');
+    }
+}
+
+async function deleteFolder(folderId, folderName) {
+    if (!confirm(`Delete folder "${folderName}" and all its notes? This cannot be undone.`)) return;
+    
+    try {
+        const response = await fetch('{% url "delete_folder" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({ folder_id: folderId })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            window.location.href = '{% url "notes" %}';
+        } else {
+            alert(data.error || 'Failed to delete folder');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to delete folder');
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+            modal.classList.remove('active');
+        });
+    }
+});
+
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
         }
     });
-
-    function openModal(id) {
-        document.getElementById(id).classList.add('active');
-        if (id === 'folderModal') setTimeout(() => document.getElementById('folderNameInput').focus(), 50);
-        if (id === 'noteModal') {
-            // Focus title if empty, else content
-            const title = document.getElementById('noteTitleInput').value;
-            if (!title) setTimeout(() => document.getElementById('noteTitleInput').focus(), 50);
-        }
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('active');
-        // Clear inputs
-        if (id === 'folderModal') document.getElementById('folderNameInput').value = '';
-        if (id === 'noteModal') {
-            document.getElementById('noteTitleInput').value = '';
-            document.getElementById('noteContentInput').value = '';
-            document.getElementById('editingNoteId').value = ''; // Reset ID
-            document.getElementById('modalTitleLabel').innerText = 'New Note';
-        }
-    }
-
-    // Function to Populate and View Note
-    function viewNote(id, title, rawContent) {
-        // rawContent is escaped JS string but contains <br> from linebreaksbr. 
-        // We need to replace <br> with newline for textarea.
-        const content = rawContent.replace(/<br\s*\/?>/gi, '\n');
-
-        document.getElementById('noteTitleInput').value = title;
-        document.getElementById('noteContentInput').value = content;
-        document.getElementById('editingNoteId').value = id;
-        document.getElementById('modalTitleLabel').innerText = 'Editing Note';
-
-        openModal('noteModal');
-    }
-
-    async function createFolder() {
-        const name = document.getElementById('folderNameInput').value;
-        if (!name) return;
-
-        try {
-            const res = await fetch('{% url "create_subject_folder" %}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-                body: JSON.stringify({ name })
-            });
-            if (res.ok) window.location.reload();
-        } catch (e) { console.error(e); }
-    }
-
-    async function saveNote() {
-        let titleInput = document.getElementById('noteTitleInput').value.trim();
-        const content = document.getElementById('noteContentInput').value;
-        const noteId = document.getElementById('editingNoteId').value;
-        const folderId = "{{ selected_folder.id }}";
-
-        if (!titleInput && !content) return; // Don't save empty
-
-        let title = 'Untitled';
-        if (titleInput) {
-            title = titleInput.charAt(0).toUpperCase() + titleInput.slice(1);
-        }
-
-        // Decide URL based on ID existence
-        const url = noteId ? '{% url "edit_note" %}' : '{% url "create_note" %}';
-
-        const payload = {
-            folder_id: folderId,
-            title: title,
-            content: content
-        };
-        if (noteId) payload.note_id = noteId;
-
-        try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) window.location.reload();
-        } catch (e) { console.error(e); }
-    }
-
-    async function deleteFolder(id, name) {
-        // Removed confirmation alert as requested
-        try {
-            const res = await fetch('{% url "delete_folder" %}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-                body: JSON.stringify({ folder_id: id })
-            });
-            if (res.ok) window.location.href = '{% url "notes" %}';
-        } catch (e) { console.error(e); }
-    }
-
-    async function deleteNote(id) {
-        // Removed confirmation alert as requested
-        try {
-            const res = await fetch('{% url "delete_note" %}', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
-                body: JSON.stringify({ note_id: id })
-            });
-            if (res.ok) window.location.reload();
-        } catch (e) { console.error(e); }
-    }
-
-    // Close modal on outside click
-    window.onclick = function (event) {
-        if (event.target.classList.contains('modal-overlay')) {
-            event.target.classList.remove('active');
-        }
-    }
+});
 </script>
 {% endblock %}

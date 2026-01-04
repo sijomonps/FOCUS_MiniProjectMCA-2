@@ -3,124 +3,392 @@
 
 {% block title %}Sign Up - FOCUS{% endblock %}
 
-{% block favicon %}
-<link rel="icon"
-    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12M5,13V10H3V13H0V15H3V18H5V15H8V13H5Z" /></svg>'>
-{% endblock %}
-
 {% block auth_content %}
-<div class="flex-center" style="min-height: 100vh; padding: var(--spacing-lg); background-color: var(--bg-primary);">
-    <div class="card" style="max-width: 450px; width: 100%;">
-        <div class="text-center mb-4">
-            <div style="font-size: 2.5rem; margin-bottom: var(--spacing-md); opacity: 0.9;"><span
-                    class="material-symbols-outlined" style="font-size: 2.5rem;">center_focus_strong</span></div>
-            <h1 style="font-size: 2rem; margin-bottom: var(--spacing-sm); font-weight: 500;">FOCUS</h1>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">A calm, habit-building learning platform</p>
+<div class="auth-page-wrapper">
+    <!-- Left Side: Image Showcase -->
+    <div class="auth-image-side">
+        <img src="{% static 'images/login-image.png' %}" alt="Focus App Showcase" class="auth-showcase-img">
+    </div>
+
+    <!-- Right Side: Signup Form -->
+    <div class="auth-form-side">
+        <div class="auth-form-container">
+            <!-- Main Card -->
+            <div class="auth-card">
+                <div class="auth-logo">
+                    <span class="material-symbols-outlined logo-icon">center_focus_strong</span>
+                    <h1>FOCUS</h1>
+                    <p
+                        style="color: #a8a8a8; font-size: 1rem; font-weight: 600; line-height: 20px; margin: 10px 0 20px; text-align: center;">
+                        Sign up to build better study habits.
+                    </p>
+                </div>
+
+                <form method="post" novalidate class="auth-form">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="error-banner">
+                        {{ form.non_field_errors.0 }}
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="{{ form.username.id_for_label }}" class="sr-only">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="field-error">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                        {% if form.username.help_text %}
+                        <div class="help-text">{{ form.username.help_text }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.password1.id_for_label }}" class="sr-only">Password</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                        <div class="field-error">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.password2.id_for_label }}" class="sr-only">Confirm Password</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                        <div class="field-error">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                        {% if form.password1.help_text %}
+                        <div class="help-text">{{ form.password1.help_text|safe }}</div>
+                        {% endif %}
+                    </div>
+
+
+
+                    <button type="submit" class="btn-auth-primary">Sign up</button>
+                </form>
+            </div>
+
+            <!-- Login Link Card -->
+            <div class="auth-card auth-secondary-card">
+                <p>Have an account? <a href="{% url 'login' %}" class="auth-link">Log in</a></p>
+            </div>
         </div>
-
-        <h2 class="text-center" style="margin-bottom: var(--spacing-xl); font-size: 1.35rem; font-weight: 500;">Create
-            Your Account</h2>
-
-        <form method="post" novalidate>
-            {% csrf_token %}
-
-            {% if form.non_field_errors %}
-            <div class="message message-error mb-2">
-                {{ form.non_field_errors }}
-            </div>
-            {% endif %}
-
-            <div class="form-group">
-                <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
-                {{ form.username }}
-                {% if form.username.errors %}
-                <div style="color: var(--color-red); font-size: 0.85rem; margin-top: var(--spacing-xs);">
-                    {{ form.username.errors }}
-                </div>
-                {% endif %}
-                {% if form.username.help_text %}
-                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: var(--spacing-xs);">
-                    {{ form.username.help_text }}
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
-                {{ form.password1 }}
-                {% if form.password1.errors %}
-                <div style="color: var(--color-red); font-size: 0.85rem; margin-top: var(--spacing-xs);">
-                    {{ form.password1.errors }}
-                </div>
-                {% endif %}
-                {% if form.password1.help_text %}
-                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: var(--spacing-xs);">
-                    {{ form.password1.help_text|safe }}
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password</label>
-                {{ form.password2 }}
-                {% if form.password2.errors %}
-                <div style="color: var(--color-red); font-size: 0.85rem; margin-top: var(--spacing-xs);">
-                    {{ form.password2.errors }}
-                </div>
-                {% endif %}
-                {% if form.password2.help_text %}
-                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: var(--spacing-xs);">
-                    {{ form.password2.help_text }}
-                </div>
-                {% endif %}
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: var(--spacing-sm);">
-                Create Account
-            </button>
-        </form>
-
-        <div class="divider"></div>
-
-        <div class="text-center">
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">
-                Already have an account?
-                <a href="{% url 'login' %}"
-                    style="color: var(--color-blue); font-weight: 500; text-decoration: none;">Login →</a>
-            </p>
-        </div>
+    </div>
+    <div class="auth-footer">
+        Welcome to FOCUS <span class="material-symbols-outlined"
+            style="font-size: 0.8rem; vertical-align: middle;">center_focus_strong</span><br>Developed by Sijomon P S as
+        a Semester 2 MCA mini project at Marian College Kuttikkanam.
     </div>
 </div>
 
 <style>
-    /* Style Django form widgets for clean minimal look */
+    /* Reset & Layout */
+    .auth-page-wrapper {
+        display: flex;
+        min-height: 100vh;
+        background-color: #000000;
+        color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .auth-footer {
+        margin-bottom: 1%;
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 0.65rem;
+        color: #c1c0c0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    /* Left Side */
+    .auth-image-side {
+        flex: 1.3;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 15px;
+        background-color: #000000;
+        position: relative;
+    }
+
+    .auth-showcase-img {
+        max-height: 60vh;
+        max-width: 80%;
+        object-fit: contain;
+    }
+
+    @media (max-width: 850px) {
+        .auth-image-side {
+            display: none;
+        }
+
+        .auth-page-wrapper {
+            justify-content: center;
+        }
+    }
+
+    /* Right Side */
+    .auth-form-side {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding-left: 15px;
+    }
+
+    .auth-form-container {
+        width: 300px;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    @media (max-width: 850px) {
+        .auth-form-side {
+            align-items: center;
+            padding-left: 0;
+            margin-top: -50px;
+        }
+    }
+
+    /* Cards */
+    .auth-card {
+        background-color: transparent;
+        border: none;
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .auth-secondary-card {
+        padding: 10px 0;
+        flex-direction: row;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    /* Logo */
+    .auth-logo {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .auth-logo h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.5rem;
+        font-weight: 500;
+        margin: 0;
+        letter-spacing: -1px;
+    }
+
+    .logo-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    /* Form */
+    .auth-form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-group {
+        width: 100%;
+    }
+
+    .auth-form input {
+        width: 100%;
+        background-color: #000000;
+        /* CHANGED */
+        border: 1px solid #363636;
+        color: white;
+        padding: 5px 8px;
+        /* Decreased padding */
+        font-size: 0.7rem;
+        /* Decreased font size */
+        border-radius: 6px;
+        /* CHANGED */
+        outline: none;
+        box-sizing: border-box;
+    }
+
+    .auth-form input:focus {
+        border-color: #737373;
+    }
+
+    .auth-form input::placeholder {
+        color: white;
+    }
+
+    .btn-auth-primary {
+        width: 100%;
+        background-color: #0095f6;
+        color: white;
+        border: none;
+        padding: 6px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-auth-primary:hover {
+        background-color: #1877f2;
+    }
+
+    .auth-link {
+        color: #0095f6;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .error-banner {
+        color: #ed4956;
+        text-align: center;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .field-error {
+        color: #ed4956;
+        font-size: 0.75rem;
+        margin-top: 4px;
+        text-align: left;
+    }
+
+    .help-text {
+        color: #a8a8a8;
+        font-size: 0.7rem;
+        margin-top: 4px;
+        text-align: left;
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* Override widget defaults from Django/Base CSS */
     #id_username,
     #id_password1,
     #id_password2 {
-        width: 100%;
-        padding: 11px 14px;
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        color: var(--text-primary);
-        font-size: 0.9rem;
-        font-family: 'Inter', sans-serif;
-        transition: all var(--transition-fast);
+        background-color: #000000 !important;
+        /* CHANGED */
+        border: 1px solid #363636 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        /* CHANGED */
     }
 
-    #id_username:hover,
-    #id_password1:hover,
-    #id_password2:hover {
-        border-color: var(--border-color-light);
+    /* --- Animations --- */
+    @keyframes appearFromRight {
+        0% {
+            opacity: 0;
+            transform: translateX(100px) scale(0.95);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
     }
 
-    #id_username:focus,
-    #id_password1:focus,
-    #id_password2:focus {
-        outline: none;
-        border-color: var(--text-secondary);
-        background-color: var(--bg-tertiary);
+    @keyframes fadeInUpStagger {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
+
+    .auth-showcase-img {
+        opacity: 0;
+        animation: appearFromRight 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    .auth-logo {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 0.4s forwards;
+    }
+
+    .form-group:nth-of-type(1) {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 0.5s forwards;
+    }
+
+    .form-group:nth-of-type(2) {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 0.6s forwards;
+    }
+
+    .form-group:nth-of-type(3) {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 0.7s forwards;
+    }
+
+    /* Terms & Conditions Text */
+    .auth-form>div:nth-of-type(4) {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 0.8s forwards;
+    }
+
+    .btn-auth-primary {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 0.9s forwards;
+    }
+
+    .auth-secondary-card {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 1.0s forwards;
+    }
+
+    .form-group:nth-of-type(2) {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 1.4s forwards;
+    }
+
+    .form-group:nth-of-type(3) {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 1.5s forwards;
+    }
+
+    /* Terms & Conditions Text */
+
+
+    .btn-auth-primary {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 1.7s forwards;
+    }
+
+    .auth-secondary-card {
+        opacity: 0;
+        animation: fadeInUpStagger 0.6s ease-out 1.8s forwards;
     }
 </style>
 {% endblock %}

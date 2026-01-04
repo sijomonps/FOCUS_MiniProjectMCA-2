@@ -10,36 +10,84 @@
 
 {% block extra_css %}
 <style>
-    /* Assignment Treemap Grid - True Bento Layout */
-    .treemap-container {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        grid-auto-rows: 160px;
-        grid-auto-flow: dense;
-        /* Essential for bento packing */
-        gap: var(--spacing-md);
-        margin-bottom: var(--spacing-xl);
+    /* Full screen layout for assignments page - no margins */
+    .main-content {
+        padding: var(--spacing-lg) 0 !important;
+        align-items: stretch !important;
     }
 
-    /* Assignment Cube */
+    .content-container {
+        max-width: 100% !important;
+        width: 100%;
+        padding: 0 var(--spacing-md) !important;
+    }
+
+    .page-header {
+        padding: 0 var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    /* Advanced Dynamic Treemap Layout */
+    .treemap-container {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        grid-auto-rows: 100px;
+        grid-auto-flow: row;
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-xl);
+        min-height: 300px;
+        width: 100%;
+        max-width: 100%;
+        padding: 0 var(--spacing-lg);
+    }
+
+    .card {
+        margin-left: var(--spacing-lg);
+        margin-right: var(--spacing-lg);
+    }
+
+    /* Assignment Cube - Enhanced */
     .assignment-cube {
         background-color: var(--bg-secondary);
         border: none;
-        border-radius: var(--border-radius-xl);
-        padding: var(--spacing-lg);
-        transition: all var(--transition-base);
+        border-radius: var(--border-radius-lg);
+        padding: 14px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         position: relative;
         overflow: hidden;
         box-shadow: var(--shadow);
         animation: fadeIn 0.4s ease-out backwards;
+        cursor: pointer;
+        min-height: 0;
     }
 
-    /* Grid Spans for Bento Effect */
+    /* Cube content wrapper */
+    .cube-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        flex: 1;
+        position: relative;
+        z-index: 2;
+        gap: 6px;
+    }
+
+    /* Assignment info section */
+    .assignment-info {
+        flex: 0 0 auto;
+    }
+
+    /* Dynamic Grid Spans - Based on Urgency/Time */
     .span-1x1 {
         grid-column: span 1;
+        grid-row: span 1;
+    }
+
+    .span-2x1 {
+        grid-column: span 2;
         grid-row: span 1;
     }
 
@@ -48,21 +96,54 @@
         grid-row: span 2;
     }
 
+    .span-2x2 {
+        grid-column: span 2;
+        grid-row: span 2;
+    }
+
+    .span-2x3 {
+        grid-column: span 2;
+        grid-row: span 3;
+    }
+
+    .span-3x2 {
+        grid-column: span 3;
+        grid-row: span 2;
+    }
+
     /* Mobile responsive adjustments */
-    @media (max-width: 600px) {
-        .span-1x2 {
+    @media (max-width: 768px) {
+        .span-2x2, .span-2x3, .span-3x2 {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+
+        .span-2x1 {
             grid-column: span 1;
             grid-row: span 1;
         }
 
         .treemap-container {
-            grid-auto-rows: 140px;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: 90px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .span-1x2, .span-2x2, .span-2x3, .span-3x2 {
+            grid-column: span 1;
+            grid-row: span 1;
+        }
+
+        .treemap-container {
+            grid-template-columns: repeat(3, 1fr);
+            grid-auto-rows: 90px;
         }
     }
 
     .assignment-cube:hover {
-        transform: translateY(-4px) scale(1.02);
-        box-shadow: var(--shadow-lg);
+        transform: translateY(-6px) scale(1.03);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
         z-index: 5;
     }
 
@@ -72,62 +153,118 @@
         pointer-events: none;
     }
 
-    /* Typography */
+    /* Typography - Dynamic sizing */
     .assignment-title {
         font-weight: 700;
         color: var(--text-primary);
         margin-bottom: 4px;
-        line-height: 1.2;
+        line-height: 1.3;
         z-index: 1;
-        /* Dynamic font size based on box size handled in utility class or just CSS? 
-           Let's keep it responsive. */
-        font-size: 1.1rem;
+        font-size: 0.85rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        word-break: break-word;
     }
 
+    /* Scale font sizes by urgency */
+    .span-1x1 .assignment-title {
+        font-size: 0.85rem;
+        -webkit-line-clamp: 2;
+    }
+
+    .span-2x1 .assignment-title,
     .span-1x2 .assignment-title {
-        font-size: 1.3rem;
-        /* Slightly larger for urgent */
+        font-size: 1rem;
+        -webkit-line-clamp: 2;
+    }
+
+    .span-2x2 .assignment-title {
+        font-size: 1.15rem;
+        -webkit-line-clamp: 3;
+    }
+
+    .span-2x3 .assignment-title,
+    .span-3x2 .assignment-title {
+        font-size: 1.35rem;
+        -webkit-line-clamp: 3;
     }
 
     .assignment-subject {
-        font-size: 0.85rem;
+        font-size: 0.72rem;
         color: rgba(0, 0, 0, 0.6);
         font-weight: 500;
         z-index: 1;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
-    /* Time Display */
+    .span-2x2 .assignment-subject,
+    .span-2x3 .assignment-subject,
+    .span-3x2 .assignment-subject {
+        font-size: 0.85rem;
+    }
+
+    /* Time Display - Dynamic sizing */
     .time-container {
         margin-top: auto;
+        padding-top: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        flex: 0 0 auto;
     }
 
     .time-remaining-large {
         font-weight: 800;
-        line-height: 1;
+        line-height: 1.1;
+        margin-bottom: 3px;
     }
 
     .span-1x1 .time-remaining-large {
+        font-size: 1.25rem;
+    }
+
+    .span-2x1 .time-remaining-large,
+    .span-1x2 .time-remaining-large {
         font-size: 1.5rem;
     }
 
-    .span-1x2 .time-remaining-large {
-        font-size: 2.2rem;
+    .span-2x2 .time-remaining-large {
+        font-size: 1.9rem;
+    }
+
+    .span-2x3 .time-remaining-large,
+    .span-3x2 .time-remaining-large {
+        font-size: 2.4rem;
     }
 
     .time-label {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
         font-weight: 600;
         opacity: 0.8;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
+    }
+
+    .span-2x2 .time-label,
+    .span-2x3 .time-label,
+    .span-3x2 .time-label {
+        font-size: 0.75rem;
     }
 
     /* Action Buttons */
     .assignment-actions {
         position: absolute;
-        top: var(--spacing-sm);
-        right: var(--spacing-sm);
+        top: 6px;
+        right: 6px;
         display: flex;
-        gap: 6px;
+        gap: 4px;
         z-index: 10;
         opacity: 0;
         transition: opacity 0.2s ease;
@@ -138,8 +275,8 @@
     }
 
     .action-btn {
-        width: 28px;
-        height: 28px;
+        width: 22px;
+        height: 22px;
         border-radius: 50%;
         border: none;
         display: flex;
@@ -148,12 +285,14 @@
         cursor: pointer;
         background: rgba(255, 255, 255, 0.95);
         color: var(--text-primary);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         transition: transform 0.2s;
+        font-size: 0.75rem;
     }
 
     .action-btn:hover {
         transform: scale(1.15);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
 
     .btn-complete {
@@ -164,13 +303,36 @@
         color: var(--color-red);
     }
 
-    /* Bento Colors (Reversed Logic: Urgent = Big & Dark) */
-    /* URGENT (Big, <24h) */
-    .cube-urgent {
-        background: #D32F2F;
-        /* Dark Red */
+    /* Advanced Color System - Gradient based on urgency */
+    /* CRITICAL (<6h) - Largest boxes, Deep Red */
+    .cube-critical {
+        background: linear-gradient(135deg, #B71C1C 0%, #D32F2F 100%);
         color: #ffffff !important;
-        /* White text for contrast */
+        box-shadow: 0 8px 24px rgba(183, 28, 28, 0.4);
+    }
+
+    .cube-critical .assignment-title,
+    .cube-critical .time-remaining-large,
+    .cube-critical .time-label,
+    .cube-critical .assignment-subject {
+        color: #ffffff;
+    }
+
+    .cube-critical .action-btn {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .cube-critical .action-btn:hover {
+        background: rgba(255, 255, 255, 0.45);
+    }
+
+    /* URGENT (<24h) - Large boxes, Red-Orange */
+    .cube-urgent {
+        background: linear-gradient(135deg, #D32F2F 0%, #E64A19 100%);
+        color: #ffffff !important;
+        box-shadow: 0 6px 20px rgba(211, 47, 47, 0.35);
     }
 
     .cube-urgent .assignment-title,
@@ -189,11 +351,11 @@
         background: rgba(255, 255, 255, 0.4);
     }
 
-    /* SOON (< 3 Days) */
+    /* SOON (<48h) - Medium boxes, Orange */
     .cube-soon {
-        background: #E65100;
-        /* Dark Orange */
+        background: linear-gradient(135deg, #E64A19 0%, #F57C00 100%);
         color: #ffffff !important;
+        box-shadow: 0 4px 16px rgba(230, 74, 25, 0.3);
     }
 
     .cube-soon .assignment-title,
@@ -203,11 +365,37 @@
         color: #ffffff;
     }
 
-    /* UPCOMING (< 1 Week) */
-    .cube-upcoming {
-        background: #FBC02D;
-        /* Dark Yellow/Gold */
+    .cube-soon .action-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .cube-soon .action-btn:hover {
+        background: rgba(255, 255, 255, 0.35);
+    }
+
+    /* APPROACHING (<5 Days) - Medium boxes, Amber */
+    .cube-approaching {
+        background: linear-gradient(135deg, #F57C00 0%, #FFA726 100%);
         color: #3e2723;
+        box-shadow: 0 4px 14px rgba(245, 124, 0, 0.25);
+    }
+
+    .cube-approaching .assignment-title,
+    .cube-approaching .time-remaining-large,
+    .cube-approaching .time-label {
+        color: #3e2723;
+    }
+
+    .cube-approaching .assignment-subject {
+        color: rgba(62, 39, 35, 0.7);
+    }
+
+    /* UPCOMING (<1 Week) - Small boxes, Yellow */
+    .cube-upcoming {
+        background: linear-gradient(135deg, #FFA726 0%, #FFCA28 100%);
+        color: #3e2723;
+        box-shadow: 0 3px 12px rgba(255, 167, 38, 0.2);
     }
 
     .cube-upcoming .assignment-title,
@@ -215,11 +403,15 @@
         color: #3e2723;
     }
 
-    /* FUTURE (> 1 Week) */
+    .cube-upcoming .assignment-subject {
+        color: rgba(62, 39, 35, 0.65);
+    }
+
+    /* FUTURE (<2 Weeks) - Smaller boxes, Light Green */
     .cube-future {
-        background: #C8E6C9;
-        /* Light Green */
+        background: linear-gradient(135deg, #AED581 0%, #C5E1A5 100%);
         color: #1b5e20;
+        box-shadow: 0 2px 10px rgba(174, 213, 129, 0.2);
     }
 
     .cube-future .assignment-title,
@@ -227,16 +419,42 @@
         color: #1b5e20;
     }
 
-    /* FAR FUTURE (> 2 Weeks) */
+    .cube-future .assignment-subject {
+        color: rgba(27, 94, 32, 0.7);
+    }
+
+    /* FAR FUTURE (>2 Weeks) - Smallest boxes, Blue */
     .cube-far {
-        background: #E1F5FE;
-        /* Light Blue */
+        background: linear-gradient(135deg, #81D4FA 0%, #B3E5FC 100%);
         color: #01579b;
+        box-shadow: 0 2px 8px rgba(129, 212, 250, 0.15);
     }
 
     .cube-far .assignment-title,
     .cube-far .time-remaining-large {
         color: #01579b;
+    }
+
+    .cube-far .assignment-subject {
+        color: rgba(1, 87, 155, 0.7);
+    }
+
+    /* Pulse animation for critical items */
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.02);
+        }
+    }
+
+    .cube-critical {
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .cube-critical:hover {
+        animation: none;
     }
 
     /* Completed List */
@@ -249,6 +467,29 @@
         justify-content: space-between;
         align-items: center;
         transition: border-color var(--transition-fast);
+    }
+
+    .completed-item.hidden {
+        display: none;
+    }
+
+    #seeMoreBtn {
+        margin-top: var(--spacing-md);
+        width: 100%;
+        padding: var(--spacing-sm);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        font-weight: 600;
+    }
+
+    #seeMoreBtn:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border-color: var(--color-primary);
     }
 
     /* Fade In Animation */
@@ -321,6 +562,9 @@
                 </div>
                 {% endfor %}
             </div>
+            <button id="seeMoreBtn" class="btn" style="display: none;">
+                <i class="mdi mdi-chevron-down"></i> See More
+            </button>
         </div>
     </div>
 </div>
@@ -389,7 +633,7 @@
         dateInput.min = `${yyyy}-${mm}-${dd}`;
     }
 
-    // Render Grid
+    // Render Grid with Advanced Dynamic Sizing
     function renderTreemap() {
         if (!treemapContainer) return;
 
@@ -405,37 +649,19 @@
         assignments.forEach((assignment, index) => {
             const cube = document.createElement('div');
             const hoursRemaining = calculateHoursRemaining(assignment.deadline);
+            
+            // Calculate urgency score (0-100, where 100 is most urgent)
+            const urgencyScore = calculateUrgencyScore(hoursRemaining);
+            
+            // Advanced dynamic sizing based on urgency score and time remaining
+            const { colorClass, spanClass } = getAdvancedSizeAndColor(hoursRemaining, urgencyScore);
 
-            // Logic: GUARANTEE 3 IN A ROW
-            // All items must be width=1.
-            // Urgent (<24h) -> TALL (Height=2, Width=1) -> span-1x2
-            // Others -> STANDARD (Height=1, Width=1) -> span-1x1
-
-            let colorClass, spanClass;
-
-            if (hoursRemaining < 24) {
-                // URGENT: Tall, Dark Red
-                colorClass = 'cube-urgent';
-                spanClass = 'span-1x2';
-            } else if (hoursRemaining < 72) {
-                // SOON: Wide, Dark Orange
-                colorClass = 'cube-soon';
-                spanClass = 'span-1x1';
-            } else if (hoursRemaining < 168) { // 1 Week
-                // Upcoming: Wide, Yellow
-                colorClass = 'cube-upcoming';
-                spanClass = 'span-1x1';
-            } else {
-                // Future: Small, Light
-                colorClass = 'cube-future';
-                spanClass = 'span-1x1';
-            }
-
-            // Animation delay for nice effect
-            cube.style.animationDelay = `${index * 0.05}s`;
+            // Animation delay for nice cascading effect
+            cube.style.animationDelay = `${index * 0.04}s`;
 
             cube.className = `assignment-cube ${colorClass} ${spanClass}`;
             cube.dataset.id = assignment.id;
+            cube.dataset.hours = hoursRemaining;
 
             cube.innerHTML = `
                 <div class="assignment-actions">
@@ -447,19 +673,89 @@
                     </button>
                 </div>
 
-                <div style="z-index: 2;">
-                    <div class="assignment-title">${assignment.title}</div>
-                    <div class="assignment-subject">${formatDate(assignment.deadline)}</div>
-                </div>
-                
-                <div class="time-container">
-                    <div class="time-remaining-large">${formatHoursRemainingShort(hoursRemaining)}</div>
-                    <div class="time-label">${hoursRemaining < 0 ? 'Overdue' : 'Left'}</div>
+                <div class="cube-content">
+                    <div class="assignment-info">
+                        <div class="assignment-title">${assignment.title}</div>
+                        <div class="assignment-subject">${formatDate(assignment.deadline)}</div>
+                    </div>
+                    
+                    <div class="time-container">
+                        <div class="time-remaining-large">${formatHoursRemainingShort(hoursRemaining)}</div>
+                        <div class="time-label">${hoursRemaining < 0 ? 'Overdue' : 'Left'}</div>
+                    </div>
                 </div>
             `;
 
             treemapContainer.appendChild(cube);
         });
+    }
+
+    // Calculate urgency score (0-100) based on time remaining
+    function calculateUrgencyScore(hours) {
+        if (hours < 0) return 100; // Overdue is maximum urgency
+        if (hours < 6) return 95 + (6 - hours); // Critical: 95-101
+        if (hours < 24) return 80 + ((24 - hours) / 24) * 15; // Urgent: 80-95
+        if (hours < 48) return 65 + ((48 - hours) / 48) * 15; // Soon: 65-80
+        if (hours < 120) return 45 + ((120 - hours) / 120) * 20; // Approaching: 45-65
+        if (hours < 168) return 30 + ((168 - hours) / 168) * 15; // Upcoming: 30-45
+        if (hours < 336) return 15 + ((336 - hours) / 336) * 15; // Future: 15-30
+        return Math.max(0, 15 - (hours - 336) / 168); // Far: 0-15
+    }
+
+    // Advanced size and color determination based on time remaining
+    function getAdvancedSizeAndColor(hours, urgencyScore) {
+        let colorClass, spanClass;
+        
+        // Dynamic sizing based on urgency score
+        // More urgent = bigger boxes
+        
+        if (hours < 0 || hours < 6) {
+            // CRITICAL (<6h or overdue): Maximum size
+            colorClass = 'cube-critical';
+            spanClass = 'span-3x2'; // Largest
+        } else if (hours < 12) {
+            // Very urgent: Extra large
+            colorClass = 'cube-urgent';
+            spanClass = 'span-2x3';
+        } else if (hours < 24) {
+            // URGENT (<24h): Large
+            colorClass = 'cube-urgent';
+            spanClass = 'span-2x2';
+        } else if (hours < 36) {
+            // Urgent-soon transition: Medium-large
+            colorClass = 'cube-soon';
+            spanClass = 'span-2x2';
+        } else if (hours < 48) {
+            // SOON (<48h): Medium
+            colorClass = 'cube-soon';
+            spanClass = 'span-2x1';
+        } else if (hours < 72) {
+            // Soon-approaching: Medium
+            colorClass = 'cube-soon';
+            spanClass = 'span-1x2';
+        } else if (hours < 120) { // 5 days
+            // APPROACHING: Medium-small
+            colorClass = 'cube-approaching';
+            spanClass = 'span-2x1';
+        } else if (hours < 168) { // 1 week
+            // UPCOMING: Small-medium
+            colorClass = 'cube-upcoming';
+            spanClass = 'span-1x2';
+        } else if (hours < 240) { // 10 days
+            // Upcoming-future: Small
+            colorClass = 'cube-upcoming';
+            spanClass = 'span-1x1';
+        } else if (hours < 336) { // 2 weeks
+            // FUTURE: Small
+            colorClass = 'cube-future';
+            spanClass = 'span-1x1';
+        } else {
+            // FAR FUTURE (>2 weeks): Smallest
+            colorClass = 'cube-far';
+            spanClass = 'span-1x1';
+        }
+        
+        return { colorClass, spanClass };
     }
 
     // Calc functions
@@ -473,18 +769,96 @@
     function formatHoursRemainingShort(hours) {
         if (hours < 0) return "Late";
         if (hours < 1) {
-            return `${Math.round(hours * 60)}m`;
+            const minutes = Math.round(hours * 60);
+            return `${minutes}m`;
         } else if (hours < 24) {
-            return `${Math.round(hours)}h`;
+            const h = Math.floor(hours);
+            const m = Math.round((hours - h) * 60);
+            if (m > 0 && hours < 6) {
+                return `${h}h ${m}m`;
+            }
+            return `${h}h`;
         } else {
             const days = Math.floor(hours / 24);
+            const remainingHours = Math.floor(hours % 24);
+            if (remainingHours > 0 && days < 3) {
+                return `${days}d ${remainingHours}h`;
+            }
             return `${days}d`;
         }
     }
 
     function formatDate(dateStr) {
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const now = new Date();
+        
+        // Normalize dates to midnight for accurate day comparison
+        const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(nowOnly);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // Check if today
+        if (dateOnly.getTime() === nowOnly.getTime()) {
+            return 'Today ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        }
+        // Check if tomorrow
+        if (dateOnly.getTime() === tomorrow.getTime()) {
+            return 'Tomorrow ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        }
+        
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    // Real-time updates - refresh times every minute
+    function startRealtimeUpdates() {
+        setInterval(() => {
+            const cubes = document.querySelectorAll('.assignment-cube');
+            let needsRerender = false;
+            
+            cubes.forEach(cube => {
+                const assignmentId = parseInt(cube.dataset.id);
+                const assignment = assignments.find(a => a.id === assignmentId);
+                
+                if (assignment) {
+                    const hoursRemaining = calculateHoursRemaining(assignment.deadline);
+                    const oldHours = parseFloat(cube.dataset.hours);
+                    
+                    // Update time display
+                    const timeDisplay = cube.querySelector('.time-remaining-large');
+                    const timeLabel = cube.querySelector('.time-label');
+                    if (timeDisplay) {
+                        timeDisplay.textContent = formatHoursRemainingShort(hoursRemaining);
+                        timeLabel.textContent = hoursRemaining < 0 ? 'Overdue' : 'Left';
+                    }
+                    
+                    // Check if urgency category changed (requires re-render for size change)
+                    if (crossedUrgencyThreshold(oldHours, hoursRemaining)) {
+                        needsRerender = true;
+                    }
+                    
+                    cube.dataset.hours = hoursRemaining;
+                }
+            });
+            
+            // Re-render if any assignment crossed an urgency threshold
+            if (needsRerender) {
+                renderTreemap();
+            }
+        }, 60000); // Update every minute
+    }
+
+    // Check if assignment crossed an urgency threshold requiring resize
+    function crossedUrgencyThreshold(oldHours, newHours) {
+        const thresholds = [6, 12, 24, 36, 48, 72, 120, 168, 240, 336];
+        
+        for (let threshold of thresholds) {
+            if ((oldHours >= threshold && newHours < threshold) || 
+                (oldHours < threshold && newHours >= threshold)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Actions - NO CONFIRMATION
@@ -506,11 +880,17 @@
                 element.classList.add('completed');
                 setTimeout(() => {
                     assignments = assignments.filter(a => a.id !== assignmentId);
-                    // Don't full re-render, just remove element?? 
-                    // Grid packing works best with re-render or Masonry lib.
-                    // Let's re-render to repack the bento box.
                     renderTreemap();
-                    if (assignments.length === 0) location.reload();
+                    
+                    // Show completed section and reload to display the completed item
+                    if (completedSectionDiv) {
+                        completedSectionDiv.style.display = 'block';
+                    }
+                    
+                    // Reload if no more pending assignments
+                    if (assignments.length === 0) {
+                        location.reload();
+                    }
                 }, 400);
             }
         } catch (error) {
@@ -605,5 +985,91 @@
     });
 
     renderTreemap();
+    startRealtimeUpdates(); // Start real-time updates
+
+    // See More functionality for completed assignments
+    const seeMoreBtn = document.getElementById('seeMoreBtn');
+    const completedListDiv = document.getElementById('completedList');
+    const completedSectionDiv = document.getElementById('completedSection');
+    let showingAll = false;
+
+    // Check if there are more than 5 completed assignments on page load
+    async function checkForMoreCompleted() {
+        if (!seeMoreBtn || !completedListDiv) return;
+        
+        try {
+            const response = await fetch("{% url 'get_all_completed_assignments' %}");
+            const data = await response.json();
+            
+            if (data.success && data.completed.length > 5) {
+                seeMoreBtn.style.display = 'block';
+            } else if (data.completed.length === 0) {
+                // Hide completed section if no completed assignments
+                if (completedSectionDiv) {
+                    completedSectionDiv.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking completed assignments:', error);
+        }
+    }
+
+    // See More button click handler
+    if (seeMoreBtn) {
+        seeMoreBtn.addEventListener('click', async () => {
+            if (!showingAll) {
+                // Load and show all completed assignments
+                try {
+                    const response = await fetch("{% url 'get_all_completed_assignments' %}");
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Clear current list
+                        completedListDiv.innerHTML = '';
+                        
+                        // Add all completed assignments
+                        data.completed.forEach(assignment => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'completed-item';
+                            itemDiv.dataset.id = assignment.id;
+                            itemDiv.innerHTML = `
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-xs);">
+                                        ${assignment.title}
+                                    </div>
+                                    <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                        ${assignment.subject}
+                                    </div>
+                                </div>
+                                <div style="text-align: right; font-size: 0.85rem; color: var(--text-tertiary);">
+                                    <span style="color: var(--color-green); margin-right: var(--spacing-sm);">
+                                        <i class="mdi mdi-check"></i>
+                                    </span>
+                                    ${assignment.completed_at}
+                                </div>
+                            `;
+                            completedListDiv.appendChild(itemDiv);
+                        });
+                        
+                        seeMoreBtn.innerHTML = '<i class="mdi mdi-chevron-up"></i> Show Less';
+                        showingAll = true;
+                    }
+                } catch (error) {
+                    console.error('Error loading completed assignments:', error);
+                }
+            } else {
+                // Show only first 5
+                location.reload(); // Simple way to reset to initial state
+            }
+        });
+    }
+
+    // Initialize on page load
+    if (completedListDiv && completedListDiv.children.length > 0) {
+        checkForMoreCompleted();
+    } else if (completedSectionDiv) {
+        // Hide section if no completed items
+        completedSectionDiv.style.display = 'none';
+    }
 </script>
 {% endblock %}

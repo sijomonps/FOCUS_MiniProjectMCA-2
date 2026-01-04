@@ -17,11 +17,11 @@ urlpatterns = [
     path('api/study/save/', views.save_study_session, name='save_study_session'),
     path('api/assignment/add/', views.add_assignment, name='add_assignment'),
     path('api/assignment/<int:assignment_id>/complete/', views.complete_assignment, name='complete_assignment'),
+    path('api/assignment/delete/<int:assignment_id>/', views.delete_assignment, name='delete_assignment'),
+    path('api/assignments/completed/all/', views.get_all_completed_assignments, name='get_all_completed_assignments'),
     path('api/note/save/', views.save_quick_note, name='save_quick_note'),
     path('api/folder/create/', views.create_subject_folder, name='create_subject_folder'),
     path('api/note/create/', views.create_note, name='create_note'),
-    path('api/note/edit/', views.edit_note, name='edit_note'),
     path('api/note/delete/', views.delete_note, name='delete_note'),
     path('api/folder/delete/', views.delete_folder, name='delete_folder'),
-    path('api/assignment/delete/<int:assignment_id>/', views.delete_assignment, name='delete_assignment'),
 ]

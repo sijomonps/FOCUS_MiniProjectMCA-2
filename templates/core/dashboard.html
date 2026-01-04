@@ -365,31 +365,31 @@
                 </div>
             </div>
 
-            <!-- Subject Breakdown -->
+            <!-- Subject Breakdown - Pie Chart -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="mdi mdi-chart-pie" style="margin-right: 8px;"></i> Focus Areas</h3>
+                    <h3 class="card-title"><i class="mdi mdi-chart-pie" style="margin-right: 8px;"></i> Study Time by
+                        Subject</h3>
                 </div>
                 <div class="card-body">
                     {% if subject_breakdown %}
-                    <div class="subject-stats">
-                        {% for item in subject_breakdown %}
-                        <div class="subject-stat-item" style="margin-bottom: 12px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                <span style="font-size: 0.9rem; font-weight: 500;">{{ item.subject }}</span>
-                                <span style="font-size: 0.85rem; color: var(--text-secondary);">{{ item.hours }}h</span>
-                            </div>
-                            <div
-                                style="background: var(--bg-secondary); height: 6px; border-radius: 3px; overflow: hidden;">
-                                <div
-                                    style="background: var(--primary-color); width: {{ item.percentage }}%; height: 100%; border-radius: 3px;">
-                                </div>
-                            </div>
+                    <div style="display: flex; align-items: center; gap: 24px;">
+                        <div style="width: 160px; height: 160px; flex-shrink: 0;">
+                            <canvas id="subjectPieChart"></canvas>
                         </div>
-                        {% endfor %}
+                        <div class="pie-legend" style="flex: 1;">
+                            {% for item in subject_breakdown %}
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <div class="pie-color-{{ forloop.counter0 }}"
+                                    style="width: 12px; height: 12px; border-radius: 3px;"></div>
+                                <span style="font-size: 0.85rem; flex: 1;">{{ item.subject }}</span>
+                                <span style="font-size: 0.8rem; color: var(--text-secondary);">{{ item.hours }}h ({{ item.percentage }}%)</span>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                     {% else %}
-                    <p class="text-tertiary">No study data yet.</p>
+                    <p class="text-tertiary">No study data yet. Start studying to see your breakdown!</p>
                     {% endif %}
                 </div>
             </div>
@@ -444,14 +444,28 @@
                 <div class="calendar-grid" id="calendarGrid"></div>
             </div>
 
+            <!-- Selected Date Tasks -->
             <div class="schedule-card">
                 <div class="schedule-header">
-                    <span>Tasks</span>
-                    <span id="selectedDateDisplay"
-                        style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">Today</span>
+                    <span><i class="mdi mdi-calendar-today" style="margin-right: 6px;"></i><span
+                            id="selectedDateLabel">Today</span></span>
+                    <span id="selectedDateCount"
+                        style="font-size: 0.75rem; color: var(--text-tertiary); font-weight: normal;"></span>
                 </div>
-                <div class="schedule-list" id="scheduleList"></div>
+                <div class="schedule-list" id="selectedDateList"></div>
             </div>
+
+
+            <!-- Upcoming Tasks -->
+            <div class="schedule-card" style="margin-top: 0;">
+                <div class="schedule-header">
+                    <span><i class="mdi mdi-calendar-clock" style="margin-right: 6px;"></i>Upcoming</span>
+                    <span id="upcomingCount"
+                        style="font-size: 0.75rem; color: var(--text-tertiary); font-weight: normal;"></span>
+                </div>
+                <div class="schedule-list" id="upcomingList"></div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -465,6 +479,7 @@
     const weeklyData = {{ chart_data| safe }};
     const monthlyLabels = {{ chart_labels_monthly| safe }};
     const monthlyData = {{ chart_data_monthly| safe }};
+
 
     let activityChart = null;
 
@@ -535,6 +550,58 @@
     // Initialize chart
     initChart('weekly');
 
+    // --- Pie Chart for Subject Breakdown ---
+    const pieColors = [
+        '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316',
+        '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6'
+    ];
+
+    // Set legend colors CSS dynamically
+    pieColors.forEach((color, i) => {
+        const style = document.createElement('style');
+        style.textContent = `.pie-color-${i} { background: ${color} !important; }`;
+        document.head.appendChild(style);
+    });
+
+    {% if subject_breakdown %}
+    const pieCtx = document.getElementById('subjectPieChart');
+    if (pieCtx) {
+        const subjectLabels = [{% for item in subject_breakdown %} '{{ item.subject }}', {% endfor %}];
+    const subjectData = [{% for item in subject_breakdown %}{{ item.minutes }}, {% endfor %}];
+    new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: subjectLabels,
+            datasets: [{
+                data: subjectData,
+                backgroundColor: pieColors.slice(0, subjectData.length),
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '60%',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const mins = context.raw;
+                            const hours = Math.floor(mins / 60);
+                            const m = mins % 60;
+                            return hours > 0 ? `${hours}h ${m}m` : `${m}m`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    }
+    {% endif %}
+
+
     // --- Subject Management ---
     async function addSubject() {
         const input = document.getElementById('newSubjectName');
@@ -568,8 +635,9 @@
 
     function initCalendar() {
         renderCalendar();
-        renderSchedule(selectedDate);
+        renderSchedule();
     }
+
 
     function changeMonth(delta) {
         currentDate.setMonth(currentDate.getMonth() + delta);
@@ -618,74 +686,145 @@
             div.onclick = () => {
                 selectedDate = new Date(year, month, i);
                 renderCalendar();
-                renderSchedule(selectedDate);
+                renderSchedule();
             };
+
+
             grid.appendChild(div);
         }
     }
 
-    function renderSchedule(date) {
-        const list = document.getElementById('scheduleList');
-        const display = document.getElementById('selectedDateDisplay');
+    function renderSchedule() {
+        const selectedDateList = document.getElementById('selectedDateList');
+        const upcomingList = document.getElementById('upcomingList');
+        const selectedDateCount = document.getElementById('selectedDateCount');
+        const upcomingCount = document.getElementById('upcomingCount');
+        const selectedDateLabel = document.getElementById('selectedDateLabel');
 
-        // Format display date: "May 15"
-        const options = { month: 'short', day: 'numeric' };
-        if (date.toDateString() === new Date().toDateString()) {
-            display.textContent = "Today";
+        selectedDateList.innerHTML = '';
+        upcomingList.innerHTML = '';
+
+        // Format the selected date label
+        const now = new Date();
+        const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const selDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+
+        if (selDate.getTime() === todayDate.getTime()) {
+            selectedDateLabel.textContent = 'Today';
         } else {
-            display.textContent = date.toLocaleDateString('en-US', options);
+            const options = { month: 'short', day: 'numeric' };
+            selectedDateLabel.textContent = selectedDate.toLocaleDateString('en-US', options);
         }
 
-        list.innerHTML = '';
+        // Separate tasks into selected date and upcoming (other dates)
+        const selectedDateTasks = [];
+        const upcomingTasks = [];
 
-        const dayTasks = calendarAssignments.filter(t => {
-            const d = new Date(t.deadline);
-            return d.getFullYear() === date.getFullYear() && d.getMonth() === date.getMonth() && d.getDate() === date.getDate();
-        });
-
-        if (dayTasks.length === 0) {
-            list.innerHTML = `<div class="text-tertiary" style="text-align: center; padding: 20px; font-size: 0.9rem;">No tasks</div>`;
-            return;
-        }
-
-        dayTasks.forEach(task => {
-            const item = document.createElement('div');
-            item.className = 'schedule-item';
-
-            let ringColor = 'var(--primary-color)';
-            if (task.urgency === 'high') ringColor = '#ef4444';
-            else if (task.urgency === 'medium') ringColor = '#f59e0b';
-            if (task.status === 'completed') ringColor = '#10b981';
-
+        calendarAssignments.forEach(task => {
             const deadline = new Date(task.deadline);
-            const now = new Date();
-            const hoursLeft = (deadline - now) / (1000 * 60 * 60);
+            const deadlineDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
 
-            // Ring Calculation
-            let percent = 0;
-            if (hoursLeft > 0) percent = Math.min(100, (hoursLeft / 48) * 100);
-            if (task.status === 'completed') percent = 100;
-
-            const circumference = 100;
-            const offset = circumference - (percent / 100 * circumference);
-            const showDot = hoursLeft > 0 && task.status !== 'completed';
-
-            item.innerHTML = `
-                <div class="ring-container">
-                    <svg class="ring-svg" viewBox="0 0 36 36">
-                        <path class="ring-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                        <path class="ring-circle-progress" stroke-dasharray="${circumference}, 100" stroke-dashoffset="${offset}" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style="stroke: ${ringColor};"/>
-                    </svg>
-                    <div class="ring-dot" style="background: ${ringColor}; display: ${showDot ? 'block' : 'none'};"></div>
-                </div>
-                <div class="schedule-info">
-                    <div class="schedule-title">${task.title}</div>
-                    <div class="schedule-meta">${task.subject} • ${deadline.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                </div>
-            `;
-            list.appendChild(item);
+            if (deadlineDate.getTime() === selDate.getTime()) {
+                selectedDateTasks.push(task);
+            } else {
+                upcomingTasks.push(task);
+            }
         });
+
+        // Sort both arrays by deadline
+        selectedDateTasks.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+        upcomingTasks.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+
+        // Update counts
+        selectedDateCount.textContent = selectedDateTasks.length > 0 ? `${selectedDateTasks.length}` : '';
+        upcomingCount.textContent = upcomingTasks.length > 0 ? `${upcomingTasks.length}` : '';
+
+        // Render selected date tasks
+        if (selectedDateTasks.length === 0) {
+            selectedDateList.innerHTML = `<div class="text-tertiary" style="text-align: center; padding: 20px; font-size: 0.85rem;">
+                <i class="mdi mdi-calendar-blank-outline" style="opacity: 0.5;"></i> No tasks for this date
+            </div>`;
+        } else {
+            selectedDateTasks.forEach(task => renderTaskItem(task, selectedDateList));
+        }
+
+        // Render Upcoming/Other tasks
+        if (upcomingTasks.length === 0) {
+            upcomingList.innerHTML = `<div class="text-tertiary" style="text-align: center; padding: 20px; font-size: 0.85rem;">
+                No other pending tasks
+            </div>`;
+        } else {
+            upcomingTasks.forEach(task => renderTaskItem(task, upcomingList, true));
+        }
     }
+
+
+    function renderTaskItem(task, container) {
+        const item = document.createElement('div');
+        item.className = 'schedule-item';
+
+        const deadline = new Date(task.deadline);
+        const now = new Date();
+        const msLeft = deadline - now;
+        const hoursLeft = msLeft / (1000 * 60 * 60);
+        const daysLeft = hoursLeft / 24;
+
+        // Determine ring color based on time remaining
+        let ringColor = '#4f46e5';
+        if (hoursLeft <= 0) {
+            ringColor = '#dc2626'; // Red - overdue
+        } else if (hoursLeft <= 6) {
+            ringColor = '#ef4444'; // Red - very urgent
+        } else if (hoursLeft <= 24) {
+            ringColor = '#f59e0b'; // Amber - urgent
+        } else if (hoursLeft <= 72) {
+            ringColor = '#4f46e5'; // Primary - soon
+        } else {
+            ringColor = '#10b981'; // Green - plenty of time
+        }
+
+        // Ring progress
+        const maxHours = 168;
+        let percent = Math.max(0, Math.min(100, (hoursLeft / maxHours) * 100));
+        if (hoursLeft <= 0) percent = 0;
+
+        const circumference = 100;
+        const offset = circumference - (percent / 100 * circumference);
+
+        // Format time remaining
+        let timeText = '';
+        if (hoursLeft <= 0) {
+            const hoursOverdue = Math.abs(hoursLeft);
+            timeText = hoursOverdue < 24 ? `${Math.floor(hoursOverdue)}h overdue` : `${Math.floor(hoursOverdue / 24)}d overdue`;
+        } else if (hoursLeft < 1) {
+            timeText = `${Math.floor(hoursLeft * 60)}m`;
+        } else if (hoursLeft < 24) {
+            timeText = `${Math.floor(hoursLeft)}h`;
+        } else {
+            timeText = `${Math.floor(daysLeft)}d`;
+        }
+
+        const deadlineTime = deadline.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        item.innerHTML = `
+            <div class="ring-container">
+                <svg class="ring-svg" viewBox="0 0 36 36">
+                    <path class="ring-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    <path class="ring-circle-progress" stroke-dasharray="${circumference}, 100" stroke-dashoffset="${offset}" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style="stroke: ${ringColor};"/>
+                </svg>
+            </div>
+            <div class="schedule-info">
+                <div class="schedule-title">${task.title}</div>
+                <div class="schedule-meta">${task.subject} • ${deadlineTime}</div>
+            </div>
+            <div style="text-align: right; min-width: 50px;">
+                <div style="font-size: 0.7rem; font-weight: 600; color: ${ringColor};">${timeText}</div>
+            </div>
+        `;
+        container.appendChild(item);
+    }
+
+
 
     document.addEventListener('DOMContentLoaded', initCalendar);
 </script>

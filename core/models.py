@@ -52,31 +52,6 @@ class StudySession(models.Model):
         return weekly_data
     
     @classmethod
-    def get_monthly_data(cls, user):
-        """Get study time for the last 30 days"""
-        today = timezone.now().date()
-        month_ago = today - timedelta(days=29)
-        
-        sessions = cls.objects.filter(
-            user=user,
-            date__gte=month_ago,
-            date__lte=today
-        )
-        
-        # Create dict for each day
-        monthly_data = {}
-        for i in range(30):
-            date = month_ago + timedelta(days=i)
-            monthly_data[date] = 0
-        
-        # Fill in actual data
-        for session in sessions:
-            if session.date in monthly_data:
-                monthly_data[session.date] += session.duration
-        
-        return monthly_data
-
-    @classmethod
     def get_study_streak(cls, user):
         """Calculate consecutive study days"""
         today = timezone.now().date()

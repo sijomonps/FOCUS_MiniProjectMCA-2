@@ -8,26 +8,14 @@
     <title>{% block title %}FOCUS{% endblock %}</title>
 
     <!-- Favicon -->
-    <!-- Dynamic Favicon (MDI) -->
-    {% block favicon %}
     <link rel="icon"
-        href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M18,12H22V14H18V12M2,12H6V14H2V12M11,2V6H13V2H11M11,18V22H13V18H11" /></svg>'>
-    {% endblock %}
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 height=%2224px%22 viewBox=%220 -960 960 960%22 width=%2224px%22 fill=%22%23ffffff%22><path d=%22M440-440ZM120-120q-33 0-56.5-23.5T40-200v-560q0-33 23.5-56.5T120-840h720q33 0 56.5 23.5T920-760v560q0 33-23.5 56.5T840-120H120Zm0-80h720v-560H120v560Zm360-80q83 0 141.5-58.5T680-480q0-83-58.5-141.5T480-680q-83 0-141.5 58.5T280-480q0 83 58.5 141.5T480-280Zm0-80q-50 0-85-35t-35-85q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35ZM120-760v560-560Z%22/></svg>">
 
     <!-- Material Design Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
-
-    <!-- Google Fonts - Playfair Display for elegant headings -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap"
-        rel="stylesheet">
-
-
-    <!-- Material Symbols -->
+    <!-- Google Material Symbols -->
     <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 
     <!-- Main CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -42,33 +30,37 @@
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <span class="material-symbols-outlined">center_focus_strong</span>
+                <i class="mdi mdi-book-education-outline"></i>
                 FOCUS
             </div>
 
             <nav class="sidebar-nav">
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     <li>
-                        <a href="{% url 'dashboard' %}" class="{% if request.path == '/dashboard/' %}active{% endif %}">
-                            <span class="icon"><i class="mdi mdi-home-outline"></i></span>
-                            <span>Home</span>
+                        <a href="{% url 'dashboard' %}" class="{% if request.path == '/dashboard/' %}active{% endif %}"
+                            data-tooltip="View your dashboard">
+                            <span class="icon"><i class="mdi mdi-view-dashboard"></i></span>
+                            <span>Dashboard</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'study' %}" class="{% if request.path == '/study/' %}active{% endif %}">
+                        <a href="{% url 'study' %}" class="{% if request.path == '/study/' %}active{% endif %}"
+                            data-tooltip="Start study session">
                             <span class="icon"><i class="mdi mdi-timer-outline"></i></span>
                             <span>Study Timer</span>
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'assignments' %}"
-                            class="{% if request.path == '/assignments/' %}active{% endif %}">
+                            class="{% if request.path == '/assignments/' %}active{% endif %}"
+                            data-tooltip="Manage assignments">
                             <span class="icon"><i class="mdi mdi-clipboard-text-outline"></i></span>
                             <span>Assignments</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'notes' %}" class="{% if request.path == '/notes/' %}active{% endif %}">
+                        <a href="{% url 'notes' %}" class="{% if request.path == '/notes/' %}active{% endif %}"
+                            data-tooltip="Organize your quick notes">
                             <span class="icon"><i class="mdi mdi-notebook-outline"></i></span>
                             <span>Quick Notes</span>
                         </a>
@@ -81,8 +73,7 @@
                     <div class="user-profile-label">Logged in as</div>
                     <div class="user-profile-name">{{ user.username }}</div>
                 </div>
-                <a href="{% url 'logout' %}" class="btn btn-secondary btn-sm"
-                    style="width: 100%; font-size: 0.75rem; padding: 6px 10px;">
+                <a href="{% url 'logout' %}" class="btn btn-secondary" style="width: 100%;">
                     <span><i class="mdi mdi-logout"></i></span>
                     <span>Logout</span>
                 </a>
@@ -100,9 +91,7 @@
             {% endfor %}
             {% endif %}
 
-            <div class="content-container">
-                {% block content %}{% endblock %}
-            </div>
+            {% block content %}{% endblock %}
         </main>
     </div>
     {% else %}

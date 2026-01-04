@@ -223,21 +223,65 @@
         background: var(--border-color);
         border-radius: 3px;
     }
+
+    /* Break Buttons */
+    .break-btn {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .break-btn:hover {
+        border-color: var(--color-green);
+        color: var(--color-green);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .break-btn.active {
+        background: var(--color-green);
+        color: white;
+        border-color: var(--color-green);
+    }
+
+    .break-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 </style>
+
 {% endblock %}
 
 {% block content %}
 <div class="fade-in timer-container">
 
-    <!-- Mode Switcher -->
-    <div class="mode-switcher">
-        <button class="mode-btn active" onclick="switchMode('timer')" id="btn-timer">timer</button>
-        <button class="mode-btn" onclick="switchMode('short')" id="btn-short">short break</button>
-        <button class="mode-btn" onclick="switchMode('long')" id="btn-long">long break</button>
+    <!-- Timer Display -->
+    <div class="timer-display" id="timerDisplay">00:00</div>
+
+    <!-- Break Timer Display (hidden by default) -->
+    <div id="breakTimerSection" style="display: none; margin-bottom: var(--spacing-xl);">
+        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px;" id="breakLabel">Short Break
+        </div>
+        <div style="font-size: 3rem; font-weight: 600; color: var(--color-green);" id="breakTimerDisplay">5:00</div>
     </div>
 
-    <!-- Timer -->
-    <div class="timer-display" id="timerDisplay">00:00</div>
+    <!-- Break Buttons -->
+    <div class="break-buttons" style="display: flex; gap: 12px; margin-bottom: var(--spacing-xl);">
+        <button class="break-btn" id="shortBreakBtn" onclick="startBreak('short')">
+            <i class="mdi mdi-coffee-outline"></i> Short Break (5m)
+        </button>
+        <button class="break-btn" id="longBreakBtn" onclick="startBreak('long')">
+            <i class="mdi mdi-sleep"></i> Long Break (10m)
+        </button>
+    </div>
+
 
     <!-- Custom Subject Select -->
     <div class="custom-select-wrapper" id="subjectWrapper">
@@ -310,31 +354,47 @@
 {% block extra_js %}
 <script>
     // Configuration
-    const MODES = {
-        'timer': 0, // Starts at 0, counts up
-        'short': 5 * 60, // Counts down
-        'long': 10 * 60 // Counts down (10 mins)
+    const BREAK_DURATIONS = {
+        'short': 5 * 60,
+        'long': 10 * 60
     };
 
-    let currentMode = 'timer';
-    let currentTime = 0; // Tracks elapsed time for 'timer' or remaining time for breaks
+    // Persistence Keys
+    const KEY_TIME = 'focus_time';
+    const KEY_RUNNING = 'focus_running';
+    const KEY_SUBJECT = 'focus_subject';
+    const KEY_SYNCED = 'focus_synced';
+    const KEY_START_TS = 'focus_startTs';
+    const KEY_DAY = 'focus_day'; // Track the day for 24hr reset
+    const KEY_BREAK = 'focus_onBreak';
+    const KEY_BREAK_TIME = 'focus_breakTime';
+    const KEY_BREAK_TYPE = 'focus_breakType';
+    const KEY_BREAK_TS = 'focus_breakTs';
+
+
+    let currentTime = 0;
     let timerInterval = null;
     let isRunning = false;
-    let syncedTime = 0; // New variable to track what we've already synced to DB
+    let syncedTime = 0;
+    let wasRunningBeforeBreak = false;
+
+    // Break state
+    let isOnBreak = false;
+    let breakTime = 0;
+    let breakInterval = null;
+    let currentBreakType = null;
+
 
     // DOM Elements
     const timerDisplay = document.getElementById('timerDisplay');
     const mainBtn = document.getElementById('mainBtn');
     const subjectInput = document.getElementById('subjectInput');
-    const subjectWrapper = document.getElementById('subjectWrapper'); // Wrapper for visibility toggle
-
-    // Persistence Keys
-    const KEY_START_TIME = 'focus_startTime';
-    const KEY_ELAPSED = 'focus_elapsed';
-    const KEY_IS_RUNNING = 'focus_isRunning';
-    const KEY_MODE = 'focus_mode';
-    const KEY_SUBJECT = 'focus_subject';
-    const KEY_SYNCED = 'focus_syncedTime';
+    const subjectWrapper = document.getElementById('subjectWrapper');
+    const breakTimerSection = document.getElementById('breakTimerSection');
+    const breakTimerDisplay = document.getElementById('breakTimerDisplay');
+    const breakLabel = document.getElementById('breakLabel');
+    const shortBreakBtn = document.getElementById('shortBreakBtn');
+    const longBreakBtn = document.getElementById('longBreakBtn');
 
     function formatTime(seconds) {
         const m = Math.floor(seconds / 60);
@@ -344,89 +404,159 @@
 
     function updateDisplay() {
         timerDisplay.textContent = formatTime(currentTime);
-        document.title = isRunning ? `(${formatTime(currentTime)}) Focus` : 'Focus - StudyFlow';
+        if (isOnBreak) {
+            document.title = `☕ Break (${formatTime(breakTime)})`;
+        } else if (isRunning) {
+            document.title = `(${formatTime(currentTime)}) Focus`;
+        } else {
+            document.title = 'Focus - StudyFlow';
+        }
+    }
+
+    function updateBreakDisplay() {
+        breakTimerDisplay.textContent = formatTime(breakTime);
+    }
+
+    function getTodayString() {
+        const now = new Date();
+        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
     }
 
     function saveState() {
-        localStorage.setItem(KEY_MODE, currentMode);
+        localStorage.setItem(KEY_TIME, currentTime);
+        localStorage.setItem(KEY_RUNNING, isRunning);
         localStorage.setItem(KEY_SUBJECT, subjectInput.value);
-        localStorage.setItem(KEY_ELAPSED, currentTime);
-        localStorage.setItem(KEY_IS_RUNNING, isRunning);
         localStorage.setItem(KEY_SYNCED, syncedTime);
-
-        // If running, save the timestamp to calc delta on refresh
+        localStorage.setItem(KEY_DAY, getTodayString()); // Save today's date
         if (isRunning) {
-            localStorage.setItem(KEY_START_TIME, Date.now());
+            localStorage.setItem(KEY_START_TS, Date.now());
         } else {
-            localStorage.removeItem(KEY_START_TIME);
+            localStorage.removeItem(KEY_START_TS);
+        }
+
+        // Save break state
+        localStorage.setItem(KEY_BREAK, isOnBreak);
+        if (isOnBreak) {
+            localStorage.setItem(KEY_BREAK_TIME, breakTime);
+            localStorage.setItem(KEY_BREAK_TYPE, currentBreakType);
+            localStorage.setItem(KEY_BREAK_TS, Date.now());
+        } else {
+            localStorage.removeItem(KEY_BREAK_TIME);
+            localStorage.removeItem(KEY_BREAK_TYPE);
+            localStorage.removeItem(KEY_BREAK_TS);
         }
     }
 
     function loadState() {
-        const savedMode = localStorage.getItem(KEY_MODE);
+        const savedDay = localStorage.getItem(KEY_DAY);
+        const today = getTodayString();
+
+        // Check if it's a new day - reset timer
+        if (savedDay && savedDay !== today) {
+            console.log('New day detected, resetting timer');
+            // Save any unsaved progress before resetting
+            const savedTime = parseInt(localStorage.getItem(KEY_TIME)) || 0;
+            const savedSynced = parseInt(localStorage.getItem(KEY_SYNCED)) || 0;
+            if (savedTime > savedSynced && savedTime >= 60) {
+                attemptSave(); // Save previous day's progress
+            }
+            // Clear timer data for new day
+            localStorage.removeItem(KEY_TIME);
+            localStorage.removeItem(KEY_SYNCED);
+            localStorage.removeItem(KEY_RUNNING);
+            localStorage.removeItem(KEY_START_TS);
+            localStorage.removeItem(KEY_BREAK);
+            localStorage.removeItem(KEY_BREAK_TIME);
+            localStorage.removeItem(KEY_BREAK_TYPE);
+            localStorage.removeItem(KEY_BREAK_TS);
+            currentTime = 0;
+            syncedTime = 0;
+            localStorage.setItem(KEY_DAY, today);
+        }
+
+        const savedTime = parseInt(localStorage.getItem(KEY_TIME));
+        const savedRunning = localStorage.getItem(KEY_RUNNING) === 'true';
         const savedSubject = localStorage.getItem(KEY_SUBJECT);
-        const savedElapsed = parseInt(localStorage.getItem(KEY_ELAPSED));
-        const savedRunning = localStorage.getItem(KEY_IS_RUNNING) === 'true';
-        const savedStartTime = parseInt(localStorage.getItem(KEY_START_TIME));
         const savedSynced = parseInt(localStorage.getItem(KEY_SYNCED));
+        const savedStartTs = parseInt(localStorage.getItem(KEY_START_TS));
 
-        if (savedMode && MODES.hasOwnProperty(savedMode)) {
-            // Restore visual mode
-            currentMode = savedMode;
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`btn-${currentMode}`).classList.add('active');
+        // Break state
+        const savedOnBreak = localStorage.getItem(KEY_BREAK) === 'true';
+        const savedBreakTime = parseInt(localStorage.getItem(KEY_BREAK_TIME));
+        const savedBreakType = localStorage.getItem(KEY_BREAK_TYPE);
+        const savedBreakTs = parseInt(localStorage.getItem(KEY_BREAK_TS));
 
-            if (currentMode === 'timer') {
-                subjectWrapper.style.display = 'block';
-                // Sync custom dropdown logic here if needed
-                if (savedSubject) {
-                    subjectInput.value = savedSubject;
-                    updateCustomSelectDisplay(savedSubject);
-                }
+        if (!isNaN(savedTime)) currentTime = savedTime;
+        if (!isNaN(savedSynced)) syncedTime = savedSynced;
+
+
+        if (savedSubject) {
+            subjectInput.value = savedSubject;
+            updateCustomSelectDisplay(savedSubject);
+        }
+
+        // Restore break state
+        if (savedOnBreak && savedBreakType && !isNaN(savedBreakTime) && !isNaN(savedBreakTs)) {
+            const elapsed = Math.floor((Date.now() - savedBreakTs) / 1000);
+            const remainingBreak = savedBreakTime - elapsed;
+
+            if (remainingBreak > 0) {
+                isOnBreak = true;
+                currentBreakType = savedBreakType;
+                breakTime = remainingBreak;
+                wasRunningBeforeBreak = savedRunning;
+
+                breakLabel.textContent = savedBreakType === 'short' ? 'Short Break' : 'Long Break';
+                breakTimerSection.style.display = 'block';
+                updateBreakDisplay();
+
+                shortBreakBtn.classList.toggle('active', savedBreakType === 'short');
+                longBreakBtn.classList.toggle('active', savedBreakType === 'long');
+
+                mainBtn.disabled = true;
+                mainBtn.style.opacity = '0.5';
+
+                // Resume break countdown
+                breakInterval = setInterval(() => {
+                    if (breakTime > 0) {
+                        breakTime--;
+                        updateBreakDisplay();
+                        updateDisplay();
+                        if (breakTime % 5 === 0) saveState();
+                    } else {
+                        endBreak(true);
+                        alert('Break is over! Timer resumed.');
+                    }
+                }, 1000);
             } else {
-                subjectWrapper.style.display = 'none';
+                // Break expired while away
+                localStorage.removeItem(KEY_BREAK);
+                localStorage.removeItem(KEY_BREAK_TIME);
+                localStorage.removeItem(KEY_BREAK_TYPE);
+                localStorage.removeItem(KEY_BREAK_TS);
             }
-        }
-
-        if (!isNaN(savedElapsed)) {
-            currentTime = savedElapsed;
-        }
-
-        if (!isNaN(savedSynced)) {
-            syncedTime = savedSynced;
-        }
-
-        // If it was running, calculate missed time
-        if (savedRunning && !isNaN(savedStartTime)) {
-            const now = Date.now();
-            const diffSeconds = Math.floor((now - savedStartTime) / 1000);
-
-            if (currentMode === 'timer') {
-                currentTime += diffSeconds;
-            } else {
-                currentTime = Math.max(0, currentTime - diffSeconds);
-            }
-
-            // Resume automatically
-            startTimer(false); // false = don't reset state, just resume
+        } else if (savedRunning && !isNaN(savedStartTs)) {
+            // If was running (not on break), calculate elapsed time
+            const elapsed = Math.floor((Date.now() - savedStartTs) / 1000);
+            currentTime += elapsed;
+            startTimer();
         }
 
         updateDisplay();
     }
 
-    // Clear state when done/reset
-    function clearState() {
-        localStorage.removeItem(KEY_START_TIME);
-        localStorage.removeItem(KEY_ELAPSED);
-        localStorage.removeItem(KEY_IS_RUNNING);
-        localStorage.removeItem(KEY_SYNCED);
-        // We keep subject/mode for convenience usually, but let's clear running flags
+    function updateCustomSelectDisplay(value) {
+        const option = document.querySelector(`.custom-option[data-value="${value}"]`);
+        if (option) {
+            document.getElementById('triggerText').textContent = option.textContent;
+            document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+        }
     }
 
     async function attemptSave() {
-        // Calculate new minutes to save
         const deltaSeconds = currentTime - syncedTime;
-        if (deltaSeconds < 60) return; // Don't save tiny fragments < 1 min
+        if (deltaSeconds < 60) return;
 
         const durationMins = Math.round(deltaSeconds / 60);
         if (durationMins <= 0) return;
@@ -448,48 +578,11 @@
 
             if (response.ok) {
                 console.log(`Saved ${durationMins} minutes.`);
-                syncedTime = currentTime; // Mark these seconds as saved
-                saveState(); // Update local storage with new syncedTime
+                syncedTime = currentTime;
             }
         } catch (e) {
             console.error(e);
         }
-    }
-
-    function switchMode(mode) {
-        if (isRunning) {
-            if (!confirm("Stop current timer and switch?")) return;
-            pauseTimer();
-        } else {
-            // Even if not running, if we have unsaved time in timer mode, save it
-            if (currentMode === 'timer' && currentTime > syncedTime) {
-                attemptSave();
-            }
-        }
-
-        // Update styling
-        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`btn-${mode}`).classList.add('active');
-
-        currentMode = mode;
-        syncedTime = 0; // Reset sync tracker for new mode
-
-        // Reset time based on mode
-        if (mode === 'timer') {
-            currentTime = 0;
-            subjectWrapper.style.display = 'block';
-            if (localStorage.getItem(KEY_SUBJECT)) {
-                const s = localStorage.getItem(KEY_SUBJECT);
-                subjectInput.value = s;
-                updateCustomSelectDisplay(s);
-            }
-        } else {
-            currentTime = MODES[mode];
-            subjectWrapper.style.display = 'none';
-        }
-
-        updateDisplay();
-        saveState();
     }
 
     function toggleTimer() {
@@ -500,32 +593,23 @@
         }
     }
 
-    function startTimer(isNewStart = true) {
-        if (!isRunning) {
+    function startTimer() {
+        // Require subject selection
+        if (!subjectInput.value || subjectInput.value === '') {
+            alert('Please select a subject before starting the timer.');
+            return;
+        }
+
+        if (!isRunning && !isOnBreak) {
             isRunning = true;
             mainBtn.textContent = 'PAUSE';
             mainBtn.style.opacity = '0.8';
-
-            if (isNewStart) saveState(); // Save initial running state
+            saveState();
 
             timerInterval = setInterval(() => {
-                if (currentMode === 'timer') {
-                    // Count UP
-                    currentTime++;
-                    updateDisplay();
-                } else {
-                    // Count DOWN
-                    if (currentTime > 0) {
-                        currentTime--;
-                        updateDisplay();
-                    } else {
-                        completeTimer();
-                    }
-                }
-
-                // Save state periodically (e.g., every second)
-                saveState();
-
+                currentTime++;
+                updateDisplay();
+                if (currentTime % 10 === 0) saveState();
             }, 1000);
         }
     }
@@ -536,45 +620,105 @@
             isRunning = false;
             mainBtn.textContent = 'START';
             mainBtn.style.opacity = '1';
-
-            saveState(); // Save paused state
-
-            // Attempt to save progress if in timer mode
-            if (currentMode === 'timer') {
-                attemptSave();
-            }
+            attemptSave();
+            saveState();
         }
     }
 
-    function completeTimer() {
-        clearInterval(timerInterval);
-        isRunning = false;
-        mainBtn.textContent = 'START';
-
-        clearState(); // Clear running state
-        localStorage.setItem(KEY_MODE, currentMode); // Preserve mode preference
-
-        // Reset for next break
-        if (currentMode !== 'timer') {
-            currentTime = MODES[currentMode];
-            alert("Time's up!");
-            updateDisplay();
+    // Break functionality
+    function startBreak(type) {
+        // If already on this break, cancel it and auto-resume
+        if (isOnBreak && currentBreakType === type) {
+            endBreak(true);
+            return;
         }
-    }
 
-    // Auto-save on page leave warning
-    window.addEventListener('beforeunload', (e) => {
+        // Track if timer was running before break
+        wasRunningBeforeBreak = isRunning;
+
+        // Pause main timer if running (without full pauseTimer to avoid save)
         if (isRunning) {
-            // Standard way to trigger browser warning
-            e.preventDefault();
-            e.returnValue = '';
+            clearInterval(timerInterval);
+            isRunning = false;
+            mainBtn.textContent = 'START';
+        }
+
+        // End any existing break
+        if (isOnBreak) {
+            clearInterval(breakInterval);
+        }
+
+        isOnBreak = true;
+        currentBreakType = type;
+        breakTime = BREAK_DURATIONS[type];
+
+        // Update UI
+        breakLabel.textContent = type === 'short' ? 'Short Break' : 'Long Break';
+        breakTimerSection.style.display = 'block';
+        updateBreakDisplay();
+
+        // Update button states
+        shortBreakBtn.classList.toggle('active', type === 'short');
+        longBreakBtn.classList.toggle('active', type === 'long');
+
+        // Disable main timer button during break
+        mainBtn.disabled = true;
+        mainBtn.style.opacity = '0.5';
+
+        saveState(); // Save break state
+
+        // Start break countdown
+        breakInterval = setInterval(() => {
+            if (breakTime > 0) {
+                breakTime--;
+                updateBreakDisplay();
+                updateDisplay();
+                if (breakTime % 5 === 0) saveState(); // Save periodically
+            } else {
+                endBreak(true);
+                alert('Break is over! Timer resumed.');
+            }
+        }, 1000);
+    }
+
+
+    function endBreak(autoResume = false) {
+        clearInterval(breakInterval);
+        isOnBreak = false;
+        currentBreakType = null;
+        breakTimerSection.style.display = 'none';
+
+        // Reset button states
+        shortBreakBtn.classList.remove('active');
+        longBreakBtn.classList.remove('active');
+
+        // Re-enable main timer button
+        mainBtn.disabled = false;
+        mainBtn.style.opacity = '1';
+        updateDisplay();
+        saveState(); // Clear break state in localStorage
+
+        // Auto-resume if timer was running before break
+        if (autoResume && wasRunningBeforeBreak) {
+            startTimer();
+        }
+        wasRunningBeforeBreak = false;
+    }
+
+    // Save state when leaving page (persist timer and break)
+    window.addEventListener('beforeunload', () => {
+        if (isRunning || isOnBreak) {
+            saveState();
+            if (isRunning) attemptSave();
         }
     });
 
-    // Save subject input changes
-    subjectInput.addEventListener('input', () => {
-        saveState();
+    window.addEventListener('visibilitychange', () => {
+        if (document.hidden && (isRunning || isOnBreak)) {
+            saveState();
+        }
     });
+
 
     // Initialize Custom Select
     function setupCustomSelect() {
@@ -584,9 +728,8 @@
         const triggerText = document.getElementById('triggerText');
         const optionsList = document.getElementById('customOptions');
 
-        // Populate options
         Array.from(select.options).forEach(option => {
-            if (option.disabled) return; // Skip placeholder
+            if (option.disabled) return;
 
             const div = document.createElement('div');
             div.className = 'custom-option';
@@ -596,28 +739,20 @@
             div.addEventListener('click', () => {
                 select.value = option.value;
                 triggerText.textContent = option.text;
-
-                // Update selected state
                 document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
                 div.classList.add('selected');
-
-                // Close dropdown
                 customSelect.classList.remove('open');
-
-                // Trigger change event for persistence
-                select.dispatchEvent(new Event('input'));
+                saveState();
             });
 
             optionsList.appendChild(div);
         });
 
-        // Toggle dropdown
         trigger.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent document click from closing immediately
+            e.stopPropagation();
             customSelect.classList.toggle('open');
         });
 
-        // Close when clicking outside
         document.addEventListener('click', (e) => {
             if (!customSelect.contains(e.target)) {
                 customSelect.classList.remove('open');
@@ -625,24 +760,8 @@
         });
     }
 
-    // Helper to update display when loading from storage
-    function updateCustomSelectDisplay(value) {
-        const option = document.querySelector(`.custom-option[data-value="${value}"]`);
-        if (option) {
-            document.getElementById('triggerText').textContent = option.textContent;
-            document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
-            option.classList.add('selected');
-        } else {
-            // Fallback
-            document.getElementById('triggerText').textContent = value || "Select a subject...";
-        }
-    }
-
     // Initialize
     setupCustomSelect();
-    loadState(); // Restore from local storage
-    if (!isRunning && currentTime === 0) {
-        updateDisplay(); // Default display if nothing loaded
-    }
+    loadState();
 </script>
 {% endblock %}
