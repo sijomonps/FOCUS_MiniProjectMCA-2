@@ -11,7 +11,7 @@
         gap: calc(var(--spacing) * 3);
         height: calc(100vh - 200px);
     }
-    
+
     /* Folders Sidebar */
     .folders-sidebar {
         background-color: var(--bg-secondary);
@@ -20,14 +20,14 @@
         padding: calc(var(--spacing) * 2);
         overflow-y: auto;
     }
-    
+
     .sidebar-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: calc(var(--spacing) * 2);
     }
-    
+
     .sidebar-title {
         font-size: 0.9rem;
         font-weight: 600;
@@ -35,7 +35,7 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .btn-add-folder {
         background: var(--color-blue);
         color: white;
@@ -49,18 +49,18 @@
         cursor: pointer;
         transition: all var(--transition-base);
     }
-    
+
     .btn-add-folder:hover {
         background: #1976d2;
         transform: scale(1.05);
     }
-    
+
     .folder-list {
         display: flex;
         flex-direction: column;
         gap: calc(var(--spacing) / 2);
     }
-    
+
     .folder-item {
         display: flex;
         align-items: center;
@@ -71,37 +71,37 @@
         transition: all var(--transition-fast);
         border: 1px solid transparent;
     }
-    
+
     .folder-item:hover {
         background-color: rgba(255, 255, 255, 0.03);
         border-color: var(--border-color);
     }
-    
+
     .folder-item.active {
         background-color: rgba(33, 150, 243, 0.1);
         border-color: var(--color-blue);
     }
-    
+
     .folder-icon {
         color: var(--color-orange);
         font-size: 1.3rem;
     }
-    
+
     .folder-info {
         flex: 1;
     }
-    
+
     .folder-name {
         font-size: 0.95rem;
         color: var(--text-primary);
         font-weight: 500;
     }
-    
+
     .folder-count {
         font-size: 0.75rem;
         color: var(--text-tertiary);
     }
-    
+
     .folder-delete {
         opacity: 0;
         color: var(--text-tertiary);
@@ -109,15 +109,15 @@
         cursor: pointer;
         transition: all var(--transition-fast);
     }
-    
+
     .folder-item:hover .folder-delete {
         opacity: 1;
     }
-    
+
     .folder-delete:hover {
         color: var(--color-red);
     }
-    
+
     /* Notes Content Area */
     .notes-content {
         background-color: var(--bg-secondary);
@@ -126,14 +126,14 @@
         padding: calc(var(--spacing) * 3);
         overflow-y: auto;
     }
-    
+
     .notes-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: calc(var(--spacing) * 3);
     }
-    
+
     .notes-title {
         font-size: 1.5rem;
         font-weight: 600;
@@ -142,7 +142,7 @@
         align-items: center;
         gap: calc(var(--spacing) * 1.5);
     }
-    
+
     .btn-add-note {
         background: var(--color-green);
         color: white;
@@ -156,19 +156,19 @@
         font-weight: 500;
         transition: all var(--transition-base);
     }
-    
+
     .btn-add-note:hover {
         background: #388e3c;
         transform: translateY(-2px);
     }
-    
+
     /* Note Cards */
     .notes-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: calc(var(--spacing) * 2);
     }
-    
+
     .note-card {
         background-color: var(--bg-primary);
         border: 1px solid var(--border-color);
@@ -177,27 +177,27 @@
         transition: all var(--transition-base);
         position: relative;
     }
-    
+
     .note-card:hover {
         border-color: var(--border-color-light);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
-    
+
     .note-card-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         margin-bottom: calc(var(--spacing) * 1.5);
     }
-    
+
     .note-title {
         font-size: 1.05rem;
         font-weight: 600;
         color: var(--text-primary);
         flex: 1;
     }
-    
+
     .note-delete {
         color: var(--text-tertiary);
         font-size: 1.1rem;
@@ -205,15 +205,15 @@
         opacity: 0;
         transition: all var(--transition-fast);
     }
-    
+
     .note-card:hover .note-delete {
         opacity: 1;
     }
-    
+
     .note-delete:hover {
         color: var(--color-red);
     }
-    
+
     .note-content {
         color: var(--text-secondary);
         line-height: 1.6;
@@ -222,7 +222,7 @@
         white-space: pre-wrap;
         word-wrap: break-word;
     }
-    
+
     .note-footer {
         font-size: 0.75rem;
         color: var(--text-tertiary);
@@ -230,30 +230,30 @@
         align-items: center;
         gap: calc(var(--spacing));
     }
-    
+
     /* Empty State */
     .empty-state {
         text-align: center;
         padding: calc(var(--spacing) * 6) calc(var(--spacing) * 3);
     }
-    
+
     .empty-icon {
         font-size: 4rem;
         color: var(--text-tertiary);
         margin-bottom: calc(var(--spacing) * 2);
     }
-    
+
     .empty-title {
         font-size: 1.25rem;
         color: var(--text-secondary);
         margin-bottom: calc(var(--spacing));
     }
-    
+
     .empty-text {
         color: var(--text-tertiary);
         margin-bottom: calc(var(--spacing) * 3);
     }
-    
+
     /* Modal */
     .modal-overlay {
         display: none;
@@ -268,11 +268,11 @@
         align-items: center;
         justify-content: center;
     }
-    
+
     .modal-overlay.active {
         display: flex;
     }
-    
+
     .modal-content {
         background-color: var(--bg-secondary);
         border: 1px solid var(--border-color);
@@ -283,35 +283,35 @@
         max-height: 80vh;
         overflow-y: auto;
     }
-    
+
     .modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: calc(var(--spacing) * 3);
     }
-    
+
     .modal-title {
         font-size: 1.25rem;
         font-weight: 600;
         color: var(--text-primary);
     }
-    
+
     .modal-close {
         color: var(--text-tertiary);
         font-size: 1.5rem;
         cursor: pointer;
         transition: color var(--transition-fast);
     }
-    
+
     .modal-close:hover {
         color: var(--text-primary);
     }
-    
+
     .form-group {
         margin-bottom: calc(var(--spacing) * 2);
     }
-    
+
     .form-label {
         display: block;
         font-size: 0.9rem;
@@ -319,8 +319,9 @@
         color: var(--text-secondary);
         margin-bottom: calc(var(--spacing));
     }
-    
-    .form-input, .form-textarea {
+
+    .form-input,
+    .form-textarea {
         width: 100%;
         background-color: var(--bg-primary);
         border: 1px solid var(--border-color);
@@ -331,24 +332,25 @@
         font-family: inherit;
         transition: border-color var(--transition-fast);
     }
-    
-    .form-input:focus, .form-textarea:focus {
+
+    .form-input:focus,
+    .form-textarea:focus {
         outline: none;
         border-color: var(--color-blue);
     }
-    
+
     .form-textarea {
         min-height: 200px;
         resize: vertical;
     }
-    
+
     .modal-actions {
         display: flex;
         gap: calc(var(--spacing) * 1.5);
         justify-content: flex-end;
         margin-top: calc(var(--spacing) * 3);
     }
-    
+
     .btn-cancel {
         background: transparent;
         border: 1px solid var(--border-color);
@@ -359,12 +361,12 @@
         font-weight: 500;
         transition: all var(--transition-fast);
     }
-    
+
     .btn-cancel:hover {
         border-color: var(--text-secondary);
         color: var(--text-primary);
     }
-    
+
     .btn-submit {
         background: var(--color-blue);
         color: white;
@@ -375,23 +377,36 @@
         font-weight: 500;
         transition: all var(--transition-base);
     }
-    
+
     .btn-submit:hover {
         background: #1976d2;
     }
-    
+
     @media (max-width: 768px) {
         .notes-layout {
-            grid-template-columns: 1fr;
+            grid-template-columns: 100%;
             height: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        
+
         .folders-sidebar {
-            max-height: 300px;
+            max-height: 250px;
+            width: 100%;
         }
-        
+
         .notes-grid {
             grid-template-columns: 1fr;
+        }
+
+        .notes-content {
+            padding: 16px;
+        }
+
+        .page-header {
+            padding: 0 8px;
+            /* Reduce padding slightly */
         }
     }
 </style>
@@ -403,7 +418,7 @@
         <h1 class="page-title"><i class="mdi mdi-notebook-outline"></i> Quick Notes</h1>
         <p class="page-subtitle">Organize your notes by subject</p>
     </div>
-    
+
     <div class="notes-layout">
         <!-- Folders Sidebar -->
         <div class="folders-sidebar">
@@ -413,7 +428,7 @@
                     <i class="mdi mdi-plus"></i>
                 </button>
             </div>
-            
+
             <div class="folder-list">
                 <!-- All Notes (unorganized) -->
                 <div class="folder-item {% if not selected_folder %}active{% endif %}" onclick="selectFolder(null)">
@@ -423,27 +438,28 @@
                         <div class="folder-count">Unorganized</div>
                     </div>
                 </div>
-                
+
                 {% for folder in folders %}
-                <div class="folder-item {% if selected_folder and selected_folder.id == folder.id %}active{% endif %}" 
-                     onclick="selectFolder({{ folder.id }})">
+                <div class="folder-item {% if selected_folder and selected_folder.id == folder.id %}active{% endif %}"
+                    onclick="selectFolder({{ folder.id }})">
                     <i class="mdi mdi-folder folder-icon"></i>
                     <div class="folder-info">
                         <div class="folder-name">{{ folder.name }}</div>
                         <div class="folder-count">{{ folder.note_count }} note{{ folder.note_count|pluralize }}</div>
                     </div>
-                    <i class="mdi mdi-delete-outline folder-delete" 
-                       onclick="event.stopPropagation(); deleteFolder({{ folder.id }}, '{{ folder.name }}')"></i>
+                    <i class="mdi mdi-delete-outline folder-delete"
+                        onclick="event.stopPropagation(); deleteFolder({{ folder.id }}, '{{ folder.name }}')"></i>
                 </div>
                 {% endfor %}
             </div>
         </div>
-        
+
         <!-- Notes Content -->
         <div class="notes-content">
             <div class="notes-header">
                 <div class="notes-title">
-                    <i class="mdi mdi-{% if selected_folder %}folder-open{% else %}file-document-multiple{% endif %}"></i>
+                    <i
+                        class="mdi mdi-{% if selected_folder %}folder-open{% else %}file-document-multiple{% endif %}"></i>
                     {{ selected_folder.name|default:"All Notes" }}
                 </div>
                 {% if selected_folder %}
@@ -453,15 +469,15 @@
                 </button>
                 {% endif %}
             </div>
-            
+
             {% if notes %}
             <div class="notes-grid">
                 {% for note in notes %}
                 <div class="note-card">
                     <div class="note-card-header">
                         <div class="note-title">{{ note.title }}</div>
-                        <i class="mdi mdi-delete-outline note-delete" 
-                           onclick="deleteNote({{ note.id }}, '{{ note.title }}')"></i>
+                        <i class="mdi mdi-delete-outline note-delete"
+                            onclick="deleteNote({{ note.id }}, '{{ note.title }}')"></i>
                     </div>
                     <div class="note-content">{{ note.content }}</div>
                     <div class="note-footer">
@@ -477,7 +493,8 @@
             {% else %}
             <div class="empty-state">
                 <div class="empty-icon">
-                    <i class="mdi mdi-{% if selected_folder %}note-plus-outline{% else %}folder-plus-outline{% endif %}"></i>
+                    <i
+                        class="mdi mdi-{% if selected_folder %}note-plus-outline{% else %}folder-plus-outline{% endif %}"></i>
                 </div>
                 <div class="empty-title">
                     {% if selected_folder %}
@@ -515,8 +532,8 @@
         <form id="addFolderForm" onsubmit="createFolder(event)">
             <div class="form-group">
                 <label class="form-label">Subject Name</label>
-                <input type="text" class="form-input" id="folderName" 
-                       placeholder="e.g., Mathematics, History, Science..." required>
+                <input type="text" class="form-input" id="folderName"
+                    placeholder="e.g., Mathematics, History, Science..." required>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" onclick="closeModal('addFolderModal')">Cancel</button>
@@ -536,13 +553,12 @@
         <form id="addNoteForm" onsubmit="createNote(event)">
             <div class="form-group">
                 <label class="form-label">Title</label>
-                <input type="text" class="form-input" id="noteTitle" 
-                       placeholder="Note title..." required>
+                <input type="text" class="form-input" id="noteTitle" placeholder="Note title..." required>
             </div>
             <div class="form-group">
                 <label class="form-label">Content</label>
-                <textarea class="form-textarea" id="noteContent" 
-                          placeholder="Write your note here..." required></textarea>
+                <textarea class="form-textarea" id="noteContent" placeholder="Write your note here..."
+                    required></textarea>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" onclick="closeModal('addNoteModal')">Cancel</button>
@@ -553,158 +569,159 @@
 </div>
 
 <script>
-const csrftoken = '{{ csrf_token }}';
-let currentFolderId = {{ selected_folder.id|default:"null" }};
+    const csrftoken = '{{ csrf_token }}';
+    let currentFolderId = {{ selected_folder.id|default:"null" }};
 
-function selectFolder(folderId) {
-    const url = folderId ? `?folder=${folderId}` : '';
-    window.location.href = '{% url "notes" %}' + url;
-}
 
-function showAddFolderModal() {
-    document.getElementById('addFolderModal').classList.add('active');
-    document.getElementById('folderName').focus();
-}
-
-function showAddNoteModal() {
-    if (!currentFolderId) {
-        alert('Please select a folder first');
-        return;
+    function selectFolder(folderId) {
+        const url = folderId ? `?folder=${folderId}` : '';
+        window.location.href = '{% url "notes" %}' + url;
     }
-    document.getElementById('addNoteModal').classList.add('active');
-    document.getElementById('noteTitle').focus();
-}
 
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-    if (modalId === 'addFolderModal') {
-        document.getElementById('addFolderForm').reset();
-    } else if (modalId === 'addNoteModal') {
-        document.getElementById('addNoteForm').reset();
+    function showAddFolderModal() {
+        document.getElementById('addFolderModal').classList.add('active');
+        document.getElementById('folderName').focus();
     }
-}
 
-async function createFolder(event) {
-    event.preventDefault();
-    const folderName = document.getElementById('folderName').value.trim();
-    
-    try {
-        const response = await fetch('{% url "create_subject_folder" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken
-            },
-            body: JSON.stringify({ name: folderName })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert(data.error || 'Failed to create folder');
+    function showAddNoteModal() {
+        if (!currentFolderId) {
+            alert('Please select a folder first');
+            return;
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to create folder');
+        document.getElementById('addNoteModal').classList.add('active');
+        document.getElementById('noteTitle').focus();
     }
-}
 
-async function createNote(event) {
-    event.preventDefault();
-    const title = document.getElementById('noteTitle').value.trim();
-    const content = document.getElementById('noteContent').value.trim();
-    
-    try {
-        const response = await fetch('{% url "create_note" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken
-            },
-            body: JSON.stringify({
-                folder_id: currentFolderId,
-                title: title,
-                content: content
-            })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert(data.error || 'Failed to create note');
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        if (modalId === 'addFolderModal') {
+            document.getElementById('addFolderForm').reset();
+        } else if (modalId === 'addNoteModal') {
+            document.getElementById('addNoteForm').reset();
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to create note');
     }
-}
 
-async function deleteNote(noteId, noteTitle) {
-    if (!confirm(`Delete note "${noteTitle}"?`)) return;
-    
-    try {
-        const response = await fetch('{% url "delete_note" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken
-            },
-            body: JSON.stringify({ note_id: noteId })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert(data.error || 'Failed to delete note');
+    async function createFolder(event) {
+        event.preventDefault();
+        const folderName = document.getElementById('folderName').value.trim();
+
+        try {
+            const response = await fetch('{% url "create_subject_folder" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ name: folderName })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to create folder');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to create folder');
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to delete note');
     }
-}
 
-async function deleteFolder(folderId, folderName) {
-    if (!confirm(`Delete folder "${folderName}" and all its notes? This cannot be undone.`)) return;
-    
-    try {
-        const response = await fetch('{% url "delete_folder" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrftoken
-            },
-            body: JSON.stringify({ folder_id: folderId })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            window.location.href = '{% url "notes" %}';
-        } else {
-            alert(data.error || 'Failed to delete folder');
+    async function createNote(event) {
+        event.preventDefault();
+        const title = document.getElementById('noteTitle').value.trim();
+        const content = document.getElementById('noteContent').value.trim();
+
+        try {
+            const response = await fetch('{% url "create_note" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    folder_id: currentFolderId,
+                    title: title,
+                    content: content
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to create note');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to create note');
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to delete folder');
     }
-}
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-overlay.active').forEach(modal => {
-            modal.classList.remove('active');
-        });
+    async function deleteNote(noteId, noteTitle) {
+        if (!confirm(`Delete note "${noteTitle}"?`)) return;
+
+        try {
+            const response = await fetch('{% url "delete_note" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ note_id: noteId })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to delete note');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to delete note');
+        }
     }
-});
 
-document.querySelectorAll('.modal-overlay').forEach(modal => {
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.classList.remove('active');
+    async function deleteFolder(folderId, folderName) {
+        if (!confirm(`Delete folder "${folderName}" and all its notes? This cannot be undone.`)) return;
+
+        try {
+            const response = await fetch('{% url "delete_folder" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ folder_id: folderId })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                window.location.href = '{% url "notes" %}';
+            } else {
+                alert(data.error || 'Failed to delete folder');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to delete folder');
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                modal.classList.remove('active');
+            });
         }
     });
-});
+
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
 </script>
 {% endblock %}

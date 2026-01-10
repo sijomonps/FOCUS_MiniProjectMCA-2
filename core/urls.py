@@ -21,7 +21,8 @@ urlpatterns = [
     path('api/assignments/completed/all/', views.get_all_completed_assignments, name='get_all_completed_assignments'),
     path('api/note/save/', views.save_quick_note, name='save_quick_note'),
     path('api/folder/create/', views.create_subject_folder, name='create_subject_folder'),
+    path('api/folder/delete/', views.delete_subject_folder, name='delete_subject_folder'),
     path('api/note/create/', views.create_note, name='create_note'),
     path('api/note/delete/', views.delete_note, name='delete_note'),
-    path('api/folder/delete/', views.delete_folder, name='delete_folder'),
+    path('api/folder/delete-by-id/', views.delete_folder, name='delete_folder'),
 ]

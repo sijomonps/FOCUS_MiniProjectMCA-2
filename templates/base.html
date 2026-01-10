@@ -27,11 +27,26 @@
 <body>
     {% if user.is_authenticated and not hide_sidebar %}
     <div class="app-container">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="btn-ghost mobile-menu-btn" onclick="toggleSidebar()">
+                <i class="mdi mdi-menu" style="font-size: 1.5rem;"></i>
+            </button>
+            <div class="mobile-logo" style="display: flex; align-items: center; gap: 8px;">
+                FOCUS <span class="material-symbols-outlined">center_focus_strong</span>
+            </div>
+            <div style="width: 40px;"></div> <!-- Spacer -->
+        </div>
+
         <!-- Sidebar Navigation -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="appSidebar">
             <div class="sidebar-logo">
-                <i class="mdi mdi-book-education-outline"></i>
+                <span class="material-symbols-outlined">center_focus_strong</span>
                 FOCUS
+                <button class="btn-ghost mobile-close-btn" onclick="toggleSidebar()"
+                    style="margin-left: auto; display: none;">
+                    <i class="mdi mdi-close"></i>
+                </button>
             </div>
 
             <nav class="sidebar-nav">
@@ -67,6 +82,22 @@
                     </li>
                 </ul>
             </nav>
+
+            <!-- Global Sidebar Timer (Hidden by default) -->
+            <div id="globalTimerContainer" class="hidden"
+                style="margin: 0 12px 12px 12px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--border-radius); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px;">
+                <div
+                    style="width: 8px; height: 8px; background: var(--color-red); border-radius: 50%; box-shadow: 0 0 8px var(--color-red);">
+                </div>
+                <div>
+                    <div
+                        style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+                        Session Active</div>
+                    <div id="globalTimerDisplay"
+                        style="font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); line-height: 1.2;">
+                        00:00</div>
+                </div>
+            </div>
 
             <div class="sidebar-footer">
                 <div class="user-profile">
@@ -134,6 +165,23 @@
         }
 
         const csrf = getCookie('csrftoken');
+
+        // Mobile Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('appSidebar');
+            sidebar.classList.toggle('active');
+
+            // Create or toggle overlay
+            let overlay = document.querySelector('.sidebar-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'sidebar-overlay';
+                overlay.onclick = toggleSidebar;
+                document.body.appendChild(overlay);
+            }
+
+            overlay.classList.toggle('active');
+        }
     </script>
 
     {% block extra_js %}{% endblock %}

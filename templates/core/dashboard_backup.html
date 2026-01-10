@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Home - FOCUS{% endblock %}
@@ -584,7 +584,8 @@
                                 <div class="pie-color-{{ forloop.counter0 }}"
                                     style="width: 12px; height: 12px; border-radius: 3px;"></div>
                                 <span style="font-size: 0.85rem; flex: 1;">{{ item.subject }}</span>
-                                <span style="font-size: 0.8rem; color: var(--text-secondary);">{{ item.hours }}h ({{ item.percentage }}%)</span>
+                                <span style="font-size: 0.8rem; color: var(--text-secondary);">{{ item.hours }}h ({{
+                                    item.percentage }}%)</span>
                             </div>
                             {% endfor %}
                         </div>
@@ -777,110 +778,668 @@
 </div>
 {% endblock %}
 
-
 {% block extra_js %}
-{% load static %}
-<!-- Load Chart.js first -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    console.log('Dashboard script starting...');
 
-<!-- Load external dashboard logic -->
-<script src="{% static 'js/dashboard.js' %}"></script>
-
-<!-- Pass data from Django template to dashboard.js and initialize -->
-<script type="text/javascript">
-    console.log('Dashboard init script starting...');
-
-    function safeParse(jsonStr) {
-        try { return jsonStr ? JSON.parse(jsonStr) : []; }
-        catch (e) { console.error('Parse error:', e); return []; }
+    // --- Helper: Safe JSON Parse ---
+    function safeParse(jsonStr, fallback) {
+        try {
+            if (!jsonStr) return fallback;
+            const parsed = JSON.parse(jsonStr);
+            return parsed === null ? fallback : parsed;
+        } catch (e) {
+            console.error('Data parsing error:', e);
+            return fallback;
+        }
     }
 
-    var dashboardConfig = {
-        weeklyLabels: safeParse('{{ chart_labels|escapejs }}'),
-        weeklyData: safeParse('{{ chart_data|escapejs }}'),
-        monthlyLabels: safeParse('{{ chart_labels_monthly|escapejs }}'),
-        monthlyData: safeParse('{{ chart_data_monthly|escapejs }}'),
-        subjectLabels: safeParse('{{ chart_subject_labels|escapejs }}'),
-        subjectData: safeParse('{{ chart_subject_data|escapejs }}'),
-        calendarAssignments: safeParse('{{ calendar_assignments_json|escapejs }}'),
-        hasSubjectBreakdown: {% if subject_breakdown %}true{% else %} false{% endif %}
-    };
+    // --- Initialize function to be called when DOM is ready ---
+    function initDashboard() {
+        // --- Chart.js Check ---
+        const chartJsAvailable = typeof Chart !== 'undefined';
+        if (!chartJsAvailable) {
+            console.error('Chart.js is not loaded. Charts will not be displayed.');
+            const chartContainers = document.querySelectorAll('canvas');
+            chartContainers.forEach(c => {
+                c.style.display = 'none';
+                const msg = document.createElement('div');
+                msg.textContent = 'Chart library failed to load.';
+                msg.className = 'text-tertiary';
+                msg.style.padding = '20px';
+                msg.style.textAlign = 'center';
+                c.parentNode.insertBefore(msg, c.nextSibling);
+            });
+        } else {
+            console.log('Chart.js is ready.');
+        }
 
+        // --- Data Initialization ---
+        // Using || '[]' pattern inside safeParse for extra safety against empty django vars
+        const weeklyLabels = safeParse('{{ chart_labels|escapejs }}' || '[]', []);
+        const weeklyData = safeParse('{{ chart_data|escapejs }}' || '[]', []);
+        const monthlyLabels = safeParse('{{ chart_labels_monthly|escapejs }}' || '[]', []);
+        const monthlyData = safeParse('{{ chart_data_monthly|escapejs }}' || '[]', []);
+
+        const subjectLabels = safeParse('{{ chart_subject_labels|escapejs }}' || '[]', []);
+        const subjectData = safeParse('{{ chart_subject_data|escapejs }}' || '[]', []);
+
+        const calendarAssignments = safeParse('{{ calendar_assignments_json|escapejs }}' || '[]', []);
+
+        // --- Activity Chart Logic ---
+        let activityChart = null;
+
+        function initActivityChart(type) {
+            if (!chartJsAvailable) return;
+
+            const chartElement = document.getElementById('activityChart');
+            if (!chartElement) return;
+
+            const ctx = chartElement.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+            gradient.addColorStop(0, 'rgba(79, 70, 229, 0.4)');
+            gradient.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
+
+            if (activityChart) activityChart.destroy();
+
+            const labels = type === 'weekly' ? weeklyLabels : monthlyLabels;
+            const data = type === 'weekly' ? weeklyData : monthlyData;
+
+            // Ensure data is array
+            const safeLabels = Array.isArray(labels) ? labels : [];
+            const safeData = Array.isArray(data) ? data : [];
+
+            activityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: safeLabels,
+                    datasets: [{
+                        label: 'Minutes',
+                        data: safeData,
+                        backgroundColor: gradient,
+                        borderColor: '#4f46e5',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#4f46e5',
+                        pointRadius: type === 'weekly' ? 4 : 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                maxTicksLimit: type === 'weekly' ? 7 : 10,
+                                autoSkip: true,
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Expose toggle function
+        window.toggleChart = function (type) {
+            const btnWeekly = document.getElementById('btnWeekly');
+            const btnMonthly = document.getElementById('btnMonthly');
+            const title = document.getElementById('chartTitle');
+
+            if (type === 'weekly') {
+                btnWeekly.classList.add('active');
+                btnMonthly.classList.remove('active');
+                title.innerHTML = '<i class="mdi mdi-chart-line" style="margin-right: 8px;"></i> Weekly Activity';
+            } else {
+                btnWeekly.classList.remove('active');
+                btnMonthly.classList.add('active');
+                title.innerHTML = '<i class="mdi mdi-calendar-month" style="margin-right: 8px;"></i> Monthly Activity';
+            }
+            initActivityChart(type);
+        };
+
+        // Initialize defaults
+        initActivityChart('weekly');
+
+        // --- Pie Chart Logic ---
+        {% if subject_breakdown %}
+        if (chartJsAvailable) {
+            const pieCtx = document.getElementById('subjectPieChart');
+            if (pieCtx) {
+                const pieColors = [
+                    '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316',
+                    '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6'
+                ];
+
+                // CSS for legend dots
+                pieColors.forEach((color, i) => {
+                    const style = document.createElement('style');
+                    style.innerHTML = `.pie-color-${i} { background: ${color} !important; }`;
+                    document.head.appendChild(style);
+                });
+
+                const safeSubLabels = Array.isArray(subjectLabels) ? subjectLabels : [];
+                const safeSubData = Array.isArray(subjectData) ? subjectData : [];
+
+                new Chart(pieCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: safeSubLabels,
+                        datasets: [{
+                            data: safeSubData,
+                            backgroundColor: pieColors.slice(0, safeSubData.length),
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '60%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const mins = context.raw;
+                                        const hours = Math.floor(mins / 60);
+                                        const m = mins % 60;
+                                        return hours > 0 ? `${hours}h ${m}m` : `${m}m`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        {% endif %}
+
+        // --- Calendar Logic ---
+        let currentDate = new Date();
+        let selectedDate = new Date();
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            const monthEl = document.getElementById('calendarMonthYear');
+            if (monthEl) monthEl.textContent = `${monthNames[month]} ${year}`;
+
+            const grid = document.getElementById('calendarGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Empty slots
+            for (let i = 0; i < adjustedFirstDay; i++) {
+                const div = document.createElement('div');
+                div.className = 'calendar-day empty';
+                grid.appendChild(div);
+            }
+
+            const today = new Date();
+            // Safe array for iteration
+            const safeAssignments = Array.isArray(calendarAssignments) ? calendarAssignments : [];
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const div = document.createElement('div');
+                div.className = 'calendar-day';
+                div.textContent = i;
+
+                // Event check
+                const hasEvent = safeAssignments.some(t => {
+                    if (!t.deadline) return false; // Guard against missing deadline
+                    const d = new Date(t.deadline);
+                    return d.getFullYear() === year && d.getMonth() === month && d.getDate() === i;
+                });
+                if (hasEvent) div.classList.add('has-event');
+
+                if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) div.classList.add('current-day');
+                if (year === selectedDate.getFullYear() && month === selectedDate.getMonth() && i === selectedDate.getDate()) div.classList.add('active');
+
+                div.onclick = () => {
+                    selectedDate = new Date(year, month, i);
+                    renderCalendar();
+                    renderSchedule();
+                };
+
+                grid.appendChild(div);
+            }
+        }
+
+        window.changeMonth = function (delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        };
+
+        function renderSchedule() {
+            const selectedDateList = document.getElementById('selectedDateList');
+            const upcomingList = document.getElementById('upcomingList');
+            const selectedDateCount = document.getElementById('selectedDateCount');
+            const upcomingCount = document.getElementById('upcomingCount');
+            const selectedDateLabel = document.getElementById('selectedDateLabel');
+
+            if (!selectedDateList || !upcomingList) return;
+
+            selectedDateList.innerHTML = '';
+            upcomingList.innerHTML = '';
+
+            // Format label
+            const now = new Date();
+            const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const selDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+
+            if (selectedDateLabel) {
+                if (selDate.getTime() === todayDate.getTime()) {
+                    selectedDateLabel.textContent = 'Today';
+                } else {
+                    const options = { month: 'short', day: 'numeric' };
+                    selectedDateLabel.textContent = selectedDate.toLocaleDateString('en-US', options);
+                }
+            }
+
+            // Safe array
+            const safeAssignments = Array.isArray(calendarAssignments) ? calendarAssignments : [];
+            const selectedDateTasks = [];
+            const upcomingTasks = [];
+
+            safeAssignments.forEach(task => {
+                if (!task.deadline) return;
+                const deadline = new Date(task.deadline);
+                const deadlineDate = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+
+                if (deadlineDate.getTime() === selDate.getTime()) {
+                    selectedDateTasks.push(task);
+                } else {
+                    upcomingTasks.push(task);
+                }
+            });
+
+            selectedDateTasks.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+            upcomingTasks.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+
+            if (selectedDateCount) selectedDateCount.textContent = selectedDateTasks.length > 0 ? `${selectedDateTasks.length}` : '';
+            if (upcomingCount) upcomingCount.textContent = upcomingTasks.length > 0 ? `${upcomingTasks.length}` : '';
+
+            // Render logic helper
+            const renderList = (tasks, container, emptyMsg) => {
+                if (tasks.length === 0) {
+                    container.innerHTML = `<div class="text-tertiary" style="text-align: center; padding: 20px; font-size: 0.85rem;">${emptyMsg}</div>`;
+                } else {
+                    tasks.forEach(task => renderTaskItem(task, container));
+                }
+            };
+
+            renderList(selectedDateTasks, selectedDateList, '<i class="mdi mdi-calendar-blank-outline" style="opacity: 0.5;"></i> No tasks for this date');
+            renderList(upcomingTasks, upcomingList, 'No other pending tasks');
+        }
+
+        function renderTaskItem(task, container) {
+            const item = document.createElement('div');
+            item.className = 'schedule-item';
+
+            const deadline = new Date(task.deadline || new Date());
+            const now = new Date();
+            const msLeft = deadline - now;
+            const hoursLeft = msLeft / (1000 * 60 * 60);
+            const daysLeft = hoursLeft / 24;
+
+            let ringColor = '#4f46e5';
+            if (hoursLeft <= 0) ringColor = '#dc2626';
+            else if (hoursLeft <= 6) ringColor = '#ef4444';
+            else if (hoursLeft <= 24) ringColor = '#f59e0b';
+            else if (hoursLeft <= 72) ringColor = '#4f46e5';
+            else ringColor = '#10b981';
+
+            const maxHours = 168;
+            let percent = Math.max(0, Math.min(100, (hoursLeft / maxHours) * 100));
+            if (hoursLeft <= 0) percent = 0;
+            const circumference = 100;
+            const offset = circumference - (percent / 100 * circumference);
+
+            let timeText = '';
+            if (hoursLeft <= 0) {
+                const ho = Math.abs(hoursLeft);
+                timeText = ho < 24 ? `${Math.floor(ho)}h overdue` : `${Math.floor(ho / 24)}d overdue`;
+            } else if (hoursLeft < 1) {
+                timeText = `${Math.floor(hoursLeft * 60)}m`;
+            } else {
+                timeText = hoursLeft < 24 ? `${Math.floor(hoursLeft)}h` : `${Math.floor(daysLeft)}d`;
+            }
+
+            // Safe urgency access
+            const urgency = task.urgency || 'low';
+
+            item.innerHTML = `
+                <div class="ring-container">
+                     <svg class="ring-svg">
+                        <circle class="ring-circle-bg" cx="18" cy="18" r="16"></circle>
+                        <circle class="ring-circle-progress" cx="18" cy="18" r="16" stroke="${ringColor}" stroke-dashoffset="${offset}"></circle>
+                    </svg>
+                    <div class="ring-dot" style="background: ${ringColor}; transform: translate(-50%, -50%) rotate(${percent * 3.6}deg) translate(16px) rotate(-${percent * 3.6}deg);"></div>
+                </div>
+                <div class="schedule-info">
+                    <div class="schedule-title">${task.subject}: ${task.title}</div>
+                    <div class="schedule-meta" style="color: ${ringColor}">
+                         ${timeText} remaining
+                    </div>
+                </div>
+            `;
+            container.appendChild(item);
+        }
+
+        // Leaderboard Toggle
+        let lbMode = 'streaks';
+        window.toggleLeaderboard = function () {
+            const title = document.getElementById('lbTitle');
+            const streakBoard = document.getElementById('streakBoard');
+            const timeBoard = document.getElementById('timeBoard');
+
+            if (lbMode === 'streaks') {
+                lbMode = 'time';
+                title.innerHTML = '<i class="mdi mdi-clock-outline"></i> Monthly Top Time';
+                streakBoard.style.display = 'none';
+                timeBoard.style.display = 'flex';
+            } else {
+                lbMode = 'streaks';
+                title.innerHTML = '<i class="mdi mdi-fire"></i> Top Streaks';
+                streakBoard.style.display = 'flex';
+                timeBoard.style.display = 'none';
+            }
+        };
+
+        // Initialize Calendar
+        renderCalendar();
+        renderSchedule();
+
+    }
+
+    // --- Call initialization immediately with fallback ---
+    // Try immediate initialization
+    try {
+        console.log('Attempting immediate init...');
+        initDashboard();
+        console.log('Init completed successfully');
+    } catch (e) {
+        console.error('Init error:', e);
+    }
+
+    // Fallback: also try on DOMContentLoaded if not already complete
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
-            if (typeof initDashboard === 'function') initDashboard(dashboardConfig);
+            console.log('DOMContentLoaded fallback triggered');
+            initDashboard();
         });
-    } else {
-        if (typeof initDashboard === 'function') initDashboard(dashboardConfig);
     }
 
-    window.addEventListener('load', function () {
-        var calGrid = document.getElementById('calendarGrid');
-        if (calGrid && calGrid.children.length === 0 && typeof initDashboard === 'function') {
-            initDashboard(dashboardConfig);
+    // Additional fallback with setTimeout
+    setTimeout(function () {
+        const calGrid = document.getElementById('calendarGrid');
+        if (calGrid && calGrid.children.length === 0) {
+            console.log('setTimeout fallback triggered - calendar was empty');
+            initDashboard();
         }
-    });
-</script>
-<!-- Subject Management Functions -->
-<script type="text/javascript">
+    }, 1000);
+
+
+    // --- Subject Management ---
     async function addSubject() {
-        var input = document.getElementById('newSubjectName');
-        var name = input.value.trim();
-        if (!name) { showNotification('Please enter a subject name', 'error'); return; }
+        const input = document.getElementById('newSubjectName');
+        const name = input.value.trim();
+
+        if (!name) {
+            showNotification('Please enter a subject name', 'error');
+            return;
+        }
+
         try {
-            var response = await fetch("{% url 'create_subject_folder' %}", {
+            const response = await fetch("{% url 'create_subject_folder' %}", {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
                 body: JSON.stringify({ name: name })
             });
-            var data = await response.json();
+
+            const data = await response.json();
+
             if (response.ok) {
-                var list = document.getElementById('subjectsList');
-                var emptyMsg = list.querySelector('.text-tertiary');
-                if (emptyMsg && emptyMsg.parentElement) { emptyMsg.parentElement.remove(); }
-                var subjectDiv = document.createElement('div');
+                const list = document.getElementById('subjectsList');
+
+                // Remove "no subjects" message if it exists
+                const emptyMsg = list.querySelector('.text-tertiary');
+                if (emptyMsg && emptyMsg.parentElement) {
+                    emptyMsg.parentElement.remove();
+                }
+
+                // Create new subject tag
+                const subjectDiv = document.createElement('div');
                 subjectDiv.className = 'subject-tag';
                 subjectDiv.setAttribute('data-subject-id', data.folder_id);
-                subjectDiv.style = 'background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%); padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.9rem; display: flex; align-items: center; gap: 8px;';
-                subjectDiv.innerHTML = '<i class="mdi mdi-book-outline" style="font-size: 1.1rem; color: var(--primary-color);"></i><span style="font-weight: 500;">' + data.folder_name + '</span><button onclick="deleteSubject(' + data.folder_id + ', &quot;' + data.folder_name + '&quot;)" class="subject-delete-btn" style="background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; padding: 2px 4px; border-radius: 50%;" title="Delete subject"><i class="mdi mdi-close" style="font-size: 1rem;"></i></button>';
+                subjectDiv.style = `background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary)
+100%);
+padding: 8px 14px;
+border-radius: 20px;
+border: 1px solid var(--border-color);
+font-size: 0.9rem;
+display: flex;
+align-items: center;
+gap: 8px;
+transition: all 0.2s ease;
+position: relative;
+box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+animation: slideIn 0.3s ease;`;
+
+                subjectDiv.innerHTML = `
+<i class="mdi mdi-book-outline" style="font-size: 1.1rem; color: var(--primary-color);"></i>
+<span style="font-weight: 500;">${data.folder_name}</span>
+<button onclick="deleteSubject(${data.folder_id}, '${data.folder_name}')" class="subject-delete-btn" style="background: transparent; 
+                                   border: none; 
+                                   color: var(--text-tertiary); 
+                                   cursor: pointer; 
+                                   padding: 2px 4px;
+                                   border-radius: 50%;
+                                   transition: all 0.2s ease;
+                                   display: flex;
+                                   align-items: center;
+                                   justify-content: center;"
+    onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#ef4444';"
+    onmouseout="this.style.background='transparent'; this.style.color='var(--text-tertiary)';" title="Delete subject">
+    <i class="mdi mdi-close" style="font-size: 1rem;"></i>
+</button>
+`;
+
                 list.appendChild(subjectDiv);
                 input.value = '';
-                showNotification('Subject added!', 'success');
-            } else { showNotification(data.error || 'Failed to add subject', 'error'); }
-        } catch (error) { console.error(error); showNotification('Error adding subject', 'error'); }
+
+                showNotification(`Subject "${data.folder_name}" added successfully!`, 'success');
+            } else {
+                showNotification(data.error || 'Failed to add subject', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            showNotification('An error occurred while adding the subject', 'error');
+        }
     }
 
     async function deleteSubject(folderId, folderName) {
-        if (!confirm('Delete "' + folderName + '"? This will also delete all notes.')) return;
+        if (!confirm(`Are you sure you want to delete "${folderName}"?\n\nThis will also delete all notes in
+this subject.`)) {
+            return;
+        }
+
         try {
-            var response = await fetch("{% url 'delete_subject_folder' %}", {
+            const response = await fetch("{% url 'delete_subject_folder' %}", {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
                 body: JSON.stringify({ folder_id: folderId })
             });
-            var data = await response.json();
+
+            const data = await response.json();
+
             if (response.ok) {
-                var el = document.querySelector('[data-subject-id="' + folderId + '"]');
-                if (el) { el.remove(); }
-                var list = document.getElementById('subjectsList');
-                if (list.children.length === 0) {
-                    list.innerHTML = '<div class="text-tertiary" style="padding: 20px; text-align: center; width: 100%;"><i class="mdi mdi-book-plus-outline" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 8px;"></i><span style="font-size: 0.9rem;">No subjects yet. Add your first subject below!</span></div>';
+                // Remove the subject from DOM with animation
+                const subjectElement = document.querySelector(`[data-subject-id="${folderId}"]`);
+                if (subjectElement) {
+                    subjectElement.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => {
+                        subjectElement.remove();
+
+                        // Check if list is now empty
+                        const list = document.getElementById('subjectsList');
+                        if (list.children.length === 0) {
+                            list.innerHTML = `
+<div class="text-tertiary" style="padding: 20px; text-align: center; width: 100%;">
+    <i class="mdi mdi-book-plus-outline" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 8px;"></i>
+    <span style="font-size: 0.9rem;">No subjects yet. Add your first subject below!</span>
+</div>
+`;
+                        }
+                    }, 300);
                 }
-                showNotification('Subject deleted', 'success');
-            } else { showNotification(data.error || 'Failed', 'error'); }
-        } catch (error) { console.error(error); showNotification('Error deleting subject', 'error'); }
+
+                showNotification(data.message || 'Subject deleted successfully', 'success');
+            } else {
+                showNotification(data.error || 'Failed to delete subject', 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            showNotification('An error occurred while deleting the subject', 'error');
+        }
     }
 
-    function showNotification(message, type) {
-        type = type || 'info';
-        var n = document.createElement('div');
-        n.style = 'position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
-        if (type === 'success') { n.style.background = '#10b981'; n.style.color = 'white'; }
-        else if (type === 'error') { n.style.background = '#ef4444'; n.style.color = 'white'; }
-        else { n.style.background = 'var(--bg-secondary)'; n.style.color = 'var(--text-primary)'; }
-        n.textContent = message;
-        document.body.appendChild(n);
-        setTimeout(function () { n.remove(); }, 3000);
+    // Notification helper function
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.style = `
+position: fixed;
+top: 20px;
+right: 20px;
+padding: 12px 20px;
+border-radius: 8px;
+font-size: 0.9rem;
+font-weight: 500;
+z-index: 10000;
+box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+animation: slideInRight 0.3s ease;
+display: flex;
+align-items: center;
+gap: 10px;
+max-width: 400px;
+`;
+
+        if (type === 'success') {
+            notification.style.background = '#10b981';
+            notification.style.color = 'white';
+            notification.innerHTML = '<i class="mdi mdi-check-circle"></i>' + message;
+        } else if (type === 'error') {
+            notification.style.background = '#ef4444';
+            notification.style.color = 'white';
+            notification.innerHTML = '<i class="mdi mdi-alert-circle"></i>' + message;
+        } else {
+            notification.style.background = 'var(--bg-secondary)';
+            notification.style.color = 'var(--text-primary)';
+            notification.style.border = '1px solid var(--border-color)';
+            notification.innerHTML = '<i class="mdi mdi-information"></i>' + message;
+        }
+
+        document.body.appendChild(notification);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
     }
+
+    // Add animation keyframes
+    const style = document.createElement('style');
+    style.textContent = `
+@keyframes slideIn {
+from {
+opacity: 0;
+transform: translateX(-20px);
+}
+to {
+opacity: 1;
+transform: translateX(0);
+}
+}
+
+@keyframes slideOut {
+from {
+opacity: 1;
+transform: translateX(0);
+}
+to {
+opacity: 0;
+transform: translateX(-20px);
+}
+}
+
+@keyframes slideInRight {
+from {
+opacity: 0;
+transform: translateX(100px);
+}
+to {
+opacity: 1;
+transform: translateX(0);
+}
+}
+
+@keyframes slideOutRight {
+from {
+opacity: 1;
+transform: translateX(0);
+}
+to {
+opacity: 0;
+transform: translateX(100px);
+}
+}
+
+.subject-tag:hover {
+transform: translateY(-2px);
+box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+}
+`;
+    document.head.appendChild(style);
+
 </script>
+<script type="text/javascript">
+    // Fallback initialization script - runs after everything else
+    window.addEventListener('load', function () {
+        console.log('Window load event fired');
+        var calGrid = document.getElementById('calendarGrid');
+        if (calGrid && calGrid.children.length === 0) {
+            console.log('Calendar empty, attempting init...');
+            if (typeof initDashboard === 'function') {
+                initDashboard();
+            } else {
+                console.error('initDashboard not found');
+            }
+        }
+    });
+</script>
+<!-- FIXED -->
 {% endblock %}

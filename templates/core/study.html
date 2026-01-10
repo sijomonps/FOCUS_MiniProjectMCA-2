@@ -71,6 +71,16 @@
         letter-spacing: -3px;
     }
 
+    @media (max-width: 768px) {
+        .timer-display {
+            font-size: 4rem;
+        }
+
+        .timer-container {
+            min-height: 60vh;
+        }
+    }
+
     /* Custom Subject Select */
     .custom-select-wrapper {
         position: relative;
@@ -291,7 +301,7 @@
             {% else %}
             <option value="" disabled selected>Select a subject...</option>
             {% for subject in subjects %}
-            <option value="{{ subject.name }}">{{ subject.name }}</option>
+            <option value="{{ subject }}">{{ subject }}</option>
             {% endfor %}
             <option value="General Study">General Study</option>
             {% endif %}

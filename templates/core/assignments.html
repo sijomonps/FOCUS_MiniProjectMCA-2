@@ -25,6 +25,11 @@
     .page-header {
         padding: 0 var(--spacing-lg);
         margin-bottom: var(--spacing-lg);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+        align-items: center;
+        justify-content: space-between;
     }
 
     /* Advanced Dynamic Treemap Layout */
@@ -113,7 +118,10 @@
 
     /* Mobile responsive adjustments */
     @media (max-width: 768px) {
-        .span-2x2, .span-2x3, .span-3x2 {
+
+        .span-2x2,
+        .span-2x3,
+        .span-3x2 {
             grid-column: span 2;
             grid-row: span 2;
         }
@@ -130,7 +138,11 @@
     }
 
     @media (max-width: 600px) {
-        .span-1x2, .span-2x2, .span-2x3, .span-3x2 {
+
+        .span-1x2,
+        .span-2x2,
+        .span-2x3,
+        .span-3x2 {
             grid-column: span 1;
             grid-row: span 1;
         }
@@ -138,6 +150,49 @@
         .treemap-container {
             grid-template-columns: repeat(3, 1fr);
             grid-auto-rows: 90px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .treemap-container {
+            grid-template-columns: repeat(2, 1fr);
+            /* 2 columns for phones */
+            padding: 0 var(--spacing-sm);
+            gap: 10px;
+        }
+
+        .main-content {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .page-header {
+            padding: 0 var(--spacing-md);
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+
+        .page-header .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .card {
+            margin-left: var(--spacing-sm);
+            margin-right: var(--spacing-sm);
+        }
+
+        .assignment-title {
+            font-size: 0.78rem;
+        }
+
+        .time-remaining-large {
+            font-size: 1rem;
+        }
+
+        .span-1x1 .time-remaining-large {
+            font-size: 1rem;
         }
     }
 
@@ -441,9 +496,12 @@
 
     /* Pulse animation for critical items */
     @keyframes pulse {
-        0%, 100% {
+
+        0%,
+        100% {
             transform: scale(1);
         }
+
         50% {
             transform: scale(1.02);
         }
@@ -649,10 +707,10 @@
         assignments.forEach((assignment, index) => {
             const cube = document.createElement('div');
             const hoursRemaining = calculateHoursRemaining(assignment.deadline);
-            
+
             // Calculate urgency score (0-100, where 100 is most urgent)
             const urgencyScore = calculateUrgencyScore(hoursRemaining);
-            
+
             // Advanced dynamic sizing based on urgency score and time remaining
             const { colorClass, spanClass } = getAdvancedSizeAndColor(hoursRemaining, urgencyScore);
 
@@ -705,10 +763,10 @@
     // Advanced size and color determination based on time remaining
     function getAdvancedSizeAndColor(hours, urgencyScore) {
         let colorClass, spanClass;
-        
+
         // Dynamic sizing based on urgency score
         // More urgent = bigger boxes
-        
+
         if (hours < 0 || hours < 6) {
             // CRITICAL (<6h or overdue): Maximum size
             colorClass = 'cube-critical';
@@ -754,7 +812,7 @@
             colorClass = 'cube-far';
             spanClass = 'span-1x1';
         }
-        
+
         return { colorClass, spanClass };
     }
 
@@ -791,13 +849,13 @@
     function formatDate(dateStr) {
         const date = new Date(dateStr);
         const now = new Date();
-        
+
         // Normalize dates to midnight for accurate day comparison
         const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const tomorrow = new Date(nowOnly);
         tomorrow.setDate(tomorrow.getDate() + 1);
-        
+
         // Check if today
         if (dateOnly.getTime() === nowOnly.getTime()) {
             return 'Today ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -806,7 +864,7 @@
         if (dateOnly.getTime() === tomorrow.getTime()) {
             return 'Tomorrow ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
         }
-        
+
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
     }
 
@@ -815,15 +873,15 @@
         setInterval(() => {
             const cubes = document.querySelectorAll('.assignment-cube');
             let needsRerender = false;
-            
+
             cubes.forEach(cube => {
                 const assignmentId = parseInt(cube.dataset.id);
                 const assignment = assignments.find(a => a.id === assignmentId);
-                
+
                 if (assignment) {
                     const hoursRemaining = calculateHoursRemaining(assignment.deadline);
                     const oldHours = parseFloat(cube.dataset.hours);
-                    
+
                     // Update time display
                     const timeDisplay = cube.querySelector('.time-remaining-large');
                     const timeLabel = cube.querySelector('.time-label');
@@ -831,16 +889,16 @@
                         timeDisplay.textContent = formatHoursRemainingShort(hoursRemaining);
                         timeLabel.textContent = hoursRemaining < 0 ? 'Overdue' : 'Left';
                     }
-                    
+
                     // Check if urgency category changed (requires re-render for size change)
                     if (crossedUrgencyThreshold(oldHours, hoursRemaining)) {
                         needsRerender = true;
                     }
-                    
+
                     cube.dataset.hours = hoursRemaining;
                 }
             });
-            
+
             // Re-render if any assignment crossed an urgency threshold
             if (needsRerender) {
                 renderTreemap();
@@ -851,9 +909,9 @@
     // Check if assignment crossed an urgency threshold requiring resize
     function crossedUrgencyThreshold(oldHours, newHours) {
         const thresholds = [6, 12, 24, 36, 48, 72, 120, 168, 240, 336];
-        
+
         for (let threshold of thresholds) {
-            if ((oldHours >= threshold && newHours < threshold) || 
+            if ((oldHours >= threshold && newHours < threshold) ||
                 (oldHours < threshold && newHours >= threshold)) {
                 return true;
             }
@@ -866,6 +924,9 @@
         event.stopPropagation();
 
         try {
+            // Get assignment data before completing
+            const assignmentData = assignments.find(a => a.id === assignmentId);
+
             // Visual feedback immediately
             element.style.opacity = '0.5';
 
@@ -881,12 +942,41 @@
                 setTimeout(() => {
                     assignments = assignments.filter(a => a.id !== assignmentId);
                     renderTreemap();
-                    
-                    // Show completed section and reload to display the completed item
-                    if (completedSectionDiv) {
-                        completedSectionDiv.style.display = 'block';
+
+                    // Show completed section and add the completed item dynamically
+                    if (completedSection && completedList && assignmentData) {
+                        completedSection.style.display = 'block';
+
+                        // Create the completed item element
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'completed-item';
+                        itemDiv.dataset.id = assignmentId;
+
+                        // Format today's date
+                        const today = new Date();
+                        const formattedDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                        itemDiv.innerHTML = `
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-xs);">
+                                    ${assignmentData.title}
+                                </div>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                    ${assignmentData.subject || 'General'}
+                                </div>
+                            </div>
+                            <div style="text-align: right; font-size: 0.85rem; color: var(--text-tertiary);">
+                                <span style="color: var(--color-green); margin-right: var(--spacing-sm);">
+                                    <i class="mdi mdi-check"></i>
+                                </span>
+                                ${formattedDate}
+                            </div>
+                        `;
+
+                        // Prepend to show newest first
+                        completedList.insertBefore(itemDiv, completedList.firstChild);
                     }
-                    
+
                     // Reload if no more pending assignments
                     if (assignments.length === 0) {
                         location.reload();
@@ -996,11 +1086,11 @@
     // Check if there are more than 5 completed assignments on page load
     async function checkForMoreCompleted() {
         if (!seeMoreBtn || !completedListDiv) return;
-        
+
         try {
             const response = await fetch("{% url 'get_all_completed_assignments' %}");
             const data = await response.json();
-            
+
             if (data.success && data.completed.length > 5) {
                 seeMoreBtn.style.display = 'block';
             } else if (data.completed.length === 0) {
@@ -1022,11 +1112,11 @@
                 try {
                     const response = await fetch("{% url 'get_all_completed_assignments' %}");
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         // Clear current list
                         completedListDiv.innerHTML = '';
-                        
+
                         // Add all completed assignments
                         data.completed.forEach(assignment => {
                             const itemDiv = document.createElement('div');
@@ -1050,7 +1140,7 @@
                             `;
                             completedListDiv.appendChild(itemDiv);
                         });
-                        
+
                         seeMoreBtn.innerHTML = '<i class="mdi mdi-chevron-up"></i> Show Less';
                         showingAll = true;
                     }

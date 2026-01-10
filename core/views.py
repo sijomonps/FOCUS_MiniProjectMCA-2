@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
@@ -11,6 +12,7 @@ from datetime import datetime, timedelta
 import json
 
 from .models import StudySession, Assignment, QuickNote, SubjectFolder
+from django.db import models
 
 
 # Authentication Views
@@ -75,12 +77,22 @@ def dashboard_view(request):
     # Get weekly data for chart
     weekly_data = StudySession.get_weekly_data(user)
     
-    # Prepare chart data
+    # Prepare weekly chart data
     chart_labels = []
     chart_data = []
     for date, minutes in sorted(weekly_data.items()):
         chart_labels.append(date.strftime('%a'))  # Mon, Tue, etc.
         chart_data.append(minutes)
+    
+    # Get monthly data for chart
+    monthly_data = StudySession.get_monthly_data(user)
+    
+    # Prepare monthly chart data
+    chart_labels_monthly = []
+    chart_data_monthly = []
+    for date, minutes in sorted(monthly_data.items()):
+        chart_labels_monthly.append(date.strftime('%d'))  # Day number
+        chart_data_monthly.append(minutes)
     
     # Get pending assignments (up to 6 for preview)
     assignments = Assignment.objects.filter(user=user, status='pending')[:6]
@@ -93,9 +105,6 @@ def dashboard_view(request):
         greeting = "Good afternoon"
     else:
         greeting = "Good evening"
-    
-    # Get monthly data (simplified as 4 weeks for now or similar to weekly)
-    monthly_data = StudySession.get_weekly_data(user) # Reuse logic or create new one for month
     
     # Calculate subject breakdown for Pie Chart
     subject_sessions = StudySession.objects.filter(user=user)
@@ -142,6 +151,38 @@ def dashboard_view(request):
     # Prepare Subjects List
     subjects = SubjectFolder.objects.filter(user=user)
 
+    # Leaderboard Logic
+    # 1. Top Monthly Study Time
+    now = timezone.now()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    top_study_users = User.objects.filter(study_sessions__date__gte=month_start) \
+        .annotate(total_duration=models.Sum('study_sessions__duration')) \
+        .order_by('-total_duration')[:5]
+    
+    top_study_time_data = []
+    for u in top_study_users:
+        duration = u.total_duration or 0
+        hours = round(duration / 60, 1)
+        top_study_time_data.append({
+            'username': u.username,
+            'value': f"{hours}h",
+            'rank': 0 # Will assign index + 1 in template or here
+        })
+
+    # 2. Top Streaks (calculating for all users - manageable for mini project)
+    # Note: For production, store streak in user model field
+    all_users = User.objects.all()
+    user_streaks_list = []
+    for u in all_users:
+        s = StudySession.get_study_streak(u)
+        if s > 0: # Only show active streaks
+            user_streaks_list.append({'username': u.username, 'streak': s})
+    
+    # Sort and take top 5
+    user_streaks_list.sort(key=lambda x: x['streak'], reverse=True)
+    top_streaks_data = user_streaks_list[:5]
+
     context = {
         'greeting': greeting,
         'quote': "Focus is the key to success.", # Added static quote for now
@@ -150,12 +191,16 @@ def dashboard_view(request):
         'streak': streak,
         'chart_labels': json.dumps(chart_labels),
         'chart_data': json.dumps(chart_data),
-        'chart_labels_monthly': json.dumps(chart_labels), # Using weekly as placeholder to prevent error if monthly unavailable
-        'chart_data_monthly': json.dumps(chart_data),    # Using weekly as placeholder
+        'chart_labels_monthly': json.dumps(chart_labels_monthly),
+        'chart_data_monthly': json.dumps(chart_data_monthly),
+        'chart_subject_labels': json.dumps([item['subject'] for item in subject_breakdown]),
+        'chart_subject_data': json.dumps([item['minutes'] for item in subject_breakdown]),
         'assignments': assignments,
         'subject_breakdown': subject_breakdown,
         'subjects': subjects,
         'calendar_assignments_json': json.dumps(calendar_assignments),
+        'top_study_time': top_study_time_data,
+        'top_streaks': top_streaks_data,
     }
     
     return render(request, 'core/dashboard.html', context)
@@ -165,11 +210,17 @@ def dashboard_view(request):
 @login_required
 def study_view(request):
     """Study timer page"""
-    # Get unique subjects for dropdown
-    subjects = StudySession.objects.filter(user=request.user).values_list('subject', flat=True).distinct()
+    # Get subjects from SubjectFolder
+    folder_subjects = SubjectFolder.objects.filter(user=request.user).values_list('name', flat=True)
+    
+    # Get subjects from past sessions (legacy compatibility)
+    session_subjects = StudySession.objects.filter(user=request.user).values_list('subject', flat=True).distinct()
+    
+    # Combine and sort unique subjects
+    all_subjects = sorted(list(set(list(folder_subjects) + list(session_subjects))))
     
     context = {
-        'subjects': list(subjects),
+        'subjects': all_subjects,
     }
     
     return render(request, 'core/study.html', context)
@@ -462,6 +513,32 @@ def delete_folder(request):
     
     except SubjectFolder.DoesNotExist:
         return JsonResponse({'error': 'Folder not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def delete_subject_folder(request):
+    """Delete a subject folder from dashboard"""
+    try:
+        data = json.loads(request.body)
+        folder_id = data.get('folder_id')
+        
+        if not folder_id:
+            return JsonResponse({'error': 'Folder ID is required'}, status=400)
+        
+        folder = SubjectFolder.objects.get(id=folder_id, user=request.user)
+        folder_name = folder.name
+        folder.delete()  # This will cascade delete all notes in the folder
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Subject "{folder_name}" deleted successfully'
+        })
+    
+    except SubjectFolder.DoesNotExist:
+        return JsonResponse({'error': 'Subject not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 

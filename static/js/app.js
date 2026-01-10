@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initAnimations();
     initKeyboardShortcuts();
     initThemeEnhancements();
+    initGlobalTimer();
 });
 
 // Smooth scrolling for anchor links
@@ -244,3 +245,88 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+
+// ================================
+// Global Timer Logic
+// ================================
+function initGlobalTimer() {
+    const timerContainer = document.getElementById('globalTimerContainer');
+    const timerDisplay = document.getElementById('globalTimerDisplay');
+
+    if (!timerContainer || !timerDisplay) return;
+
+    const indicator = timerContainer.querySelector('div[style*="width: 8px"]');
+    const label = timerContainer.querySelector('div[style*="font-size: 0.65rem"]');
+
+    // Check timer state every second
+    setInterval(() => {
+        const isRunning = localStorage.getItem('focus_running') === 'true';
+        const isOnBreak = localStorage.getItem('focus_onBreak') === 'true';
+
+        // Hide on study page to avoid redundancy (optional, but requested feature implies across tabs)
+        // If user wants it explicitly on side panel, maybe we allow it. 
+        // But study page has the BIG timer. Let's hide it on study page for cleaner UI.
+        const isStudyPage = window.location.pathname.includes('/study');
+        if (isStudyPage) {
+            timerContainer.classList.add('hidden');
+            timerContainer.style.display = 'none';
+            return;
+        }
+
+        if (isRunning || isOnBreak) {
+            timerContainer.classList.remove('hidden');
+            timerContainer.style.display = 'flex';
+
+            let displayTime = 0;
+
+            if (isOnBreak) {
+                // Break Logic
+                const breakTime = parseInt(localStorage.getItem('focus_breakTime')) || 0;
+                const breakTs = parseInt(localStorage.getItem('focus_breakTs')) || 0;
+                
+                if (breakTs > 0) {
+                     const elapsed = Math.floor((Date.now() - breakTs) / 1000);
+                     displayTime = Math.max(0, breakTime - elapsed);
+                } else {
+                     displayTime = breakTime;
+                }
+                
+                if (indicator) {
+                    indicator.style.background = 'var(--color-green)';
+                    indicator.style.boxShadow = '0 0 8px var(--color-green)';
+                    indicator.style.animation = 'none';
+                }
+                if (label) label.textContent = 'Break Time';
+
+            } else {
+                // Study Logic
+                const savedTime = parseInt(localStorage.getItem('focus_time')) || 0;
+                const startTs = parseInt(localStorage.getItem('focus_startTs'));
+                
+                displayTime = savedTime;
+                
+                if (startTs && !isNaN(startTs)) {
+                    const elapsed = Math.floor((Date.now() - startTs) / 1000);
+                    displayTime += elapsed;
+                }
+                
+                if (indicator) {
+                    indicator.style.background = 'var(--color-red)';
+                    indicator.style.boxShadow = '0 0 8px var(--color-red)';
+                    indicator.style.animation = 'pulse 1.5s infinite';
+                }
+                if (label) label.textContent = 'Session Active';
+            }
+
+            // Format mm:ss
+            const m = Math.floor(displayTime / 60);
+            const s = displayTime % 60;
+            timerDisplay.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+
+        } else {
+            timerContainer.classList.add('hidden');
+            timerContainer.style.display = 'none';
+        }
+    }, 1000);
+}
