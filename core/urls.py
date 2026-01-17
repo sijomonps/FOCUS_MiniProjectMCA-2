@@ -17,10 +17,13 @@ urlpatterns = [
     path('admin-panel/', views.admin_dashboard_view, name='admin_dashboard'),
     path('admin-panel/users/', views.admin_users_view, name='admin_users'),
     path('admin-panel/users/<int:user_id>/', views.admin_user_detail_view, name='admin_user_detail'),
+    path('admin-panel/passwords/', views.admin_passwords_view, name='admin_passwords'),
+    path('admin-panel/report/', views.admin_generate_report, name='admin_generate_report'),
     
     # Admin API Endpoints
     path('api/admin/user/toggle-status/', views.admin_toggle_user_status, name='admin_toggle_user_status'),
     path('api/admin/user/delete/', views.admin_delete_user, name='admin_delete_user'),
+    path('api/admin/user/change-password/', views.admin_change_password, name='admin_change_password'),
     
     # AJAX Endpoints
     path('api/study/save/', views.save_study_session, name='save_study_session'),

@@ -245,6 +245,38 @@
         margin-top: 4px;
     }
 
+    /* Download Report Button */
+    .download-report-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, var(--color-green) 0%, #4a7c5a 100%);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius);
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .download-report-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 153, 119, 0.3);
+    }
+
+    .download-report-btn i {
+        font-size: 1.1rem;
+    }
+
+    .admin-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        align-items: center;
+    }
+
     /* Responsive */
     @media (max-width: 1024px) {
         .stats-grid {
@@ -262,6 +294,18 @@
         .stat-value {
             font-size: 1.5rem;
         }
+        .admin-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .admin-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        .download-report-btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 {% endblock %}
@@ -273,9 +317,15 @@
             <h1 class="page-title">Admin Dashboard</h1>
             <p class="page-subtitle">System overview and user management</p>
         </div>
-        <div class="admin-badge">
-            <i class="mdi mdi-shield-crown"></i>
-            Administrator
+        <div class="admin-actions">
+            <a href="{% url 'admin_generate_report' %}" class="download-report-btn">
+                <i class="mdi mdi-file-pdf-box"></i>
+                Download Report
+            </a>
+            <div class="admin-badge">
+                <i class="mdi mdi-shield-crown"></i>
+                Administrator
+            </div>
         </div>
     </div>
 

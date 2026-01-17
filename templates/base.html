@@ -90,7 +90,7 @@
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     <li>
                         <a href="{% url 'admin_dashboard' %}" 
-                            class="admin-nav-link {% if '/admin-panel/' in request.path and '/users' not in request.path %}active{% endif %}"
+                            class="admin-nav-link {% if request.path == '/admin-panel/' %}active{% endif %}"
                             data-tooltip="Admin Dashboard">
                             <span class="icon"><i class="mdi mdi-shield-crown"></i></span>
                             <span>Admin Panel</span>
@@ -102,6 +102,14 @@
                             data-tooltip="Manage Users">
                             <span class="icon"><i class="mdi mdi-account-group"></i></span>
                             <span>Manage Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_passwords' %}" 
+                            class="admin-nav-link {% if '/admin-panel/passwords' in request.path %}active{% endif %}"
+                            data-tooltip="Manage Passwords">
+                            <span class="icon"><i class="mdi mdi-lock-reset"></i></span>
+                            <span>Passwords</span>
                         </a>
                     </li>
                 </ul>

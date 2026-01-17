@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .forms import CustomUserCreationForm, CustomAuthenticationForm
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -977,6 +977,271 @@ def admin_delete_user(request):
         return JsonResponse({
             'success': True,
             'message': f'User {username} has been deleted'
+        })
+    
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@superuser_required
+def admin_generate_report(request):
+    """Generate PDF report of all users and their activities"""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    from io import BytesIO
+    
+    # Create the HttpResponse object with PDF headers
+    buffer = BytesIO()
+    
+    # Create the PDF document
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        rightMargin=30,
+        leftMargin=30,
+        topMargin=30,
+        bottomMargin=30
+    )
+    
+    # Container for the PDF elements
+    elements = []
+    
+    # Get styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        spaceAfter=30,
+        alignment=TA_CENTER,
+        textColor=colors.HexColor('#6699BB')
+    )
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=14,
+        spaceAfter=12,
+        spaceBefore=20,
+        textColor=colors.HexColor('#333333')
+    )
+    normal_style = ParagraphStyle(
+        'CustomNormal',
+        parent=styles['Normal'],
+        fontSize=10,
+        spaceAfter=6
+    )
+    
+    # Title
+    elements.append(Paragraph('FOCUS - User Activity Report', title_style))
+    elements.append(Paragraph(f'Generated on: {timezone.now().strftime("%B %d, %Y at %H:%M")}', normal_style))
+    elements.append(Spacer(1, 20))
+    
+    # Platform Statistics
+    elements.append(Paragraph('Platform Overview', heading_style))
+    
+    total_users = User.objects.count()
+    total_sessions = StudySession.objects.count()
+    total_study_minutes = StudySession.objects.aggregate(total=models.Sum('duration'))['total'] or 0
+    total_assignments = Assignment.objects.count()
+    total_notes = QuickNote.objects.count()
+    
+    stats_data = [
+        ['Metric', 'Value'],
+        ['Total Users', str(total_users)],
+        ['Total Study Sessions', str(total_sessions)],
+        ['Total Study Time', f'{round(total_study_minutes / 60, 1)} hours'],
+        ['Total Assignments', str(total_assignments)],
+        ['Total Notes', str(total_notes)],
+    ]
+    
+    stats_table = Table(stats_data, colWidths=[200, 150])
+    stats_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#6699BB')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f5f5f5')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#dddddd')),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
+        ('TOPPADDING', (0, 1), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+    ]))
+    elements.append(stats_table)
+    elements.append(Spacer(1, 30))
+    
+    # All Users Summary Table
+    elements.append(Paragraph('All Users Summary', heading_style))
+    
+    users = User.objects.all().order_by('-date_joined')
+    user_data = [['Username', 'Email', 'Status', 'Role', 'Study Time', 'Assignments', 'Notes', 'Joined']]
+    
+    for user in users:
+        study_time = StudySession.objects.filter(user=user).aggregate(
+            total=models.Sum('duration')
+        )['total'] or 0
+        assignments_count = Assignment.objects.filter(user=user).count()
+        notes_count = QuickNote.objects.filter(user=user).count()
+        
+        user_data.append([
+            user.username,
+            user.email or 'N/A',
+            'Active' if user.is_active else 'Disabled',
+            'Admin' if user.is_superuser else 'User',
+            f'{round(study_time / 60, 1)}h',
+            str(assignments_count),
+            str(notes_count),
+            user.date_joined.strftime('%Y-%m-%d')
+        ])
+    
+    user_table = Table(user_data, colWidths=[80, 120, 60, 50, 70, 70, 50, 80])
+    user_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#669977')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f9f9f9')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#dddddd')),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f5f5')]),
+    ]))
+    elements.append(user_table)
+    
+    # Individual User Details
+    elements.append(PageBreak())
+    elements.append(Paragraph('Individual User Details', title_style))
+    
+    for user in users:
+        elements.append(Paragraph(f'User: {user.username}', heading_style))
+        
+        # User info
+        info_text = f"Email: {user.email or 'N/A'} | Status: {'Active' if user.is_active else 'Disabled'} | "
+        info_text += f"Role: {'Administrator' if user.is_superuser else 'Regular User'} | "
+        info_text += f"Joined: {user.date_joined.strftime('%B %d, %Y')}"
+        elements.append(Paragraph(info_text, normal_style))
+        
+        # Study Sessions Summary
+        study_sessions = StudySession.objects.filter(user=user)
+        total_time = study_sessions.aggregate(total=models.Sum('duration'))['total'] or 0
+        
+        # Subject breakdown
+        subject_totals = {}
+        for session in study_sessions:
+            subject_totals[session.subject] = subject_totals.get(session.subject, 0) + session.duration
+        
+        if subject_totals:
+            elements.append(Paragraph('Study Time by Subject:', normal_style))
+            subject_data = [['Subject', 'Time Studied']]
+            for subject, minutes in sorted(subject_totals.items(), key=lambda x: x[1], reverse=True):
+                subject_data.append([subject, f'{round(minutes / 60, 1)} hours ({minutes} min)'])
+            subject_data.append(['TOTAL', f'{round(total_time / 60, 1)} hours'])
+            
+            subject_table = Table(subject_data, colWidths=[200, 150])
+            subject_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#CCBB66')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dddddd')),
+                ('TOPPADDING', (0, 0), (-1, -1), 5),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e8e8e8')),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ]))
+            elements.append(subject_table)
+        else:
+            elements.append(Paragraph('No study sessions recorded.', normal_style))
+        
+        # Assignments
+        assignments = Assignment.objects.filter(user=user)
+        pending = assignments.filter(status='pending').count()
+        completed = assignments.filter(status='completed').count()
+        elements.append(Paragraph(f'Assignments: {pending} pending, {completed} completed', normal_style))
+        
+        # Notes
+        notes_count = QuickNote.objects.filter(user=user).count()
+        folders_count = SubjectFolder.objects.filter(user=user).count()
+        elements.append(Paragraph(f'Notes: {notes_count} notes in {folders_count} folders', normal_style))
+        
+        elements.append(Spacer(1, 20))
+    
+    # Build the PDF
+    doc.build(elements)
+    
+    # Get the value of the BytesIO buffer and create response
+    pdf = buffer.getvalue()
+    buffer.close()
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="FOCUS_User_Report_{timezone.now().strftime("%Y%m%d_%H%M")}.pdf"'
+    response.write(pdf)
+    
+    return response
+
+
+@login_required
+@superuser_required
+def admin_passwords_view(request):
+    """View and manage user passwords"""
+    users = User.objects.all().order_by('username')
+    
+    user_list = []
+    for user in users:
+        user_list.append({
+            'user': user,
+            'last_login': user.last_login,
+            'date_joined': user.date_joined,
+        })
+    
+    context = {
+        'users': user_list,
+        'total_users': len(user_list),
+    }
+    
+    return render(request, 'core/admin_passwords.html', context)
+
+
+@login_required
+@superuser_required
+@require_POST
+def admin_change_password(request):
+    """Change a user's password"""
+    try:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        new_password = data.get('new_password')
+        
+        if not user_id:
+            return JsonResponse({'error': 'User ID is required'}, status=400)
+        
+        if not new_password:
+            return JsonResponse({'error': 'New password is required'}, status=400)
+        
+        if len(new_password) < 6:
+            return JsonResponse({'error': 'Password must be at least 6 characters long'}, status=400)
+        
+        target_user = User.objects.get(id=user_id)
+        
+        # Set the new password
+        target_user.set_password(new_password)
+        target_user.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Password for {target_user.username} has been changed successfully'
         })
     
     except User.DoesNotExist:
