@@ -188,11 +188,13 @@ class QuickNote(models.Model):
     title = models.CharField(max_length=200, default='Untitled Note')
     content = models.TextField(max_length=2000)  # Increased limit for better notes
     study_duration = models.IntegerField(help_text="Duration in minutes", null=True, blank=True)
+    is_pinned = models.BooleanField(default=False)  # Pin feature
+    pinned_at = models.DateTimeField(null=True, blank=True)  # Track when pinned for ordering
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-is_pinned', '-pinned_at', '-created_at']
     
     def __str__(self):
         return f"{self.user.username} - {self.title}"

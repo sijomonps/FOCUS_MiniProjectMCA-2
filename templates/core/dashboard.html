@@ -188,11 +188,21 @@
         border-radius: var(--border-radius);
         padding: var(--spacing-lg);
         text-align: center;
-        transition: border-color 0.2s;
+        transition: border-color 0.3s, box-shadow 0.3s;
     }
 
     .stat-card:hover {
         border-color: var(--border-color-light);
+    }
+    
+    /* Live indicator animation */
+    @keyframes live-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .stat-label span {
+        animation: live-pulse 1.5s ease-in-out infinite;
     }
 
     .stat-value {
@@ -511,6 +521,99 @@
         color: var(--primary-color);
         font-size: 0.9rem;
     }
+
+    /* See All Button */
+    .see-all-btn {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-top: 12px;
+        width: 100%;
+        transition: all 0.2s;
+    }
+
+    .see-all-btn:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border-color: var(--text-secondary);
+    }
+
+    /* Leaderboard Modal */
+    .leaderboard-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .leaderboard-modal.active {
+        display: flex;
+    }
+
+    .leaderboard-modal-content {
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+    }
+
+    .leaderboard-modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .leaderboard-modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .leaderboard-modal-close {
+        background: transparent;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 6px;
+    }
+
+    .leaderboard-modal-close:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .leaderboard-modal-body {
+        padding: 16px 24px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .leaderboard-modal-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .leaderboard-modal-item:last-child {
+        border-bottom: none;
+    }
 </style>
 {% endblock %}
 
@@ -528,9 +631,9 @@
 
             <!-- Stats Grid -->
             <div class="grid grid-4 mb-4" id="statsGrid">
-                <div class="stat-card">
-                    <div class="stat-value">{{ today_total }}</div>
-                    <div class="stat-label">Minutes Today</div>
+                <div class="stat-card" id="todayStatCard">
+                    <div class="stat-value" id="todayStatValue">{{ today_total }}</div>
+                    <div class="stat-label" id="todayStatLabel">Study Today</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">{{ monthly_total_hours }}</div>
@@ -713,6 +816,9 @@
                     {% empty %}
                     <div class="text-tertiary" style="font-size: 0.85rem;">No active streaks yet.</div>
                     {% endfor %}
+                    {% if top_streaks %}
+                    <button class="see-all-btn" onclick="showAllLeaderboard('streaks')">See All</button>
+                    {% endif %}
                 </div>
 
                 <div id="timeBoard" class="leaderboard-list" style="display: none;">
@@ -727,6 +833,9 @@
                     {% empty %}
                     <div class="text-tertiary" style="font-size: 0.85rem;">No study data this month.</div>
                     {% endfor %}
+                    {% if top_study_time %}
+                    <button class="see-all-btn" onclick="showAllLeaderboard('time')">See All</button>
+                    {% endif %}
                 </div>
             </div>
             <div class="calendar-card">
@@ -772,6 +881,21 @@
                 </div>
                 <div class="schedule-list" id="upcomingList"></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaderboard Modal -->
+<div class="leaderboard-modal" id="leaderboardModal">
+    <div class="leaderboard-modal-content">
+        <div class="leaderboard-modal-header">
+            <div class="leaderboard-modal-title" id="leaderboardModalTitle">All Streaks</div>
+            <button class="leaderboard-modal-close" onclick="closeLeaderboardModal()">
+                <i class="mdi mdi-close" style="font-size: 1.25rem;"></i>
+            </button>
+        </div>
+        <div class="leaderboard-modal-body" id="leaderboardModalBody">
+            <!-- Populated dynamically -->
         </div>
     </div>
 </div>
@@ -882,5 +1006,53 @@
         document.body.appendChild(n);
         setTimeout(function () { n.remove(); }, 3000);
     }
+
+    // Leaderboard Modal Functions
+    const allStreaksData = {{ all_streaks_json| safe }};
+    const allStudyTimeData = {{ all_study_time_json| safe }};
+
+    function showAllLeaderboard(type) {
+        const modal = document.getElementById('leaderboardModal');
+        const title = document.getElementById('leaderboardModalTitle');
+        const body = document.getElementById('leaderboardModalBody');
+
+        let data, label, icon;
+        if (type === 'streaks') {
+            data = allStreaksData;
+            title.innerHTML = '<i class="mdi mdi-fire" style="color: #f59e0b;"></i> All Streaks';
+            label = 'days';
+            icon = '<i class="mdi mdi-fire" style="color: #f59e0b;"></i>';
+        } else {
+            data = allStudyTimeData;
+            title.innerHTML = '<i class="mdi mdi-clock-outline" style="color: var(--primary-color);"></i> Study Hours This Month';
+            label = '';
+            icon = '';
+        }
+
+        body.innerHTML = data.length === 0
+            ? '<div style="text-align: center; padding: 40px; color: var(--text-tertiary);">No data available</div>'
+            : data.map((item, idx) => `
+                <div class="leaderboard-modal-item">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="rank-badge rank-${idx < 3 ? idx + 1 : ''}">${idx + 1}</div>
+                        <span style="font-weight: 500;">${item.username}</span>
+                    </div>
+                    <span style="font-weight: 600; color: var(--primary-color);">
+                        ${item.value} ${label} ${icon}
+                    </span>
+                </div>
+            `).join('');
+
+        modal.classList.add('active');
+    }
+
+    function closeLeaderboardModal() {
+        document.getElementById('leaderboardModal').classList.remove('active');
+    }
+
+    // Close modal on outside click
+    document.getElementById('leaderboardModal').addEventListener('click', function (e) {
+        if (e.target === this) closeLeaderboardModal();
+    });
 </script>
 {% endblock %}

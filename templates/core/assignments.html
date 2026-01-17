@@ -32,6 +32,50 @@
         justify-content: space-between;
     }
 
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+    }
+
+    .stats-badges {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+
+    .stat-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: var(--border-radius-lg);
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    .stat-badge i {
+        font-size: 1.1rem;
+    }
+
+    .stat-pending {
+        color: var(--color-orange);
+    }
+
+    .stat-pending i {
+        color: var(--color-orange);
+    }
+
+    .stat-completed {
+        color: var(--color-green);
+    }
+
+    .stat-completed i {
+        color: var(--color-green);
+    }
+
     /* Advanced Dynamic Treemap Layout */
     .treemap-container {
         display: grid;
@@ -158,7 +202,7 @@
             grid-template-columns: repeat(2, 1fr);
             /* 2 columns for phones */
             padding: 0 var(--spacing-sm);
-            gap: 10px;
+            gap: 8px;
         }
 
         .main-content {
@@ -182,17 +226,121 @@
             margin-left: var(--spacing-sm);
             margin-right: var(--spacing-sm);
         }
-
-        .assignment-title {
-            font-size: 0.78rem;
+        
+        /* Smaller assignment cube padding on mobile */
+        .assignment-cube {
+            padding: 10px;
+        }
+        
+        /* Smaller text for all spans on mobile */
+        .assignment-title,
+        .span-1x1 .assignment-title,
+        .span-2x1 .assignment-title,
+        .span-1x2 .assignment-title,
+        .span-2x2 .assignment-title,
+        .span-2x3 .assignment-title,
+        .span-3x2 .assignment-title {
+            font-size: 0.68rem;
+            -webkit-line-clamp: 2;
+            margin-bottom: 2px;
+            line-height: 1.15;
+        }
+        
+        .assignment-subject,
+        .span-2x2 .assignment-subject,
+        .span-2x3 .assignment-subject,
+        .span-3x2 .assignment-subject {
+            font-size: 0.55rem;
+            line-height: 1.1;
         }
 
+        .time-remaining-large,
+        .span-1x1 .time-remaining-large,
+        .span-2x1 .time-remaining-large,
+        .span-1x2 .time-remaining-large,
+        .span-2x2 .time-remaining-large,
+        .span-2x3 .time-remaining-large,
+        .span-3x2 .time-remaining-large {
+            font-size: 0.9rem;
+            margin-bottom: 1px;
+        }
+        
+        .time-label,
+        .span-2x2 .time-label,
+        .span-2x3 .time-label,
+        .span-3x2 .time-label {
+            font-size: 0.5rem;
+            letter-spacing: 0.3px;
+        }
+        
+        .cube-content {
+            gap: 4px;
+        }
+        
+        /* Smaller action buttons on mobile */
+        .action-btn {
+            width: 18px;
+            height: 18px;
+            font-size: 0.65rem;
+        }
+        
+        .assignment-actions {
+            top: 4px;
+            right: 4px;
+            gap: 2px;
+            opacity: 1; /* Always visible on mobile */
+        }
+        
+        /* Stats badges smaller on mobile */
+        .stat-badge {
+            padding: 6px 10px;
+            font-size: 0.75rem;
+        }
+        
+        .stat-badge i {
+            font-size: 0.95rem;
+        }
+        
+        .stats-badges {
+            gap: 6px;
+        }
+        
+        .header-actions {
+            gap: var(--spacing-sm);
+            width: 100%;
+            flex-wrap: wrap;
+        }
+    }
+    
+    /* Extra small phones */
+    @media (max-width: 360px) {
+        .treemap-container {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+        
+        .assignment-cube {
+            padding: 8px;
+        }
+        
+        .assignment-title,
+        .span-1x1 .assignment-title,
+        .span-2x1 .assignment-title,
+        .span-1x2 .assignment-title,
+        .span-2x2 .assignment-title {
+            font-size: 0.6rem;
+        }
+        
+        .assignment-subject {
+            font-size: 0.5rem;
+        }
+        
         .time-remaining-large {
-            font-size: 1rem;
+            font-size: 0.8rem;
         }
-
-        .span-1x1 .time-remaining-large {
-            font-size: 1rem;
+        
+        .time-label {
+            font-size: 0.45rem;
         }
     }
 
@@ -212,10 +360,10 @@
     .assignment-title {
         font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: 4px;
-        line-height: 1.3;
+        margin-bottom: 3px;
+        line-height: 1.2;
         z-index: 1;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
@@ -226,33 +374,33 @@
 
     /* Scale font sizes by urgency */
     .span-1x1 .assignment-title {
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         -webkit-line-clamp: 2;
     }
 
     .span-2x1 .assignment-title,
     .span-1x2 .assignment-title {
-        font-size: 1rem;
+        font-size: 0.85rem;
         -webkit-line-clamp: 2;
     }
 
     .span-2x2 .assignment-title {
-        font-size: 1.15rem;
+        font-size: 0.95rem;
         -webkit-line-clamp: 3;
     }
 
     .span-2x3 .assignment-title,
     .span-3x2 .assignment-title {
-        font-size: 1.35rem;
+        font-size: 1.1rem;
         -webkit-line-clamp: 3;
     }
 
     .assignment-subject {
-        font-size: 0.72rem;
+        font-size: 0.65rem;
         color: rgba(0, 0, 0, 0.6);
         font-weight: 500;
         z-index: 1;
-        line-height: 1.3;
+        line-height: 1.2;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -261,7 +409,7 @@
     .span-2x2 .assignment-subject,
     .span-2x3 .assignment-subject,
     .span-3x2 .assignment-subject {
-        font-size: 0.85rem;
+        font-size: 0.75rem;
     }
 
     /* Time Display - Dynamic sizing */
@@ -276,41 +424,41 @@
 
     .time-remaining-large {
         font-weight: 800;
-        line-height: 1.1;
-        margin-bottom: 3px;
+        line-height: 1;
+        margin-bottom: 2px;
     }
 
     .span-1x1 .time-remaining-large {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
     }
 
     .span-2x1 .time-remaining-large,
     .span-1x2 .time-remaining-large {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
     }
 
     .span-2x2 .time-remaining-large {
-        font-size: 1.9rem;
+        font-size: 1.5rem;
     }
 
     .span-2x3 .time-remaining-large,
     .span-3x2 .time-remaining-large {
-        font-size: 2.4rem;
+        font-size: 1.9rem;
     }
 
     .time-label {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         font-weight: 600;
         opacity: 0.8;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        line-height: 1.2;
+        letter-spacing: 0.4px;
+        line-height: 1.1;
     }
 
     .span-2x2 .time-label,
     .span-2x3 .time-label,
     .span-3x2 .time-label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     /* Action Buttons */
@@ -517,14 +665,76 @@
 
     /* Completed List */
     .completed-item {
-        padding: var(--spacing-md);
+        padding: var(--spacing-md) var(--spacing-lg);
         background-color: var(--bg-tertiary);
         border: 1px solid var(--border-color);
         border-radius: var(--border-radius);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        transition: border-color var(--transition-fast);
+        transition: all var(--transition-fast);
+    }
+
+    .completed-item:hover {
+        border-color: var(--text-tertiary);
+    }
+
+    .completed-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .completed-item-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .completed-item-subject {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .completed-item-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+
+    .completed-item-date {
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .completed-item-date i {
+        color: var(--color-green);
+    }
+
+    .completed-item-delete {
+        background: transparent;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 6px;
+        opacity: 0;
+        transition: all 0.2s;
+    }
+
+    .completed-item:hover .completed-item-delete {
+        opacity: 1;
+    }
+
+    .completed-item-delete:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--color-red);
     }
 
     .completed-item.hidden {
@@ -562,6 +772,125 @@
             transform: translateY(0);
         }
     }
+
+    /* Enhanced Modal Styles */
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .modal-header-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .modal-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark, #4338ca));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .modal-subtitle {
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+        margin-top: 2px;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-label i {
+        color: var(--text-tertiary);
+        font-size: 1rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-md);
+    }
+
+    @media (max-width: 480px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .time-hint {
+        font-size: 0.75rem;
+        color: var(--color-red);
+        margin-top: 4px;
+        min-height: 18px;
+    }
+
+    .quick-time-options {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-md);
+        flex-wrap: wrap;
+    }
+
+    .quick-label {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        font-weight: 500;
+    }
+
+    .quick-time-btn {
+        padding: 6px 12px;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .quick-time-btn:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        background: rgba(79, 70, 229, 0.1);
+    }
+
+    .quick-time-btn.active {
+        border-color: var(--color-primary);
+        background: var(--color-primary);
+        color: white;
+    }
+
+    /* Mobile responsive for header */
+    @media (max-width: 768px) {
+        .stats-badges {
+            display: none;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header-actions {
+            width: 100%;
+        }
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    }
 </style>
 {% endblock %}
 
@@ -572,10 +901,19 @@
             <h1 class="page-title"><i class="mdi mdi-clipboard-text-outline"></i> Assignments</h1>
             <p class="page-subtitle">Manage your deadlines</p>
         </div>
-        <button id="addAssignmentBtn" class="btn btn-primary btn-lg">
-            <span>+</span>
-            <span>Add Assignment</span>
-        </button>
+        <div class="header-actions">
+            <div class="stats-badges">
+                <div class="stat-badge stat-pending">
+                    <i class="mdi mdi-clock-outline"></i>
+                    <span id="pendingCount">{{ pending_assignments|length }}</span>
+                    <span>Pending</span>
+                </div>
+            </div>
+            <button id="addAssignmentBtn" class="btn btn-primary btn-lg">
+                <i class="mdi mdi-plus"></i>
+                <span>Add Assignment</span>
+            </button>
+        </div>
     </div>
 
     <!-- Treemap View -->
@@ -607,16 +945,24 @@
             <div id="completedList" style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
                 {% for assignment in completed_assignments %}
                 <div class="completed-item" data-id="{{ assignment.id }}">
-                    <div>
-                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-xs);">{{
-                            assignment.title }}</div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary);">{{ assignment.subject }}</div>
+                    <div class="completed-item-info">
+                        <div class="completed-item-title">{{ assignment.title }}</div>
+                        <div class="completed-item-subject">{{ assignment.subject }}</div>
                     </div>
-                    <div style="text-align: right; font-size: 0.85rem; color: var(--text-tertiary);">
-                        <span style="color: var(--color-green); margin-right: var(--spacing-sm);"><i
-                                class="mdi mdi-check"></i></span>
-                        {{ assignment.completed_at|date:"M d, Y" }}
+                    <div class="completed-item-meta">
+                        <div class="completed-item-date">
+                            <i class="mdi mdi-check-circle"></i>
+                            <span>{{ assignment.completed_at|date:"M d, Y" }}</span>
+                        </div>
+                        <button class="completed-item-delete"
+                            onclick="deleteCompletedAssignment({{ assignment.id }}, this)" title="Delete">
+                            <i class="mdi mdi-delete-outline"></i>
+                        </button>
                     </div>
+                </div>
+                {% empty %}
+                <div class="text-tertiary" style="text-align: center; padding: var(--spacing-lg);">
+                    No completed assignments yet.
                 </div>
                 {% endfor %}
             </div>
@@ -631,32 +977,56 @@
 <div class="modal-overlay" id="addModal">
     <div class="modal">
         <div class="modal-header">
-            <h2 class="modal-title">Add New Assignment</h2>
+            <div class="modal-header-content">
+                <div class="modal-icon">
+                    <i class="mdi mdi-clipboard-plus-outline"></i>
+                </div>
+                <div>
+                    <h2 class="modal-title">Add New Assignment</h2>
+                    <p class="modal-subtitle">Set a deadline and stay on track</p>
+                </div>
+            </div>
             <button class="modal-close" id="closeModalBtn">&times;</button>
         </div>
         <form id="addAssignmentForm">
             <div class="form-group">
-                <label for="assignmentTitle" class="form-label">Assignment Name</label>
+                <label for="assignmentTitle" class="form-label">
+                    <i class="mdi mdi-format-title"></i> Assignment Name
+                </label>
                 <input type="text" id="assignmentTitle" class="form-input"
                     placeholder="e.g., Math Homework, Essay Draft" required>
             </div>
 
-            <div class="form-group">
-                <label for="assignmentDeadline" class="form-label">Deadline Date</label>
-                <input type="date" id="assignmentDeadline" class="form-input" required>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="assignmentDeadline" class="form-label">
+                        <i class="mdi mdi-calendar"></i> Deadline Date
+                    </label>
+                    <input type="date" id="assignmentDeadline" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="assignmentTime" class="form-label">
+                        <i class="mdi mdi-clock-outline"></i> Deadline Time
+                    </label>
+                    <input type="time" id="assignmentTime" class="form-input" value="23:59" required>
+                    <div class="time-hint" id="timeHint"></div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="assignmentTime" class="form-label">Deadline Time</label>
-                <input type="time" id="assignmentTime" class="form-input" value="23:59" required>
+            <div class="quick-time-options">
+                <span class="quick-label">Quick set:</span>
+                <button type="button" class="quick-time-btn" data-days="0">Today</button>
+                <button type="button" class="quick-time-btn" data-days="1">Tomorrow</button>
+                <button type="button" class="quick-time-btn" data-days="7">Next Week</button>
             </div>
 
-            <div class="flex gap-2">
+            <div class="flex gap-2" style="margin-top: var(--spacing-lg);">
                 <button type="button" id="cancelBtn" class="btn btn-secondary" style="flex: 1;">
-                    Cancel
+                    <i class="mdi mdi-close"></i> Cancel
                 </button>
                 <button type="submit" class="btn btn-primary" style="flex: 1;">
-                    Add Assignment
+                    <i class="mdi mdi-check"></i> Add Assignment
                 </button>
             </div>
         </form>
@@ -689,7 +1059,91 @@
         const dd = String(today.getDate()).padStart(2, '0');
 
         dateInput.min = `${yyyy}-${mm}-${dd}`;
+
+        // Set default date to today
+        if (!dateInput.value) {
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        // Update time validation when date changes
+        updateTimeValidation();
     }
+
+    // Time validation for same-day assignments
+    function updateTimeValidation() {
+        const timeHint = document.getElementById('timeHint');
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+
+        if (dateInput.value === todayStr) {
+            // For today, get current time + 1 minute as minimum
+            const hours = String(today.getHours()).padStart(2, '0');
+            const minutes = String(Math.min(59, today.getMinutes() + 1)).padStart(2, '0');
+            const minTime = `${hours}:${minutes}`;
+
+            timeInput.min = minTime;
+
+            // Only show warning if the current time value is less than minimum
+            if (timeInput.value && timeInput.value < minTime) {
+                timeHint.textContent = `⚠️ Time must be after ${formatTimeDisplay(minTime)}`;
+                timeHint.style.color = 'var(--color-red)';
+            } else {
+                timeHint.textContent = '';
+            }
+        } else {
+            // For future dates, any time is valid
+            timeInput.min = '';
+            timeHint.textContent = '';
+        }
+    }
+
+    // Format time for display (12-hour format)
+    function formatTimeDisplay(time24) {
+        const [hours, minutes] = time24.split(':');
+        const h = parseInt(hours);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        return `${h12}:${minutes} ${ampm}`;
+    }
+
+    // Date input change handler
+    dateInput.addEventListener('change', updateTimeValidation);
+
+    // Time input change handler for validation
+    timeInput.addEventListener('change', function () {
+        updateTimeValidation();
+    });
+
+    // Quick time buttons
+    document.querySelectorAll('.quick-time-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const days = parseInt(this.dataset.days);
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + days);
+
+            const yyyy = targetDate.getFullYear();
+            const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(targetDate.getDate()).padStart(2, '0');
+
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+            // Remove active state from all buttons
+            document.querySelectorAll('.quick-time-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // If today, set time to end of day by default
+            if (days === 0) {
+                timeInput.value = '23:59';
+            } else {
+                timeInput.value = '23:59';
+            }
+
+            updateTimeValidation();
+        });
+    });
 
     // Render Grid with Advanced Dynamic Sizing
     function renderTreemap() {
@@ -919,6 +1373,21 @@
         return false;
     }
 
+    // Update stats badges
+    function updateStatsCounts() {
+        const pendingCountEl = document.getElementById('pendingCount');
+        const completedCountEl = document.getElementById('completedCount');
+
+        if (pendingCountEl) {
+            pendingCountEl.textContent = assignments.length;
+        }
+
+        if (completedCountEl) {
+            const completedItems = document.querySelectorAll('#completedList .completed-item');
+            completedCountEl.textContent = completedItems.length;
+        }
+    }
+
     // Actions - NO CONFIRMATION
     async function completeAssignment(assignmentId, element) {
         event.stopPropagation();
@@ -942,6 +1411,7 @@
                 setTimeout(() => {
                     assignments = assignments.filter(a => a.id !== assignmentId);
                     renderTreemap();
+                    updateStatsCounts();
 
                     // Show completed section and add the completed item dynamically
                     if (completedSection && completedList && assignmentData) {
@@ -957,24 +1427,24 @@
                         const formattedDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
                         itemDiv.innerHTML = `
-                            <div>
-                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-xs);">
-                                    ${assignmentData.title}
-                                </div>
-                                <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                                    ${assignmentData.subject || 'General'}
-                                </div>
+                            <div class="completed-item-info">
+                                <div class="completed-item-title">${assignmentData.title}</div>
+                                <div class="completed-item-subject">${assignmentData.subject || 'General'}</div>
                             </div>
-                            <div style="text-align: right; font-size: 0.85rem; color: var(--text-tertiary);">
-                                <span style="color: var(--color-green); margin-right: var(--spacing-sm);">
-                                    <i class="mdi mdi-check"></i>
-                                </span>
-                                ${formattedDate}
+                            <div class="completed-item-meta">
+                                <div class="completed-item-date">
+                                    <i class="mdi mdi-check-circle"></i>
+                                    <span>${formattedDate}</span>
+                                </div>
+                                <button class="completed-item-delete" onclick="deleteCompletedAssignment(${assignmentId}, this)" title="Delete">
+                                    <i class="mdi mdi-delete-outline"></i>
+                                </button>
                             </div>
                         `;
 
                         // Prepend to show newest first
                         completedList.insertBefore(itemDiv, completedList.firstChild);
+                        updateStatsCounts();
                     }
 
                     // Reload if no more pending assignments
@@ -1009,6 +1479,7 @@
                 setTimeout(() => {
                     assignments = assignments.filter(a => a.id !== assignmentId);
                     renderTreemap();
+                    updateStatsCounts();
                     if (assignments.length === 0) location.reload();
                 }, 300);
             }
@@ -1018,15 +1489,67 @@
         }
     }
 
+    // Delete completed assignment
+    async function deleteCompletedAssignment(assignmentId, buttonElement) {
+        event.stopPropagation();
+
+        const itemElement = buttonElement.closest('.completed-item');
+        if (!itemElement) return;
+
+        try {
+            itemElement.style.opacity = '0.5';
+
+            const response = await fetch(`/api/assignment/delete/${assignmentId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrf }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                itemElement.style.transform = 'translateX(20px)';
+                itemElement.style.opacity = '0';
+
+                setTimeout(() => {
+                    itemElement.remove();
+                    updateStatsCounts();
+
+                    // Check if completed list is now empty
+                    const remainingItems = document.querySelectorAll('#completedList .completed-item');
+                    if (remainingItems.length === 0) {
+                        const completedSectionEl = document.getElementById('completedSection');
+                        if (completedSectionEl) {
+                            completedSectionEl.style.display = 'none';
+                        }
+                    }
+                }, 300);
+            }
+        } catch (error) {
+            console.error(error);
+            itemElement.style.opacity = '1';
+        }
+    }
+
     // Modal Events
     addAssignmentBtn.addEventListener('click', () => {
+        // Reset form first
+        addAssignmentForm.reset();
+
+        // Set defaults
+        timeInput.value = '23:59'; // Default to end of day
+
         setupDateValidation();
+
+        // Reset quick buttons
+        document.querySelectorAll('.quick-time-btn').forEach(b => b.classList.remove('active'));
         addModal.classList.add('active');
     });
 
     function closeModal() {
         addModal.classList.remove('active');
         addAssignmentForm.reset();
+        document.querySelectorAll('.quick-time-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('timeHint').textContent = '';
     }
 
     closeModalBtn.addEventListener('click', closeModal);
@@ -1066,6 +1589,7 @@
             if (data.success) {
                 assignments.push(data.assignment);
                 renderTreemap();
+                updateStatsCounts();
                 closeModal();
                 if (assignments.length === 1) location.reload();
             }
@@ -1123,19 +1647,18 @@
                             itemDiv.className = 'completed-item';
                             itemDiv.dataset.id = assignment.id;
                             itemDiv.innerHTML = `
-                                <div>
-                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-xs);">
-                                        ${assignment.title}
-                                    </div>
-                                    <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                                        ${assignment.subject}
-                                    </div>
+                                <div class="completed-item-info">
+                                    <div class="completed-item-title">${assignment.title}</div>
+                                    <div class="completed-item-subject">${assignment.subject}</div>
                                 </div>
-                                <div style="text-align: right; font-size: 0.85rem; color: var(--text-tertiary);">
-                                    <span style="color: var(--color-green); margin-right: var(--spacing-sm);">
-                                        <i class="mdi mdi-check"></i>
-                                    </span>
-                                    ${assignment.completed_at}
+                                <div class="completed-item-meta">
+                                    <div class="completed-item-date">
+                                        <i class="mdi mdi-check-circle"></i>
+                                        <span>${assignment.completed_at}</span>
+                                    </div>
+                                    <button class="completed-item-delete" onclick="deleteCompletedAssignment(${assignment.id}, this)" title="Delete">
+                                        <i class="mdi mdi-delete-outline"></i>
+                                    </button>
                                 </div>
                             `;
                             completedListDiv.appendChild(itemDiv);

@@ -1,4 +1,4 @@
-# How to Deploy StudyFlow for Free
+# How to Deploy FOCUS for Free
 
 The simplest and most reliable way to deploy a Django project with a database (SQLite) for free is **PythonAnywhere**.
 

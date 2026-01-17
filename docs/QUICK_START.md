@@ -1,6 +1,6 @@
-# 🚀 StudyFlow - Quick Start Guide
+# 🚀 FOCUS - Quick Start Guide
 
-Welcome to **StudyFlow**! This guide will get you up and running in just a few minutes.
+Welcome to **FOCUS**! This guide will get you up and running in just a few minutes.
 
 ---
 
@@ -42,7 +42,7 @@ You'll be automatically logged in and redirected to your dashboard!
 
 ---
 
-## 📚 Using StudyFlow
+## 📚 Using FOCUS
 
 ### 1. **Start Your First Study Session**
 
@@ -206,7 +206,7 @@ Then refresh your browser
 
 ## 📱 Mobile Use
 
-StudyFlow works on mobile devices:
+FOCUS works on mobile devices:
 - Tap the menu icon to open sidebar
 - All features are touch-friendly
 - Landscape mode recommended for charts
@@ -250,7 +250,7 @@ Let's do a complete workflow:
 
 ## 🌟 Feature Highlights
 
-### What Makes StudyFlow Special?
+### What Makes FOCUS Special?
 
 1. **Habit Building**
    - Streaks without pressure

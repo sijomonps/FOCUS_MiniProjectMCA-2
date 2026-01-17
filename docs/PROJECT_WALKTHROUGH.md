@@ -1,8 +1,8 @@
-# StudyFlow - Project Walkthrough
+# FOCUS - Project Walkthrough
 
 ## 📋 Project Overview
 
-**StudyFlow** is a complete, production-ready personalized learning web platform designed specifically for students. It combines study time tracking, deadline visualization, habit building, and quick note-taking into a single, calm, distraction-free interface inspired by Notion's dark theme.
+**FOCUS** is a complete, production-ready personalized learning web platform designed specifically for students. It combines study time tracking, deadline visualization, habit building, and quick note-taking into a single, calm, distraction-free interface inspired by Notion's dark theme.
 
 ---
 
@@ -473,7 +473,7 @@ User (Django Auth)
 
 ## 🏆 Conclusion
 
-StudyFlow demonstrates how thoughtful design and development can create a tool that genuinely helps students. By focusing on:
+FOCUS demonstrates how thoughtful design and development can create a tool that genuinely helps students. By focusing on:
 
 1. **Simplicity** - No unnecessary features
 2. **Clarity** - Easy to understand and use
@@ -488,4 +488,4 @@ The project succeeds in creating a learning platform that students would actuall
 
 ---
 
-*This walkthrough provides a complete understanding of StudyFlow's architecture, features, and design decisions. Use it as a reference for understanding the codebase or as inspiration for your own projects.*
+*This walkthrough provides a complete understanding of FOCUS's architecture, features, and design decisions. Use it as a reference for understanding the codebase or as inspiration for your own projects.*

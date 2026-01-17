@@ -1,5 +1,5 @@
 """
-WSGI config for studyflow project.
+WSGI config for FOCUS project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

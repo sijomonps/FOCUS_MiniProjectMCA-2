@@ -1,6 +1,6 @@
 # Core App
 
-This is the main Django application that contains all the business logic for StudyFlow.
+This is the main Django application that contains all the business logic for FOCUS.
 
 ## 📁 Files Overview
 

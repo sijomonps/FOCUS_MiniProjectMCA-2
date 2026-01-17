@@ -50,6 +50,8 @@
             </div>
 
             <nav class="sidebar-nav">
+                {% if not user.is_superuser %}
+                <!-- Regular User Navigation -->
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     <li>
                         <a href="{% url 'dashboard' %}" class="{% if request.path == '/dashboard/' %}active{% endif %}"
@@ -81,32 +83,66 @@
                         </a>
                     </li>
                 </ul>
+                {% endif %}
+
+                {% if user.is_superuser %}
+                <!-- Admin Navigation -->
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li>
+                        <a href="{% url 'admin_dashboard' %}" 
+                            class="admin-nav-link {% if '/admin-panel/' in request.path and '/users' not in request.path %}active{% endif %}"
+                            data-tooltip="Admin Dashboard">
+                            <span class="icon"><i class="mdi mdi-shield-crown"></i></span>
+                            <span>Admin Panel</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_users' %}" 
+                            class="admin-nav-link {% if '/admin-panel/users' in request.path %}active{% endif %}"
+                            data-tooltip="Manage Users">
+                            <span class="icon"><i class="mdi mdi-account-group"></i></span>
+                            <span>Manage Users</span>
+                        </a>
+                    </li>
+                </ul>
+                {% endif %}
             </nav>
 
-            <!-- Global Sidebar Timer (Hidden by default) -->
-            <div id="globalTimerContainer" class="hidden"
-                style="margin: 0 12px 12px 12px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--border-radius); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px;">
-                <div
-                    style="width: 8px; height: 8px; background: var(--color-red); border-radius: 50%; box-shadow: 0 0 8px var(--color-red);">
-                </div>
+            {% if not user.is_superuser %}
+            <!-- Global Sidebar Timer (Hidden by default) - Only for regular users -->
+            <div id="globalTimerContainer" class="global-timer-container hidden">
+                <div class="global-timer-dot"></div>
                 <div>
-                    <div
-                        style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
-                        Session Active</div>
-                    <div id="globalTimerDisplay"
-                        style="font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); line-height: 1.2;">
-                        00:00</div>
+                    <div class="global-timer-label">Session Active</div>
+                    <div id="globalTimerDisplay" class="global-timer-display">00:00</div>
                 </div>
             </div>
 
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-profile-label">Logged in as</div>
-                    <div class="user-profile-name">{{ user.username }}</div>
+            <!-- Today's Study Time Tracker - Only for regular users -->
+            <div id="todayStudyContainer" class="today-study-container">
+                <div class="today-study-icon">
+                    <i class="mdi mdi-clock-check-outline"></i>
                 </div>
-                <a href="{% url 'logout' %}" class="btn btn-secondary" style="width: 100%;">
-                    <span><i class="mdi mdi-logout"></i></span>
-                    <span>Logout</span>
+                <div>
+                    <div class="today-study-label">Today's Study</div>
+                    <div id="todayStudyDisplay" class="today-study-display">0h 0m</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="sidebar-footer">
+                <div class="user-profile-card {% if user.is_superuser %}admin{% endif %}">
+                    <div class="user-avatar {% if user.is_superuser %}admin{% endif %}">
+                        <i class="mdi mdi-{% if user.is_superuser %}shield-crown{% else %}account{% endif %}"></i>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-profile-label">{% if user.is_superuser %}Administrator{% else %}Signed in as{% endif %}</div>
+                        <div class="user-profile-name">{{ user.username }}</div>
+                    </div>
+                </div>
+                <a href="{% url 'logout' %}" class="logout-btn">
+                    <i class="mdi mdi-logout-variant"></i>
+                    <span>Sign Out</span>
                 </a>
             </div>
         </aside>
@@ -165,6 +201,239 @@
         }
 
         const csrf = getCookie('csrftoken');
+
+        // ========================================
+        // Today's Study Time Tracker
+        // ========================================
+        function getTodayDateKey() {
+            const now = new Date();
+            return `studyTime_${now.getFullYear()}_${now.getMonth()}_${now.getDate()}`;
+        }
+
+        function getTodayStudyMinutes() {
+            const key = getTodayDateKey();
+            const saved = localStorage.getItem(key);
+            return saved ? parseInt(saved) : 0;
+        }
+
+        function saveTodayStudyMinutes(minutes) {
+            const key = getTodayDateKey();
+            localStorage.setItem(key, minutes.toString());
+            // Clean up old entries (keep only today)
+            cleanupOldStudyData();
+        }
+
+        function cleanupOldStudyData() {
+            const todayKey = getTodayDateKey();
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('studyTime_') && key !== todayKey) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+        }
+
+        function formatStudyTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            if (hours > 0) {
+                return `${hours}h ${mins}m`;
+            }
+            return `${mins}m`;
+        }
+
+        function updateTodayStudyDisplay() {
+            const display = document.getElementById('todayStudyDisplay');
+            const savedMinutes = getTodayStudyMinutes();
+            
+            // Calculate active session time if timer is running or paused
+            let activeSessionMinutes = 0;
+            const savedState = localStorage.getItem('focusTimerState');
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    if (state.isRunning && state.timerEndTime && state.selectedDuration) {
+                        // Timer is running - calculate elapsed time
+                        const now = Date.now();
+                        const remaining = Math.max(0, Math.floor((state.timerEndTime - now) / 1000));
+                        const elapsed = state.selectedDuration - remaining;
+                        activeSessionMinutes = Math.floor(elapsed / 60);
+                    } else if (!state.isRunning && state.totalFocusedTime && state.totalFocusedTime > 0) {
+                        // Timer is paused - use accumulated totalFocusedTime
+                        activeSessionMinutes = Math.floor(state.totalFocusedTime / 60);
+                    }
+                } catch (e) {}
+            }
+            
+            const totalMinutes = savedMinutes + activeSessionMinutes;
+            const formattedTime = formatStudyTime(totalMinutes);
+            
+            // Update sidebar display
+            if (display) {
+                display.textContent = formattedTime;
+            }
+            
+            // Update dashboard stat card if on dashboard page
+            updateDashboardTodayStat(savedMinutes, activeSessionMinutes);
+        }
+        
+        // Update the dashboard "Study Today" stat card with live timer
+        function updateDashboardTodayStat(savedMinutes, activeSessionMinutes) {
+            const todayStatValue = document.getElementById('todayStatValue');
+            const todayStatCard = document.getElementById('todayStatCard');
+            const todayStatLabel = document.getElementById('todayStatLabel');
+            
+            if (!todayStatValue) return; // Not on dashboard
+            
+            const totalMinutes = savedMinutes + activeSessionMinutes;
+            
+            // Format the display
+            let displayText;
+            if (totalMinutes >= 60) {
+                const hours = Math.floor(totalMinutes / 60);
+                const mins = totalMinutes % 60;
+                displayText = mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+            } else {
+                displayText = `${totalMinutes}m`;
+            }
+            
+            todayStatValue.textContent = displayText;
+            
+            // Add visual indicator when timer is active
+            if (activeSessionMinutes > 0) {
+                todayStatCard.style.borderColor = 'var(--color-green)';
+                todayStatCard.style.boxShadow = '0 0 12px rgba(102, 153, 119, 0.3)';
+                todayStatLabel.innerHTML = 'Study Today <span style="color: var(--color-green); font-size: 0.7rem;">● LIVE</span>';
+            } else {
+                todayStatCard.style.borderColor = '';
+                todayStatCard.style.boxShadow = '';
+                todayStatLabel.textContent = 'Study Today';
+            }
+        }
+
+        // Check if it's past midnight and reset if needed
+        function checkMidnightReset() {
+            const lastCheck = localStorage.getItem('lastStudyCheck');
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}_${now.getMonth()}_${now.getDate()}`;
+            
+            if (lastCheck !== todayStr) {
+                // It's a new day - cleanup will happen automatically via getTodayStudyMinutes
+                localStorage.setItem('lastStudyCheck', todayStr);
+            }
+        }
+
+        // ========================================
+        // Global Timer State Management
+        // ========================================
+        let globalTimerUpdateInterval = null;
+
+        function updateGlobalTimer() {
+            const savedState = localStorage.getItem('focusTimerState');
+            const globalTimerContainer = document.getElementById('globalTimerContainer');
+            const globalTimerDisplay = document.getElementById('globalTimerDisplay');
+            const globalTimerLabel = document.querySelector('.global-timer-label');
+            const globalTimerDot = document.querySelector('.global-timer-dot');
+            
+            if (!globalTimerContainer || !globalTimerDisplay) return;
+            
+            if (!savedState) {
+                globalTimerContainer.classList.add('hidden');
+                return;
+            }
+            
+            try {
+                const state = JSON.parse(savedState);
+                
+                if (state.isRunning && state.timerEndTime) {
+                    const now = Date.now();
+                    const remaining = Math.max(0, Math.floor((state.timerEndTime - now) / 1000));
+                    
+                    if (remaining > 0) {
+                        // Timer is running - show in sidebar
+                        globalTimerContainer.classList.remove('hidden');
+                        globalTimerDisplay.textContent = formatGlobalTime(remaining);
+                        
+                        // Show subject if available
+                        if (globalTimerLabel && state.subject) {
+                            globalTimerLabel.textContent = `Studying: ${state.subject}`;
+                        } else if (globalTimerLabel) {
+                            globalTimerLabel.textContent = 'Session Active';
+                        }
+                        
+                        // Active pulsing red dot
+                        if (globalTimerDot) {
+                            globalTimerDot.style.background = 'var(--color-red)';
+                            globalTimerDot.style.boxShadow = '0 0 8px var(--color-red)';
+                            globalTimerDot.style.animation = 'pulse-dot 1.5s ease-in-out infinite';
+                        }
+                    } else {
+                        // Timer ended
+                        globalTimerContainer.classList.add('hidden');
+                    }
+                } else if (!state.isRunning && state.remainingTime && state.remainingTime < state.selectedDuration) {
+                    // Timer is paused
+                    globalTimerContainer.classList.remove('hidden');
+                    globalTimerDisplay.textContent = formatGlobalTime(state.remainingTime);
+                    
+                    if (globalTimerLabel) {
+                        globalTimerLabel.textContent = 'Paused';
+                    }
+                    
+                    // Yellow dot for paused
+                    if (globalTimerDot) {
+                        globalTimerDot.style.background = 'var(--color-yellow)';
+                        globalTimerDot.style.boxShadow = '0 0 8px var(--color-yellow)';
+                        globalTimerDot.style.animation = 'none';
+                    }
+                } else {
+                    globalTimerContainer.classList.add('hidden');
+                }
+            } catch (e) {
+                console.error('Error parsing timer state:', e);
+                globalTimerContainer.classList.add('hidden');
+            }
+        }
+
+        function formatGlobalTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function startGlobalTimerUpdates() {
+            // Clear any existing interval first
+            if (globalTimerUpdateInterval) {
+                clearInterval(globalTimerUpdateInterval);
+            }
+            
+            // Update immediately
+            updateGlobalTimer();
+            updateTodayStudyDisplay();
+            
+            // Then update every 200ms for smooth countdown and live tracking
+            globalTimerUpdateInterval = setInterval(() => {
+                updateGlobalTimer();
+                updateTodayStudyDisplay(); // Update every tick for live tracking
+            }, 200);
+        }
+
+        // Check timer state on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkMidnightReset();
+            startGlobalTimerUpdates();
+        });
+        
+        // Handle visibility change - update timer when tab becomes visible again
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                checkMidnightReset();
+                updateGlobalTimer();
+                updateTodayStudyDisplay();
+            }
+        });
 
         // Mobile Sidebar Toggle
         function toggleSidebar() {

@@ -1,4 +1,4 @@
-# 📁 StudyFlow Project Structure
+# 📁 FOCUS Project Structure
 
 ## 🗂️ Visual Overview
 

@@ -1,0 +1,578 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Users - FOCUS Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .admin-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, var(--color-red) 0%, #9b4a4a 100%);
+        color: white;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        margin-bottom: var(--spacing-md);
+        transition: color var(--transition-fast);
+    }
+
+    .back-link:hover {
+        color: var(--text-primary);
+    }
+
+    .users-summary {
+        display: flex;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .summary-stat {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md) var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .summary-stat i {
+        font-size: 1.25rem;
+        color: var(--color-blue);
+    }
+
+    .summary-stat-value {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .summary-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .users-table-container {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+    }
+
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: var(--spacing-md) var(--spacing-lg);
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .users-table th {
+        background: var(--bg-tertiary);
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .users-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .users-table tr:hover td {
+        background: var(--bg-hover);
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-blue) 0%, #4a7c9b 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .user-avatar i {
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .user-avatar.admin {
+        background: linear-gradient(135deg, var(--color-red) 0%, #9b4a4a 100%);
+    }
+
+    .user-avatar.inactive {
+        background: var(--bg-tertiary);
+        opacity: 0.5;
+    }
+
+    .user-name {
+        font-weight: 500;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .user-email {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .badge-admin {
+        background: rgba(204, 102, 102, 0.15);
+        color: var(--color-red);
+    }
+
+    .badge-active {
+        background: rgba(102, 153, 119, 0.15);
+        color: var(--color-green);
+    }
+
+    .badge-inactive {
+        background: rgba(153, 153, 153, 0.15);
+        color: var(--text-tertiary);
+    }
+
+    .stat-cell {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .stat-cell i {
+        margin-right: 4px;
+        color: var(--text-tertiary);
+    }
+
+    .action-btns {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-fast);
+    }
+
+    .action-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .action-btn.view:hover {
+        border-color: var(--color-blue);
+        color: var(--color-blue);
+    }
+
+    .action-btn.toggle:hover {
+        border-color: var(--color-yellow);
+        color: var(--color-yellow);
+    }
+
+    .action-btn.delete:hover {
+        border-color: var(--color-red);
+        color: var(--color-red);
+    }
+
+    .action-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    /* Confirmation Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all var(--transition-base);
+    }
+
+    .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xl);
+        max-width: 400px;
+        width: 90%;
+        transform: scale(0.9);
+        transition: transform var(--transition-base);
+    }
+
+    .modal-overlay.show .modal {
+        transform: scale(1);
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .modal-message {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: flex-end;
+    }
+
+    .modal-btn {
+        padding: 10px 20px;
+        border-radius: var(--border-radius);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        border: 1px solid var(--border-color);
+    }
+
+    .modal-btn.cancel {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+    }
+
+    .modal-btn.cancel:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .modal-btn.danger {
+        background: var(--color-red);
+        color: white;
+        border-color: var(--color-red);
+    }
+
+    .modal-btn.danger:hover {
+        background: #a85555;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .users-table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .users-summary {
+            flex-direction: column;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+
+        .action-btns {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <a href="{% url 'admin_dashboard' %}" class="back-link">
+        <i class="mdi mdi-arrow-left"></i> Back to Admin Dashboard
+    </a>
+
+    <div class="admin-header">
+        <div>
+            <h1 class="page-title">Manage Users</h1>
+            <p class="page-subtitle">View and manage all registered users</p>
+        </div>
+        <div class="admin-badge">
+            <i class="mdi mdi-shield-crown"></i>
+            Administrator
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="users-summary">
+        <div class="summary-stat">
+            <i class="mdi mdi-account-group"></i>
+            <div>
+                <div class="summary-stat-value">{{ total_users }}</div>
+                <div class="summary-stat-label">Total Users</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="users-table-container">
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Study Time</th>
+                    <th>Assignments</th>
+                    <th>Notes</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in users %}
+                <tr id="user-row-{{ item.user.id }}">
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar {% if item.user.is_superuser %}admin{% endif %} {% if not item.user.is_active %}inactive{% endif %}">
+                                <i class="mdi mdi-account"></i>
+                            </div>
+                            <div>
+                                <div class="user-name">
+                                    {{ item.user.username }}
+                                    {% if item.user.is_superuser %}
+                                    <span class="badge badge-admin">Admin</span>
+                                    {% endif %}
+                                </div>
+                                {% if item.user.email %}
+                                <div class="user-email">{{ item.user.email }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge {% if item.user.is_active %}badge-active{% else %}badge-inactive{% endif %}" id="status-{{ item.user.id }}">
+                            {% if item.user.is_active %}Active{% else %}Disabled{% endif %}
+                        </span>
+                    </td>
+                    <td class="stat-cell">
+                        <i class="mdi mdi-clock-outline"></i>
+                        {{ item.study_hours }}h
+                    </td>
+                    <td class="stat-cell">
+                        <i class="mdi mdi-clipboard-text"></i>
+                        {{ item.assignments }}
+                    </td>
+                    <td class="stat-cell">
+                        <i class="mdi mdi-note-text"></i>
+                        {{ item.notes }}
+                    </td>
+                    <td class="stat-cell">
+                        {{ item.user.date_joined|date:"M d, Y" }}
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="{% url 'admin_user_detail' item.user.id %}" class="action-btn view" title="View Details">
+                                <i class="mdi mdi-eye"></i>
+                            </a>
+                            <button class="action-btn toggle" 
+                                    onclick="toggleUserStatus({{ item.user.id }}, '{{ item.user.username }}')"
+                                    title="{% if item.user.is_active %}Disable{% else %}Enable{% endif %} User"
+                                    {% if item.user.is_superuser %}disabled{% endif %}>
+                                <i class="mdi mdi-{% if item.user.is_active %}account-off{% else %}account-check{% endif %}"></i>
+                            </button>
+                            <button class="action-btn delete" 
+                                    onclick="confirmDeleteUser({{ item.user.id }}, '{{ item.user.username }}')"
+                                    title="Delete User"
+                                    {% if item.user.is_superuser %}disabled{% endif %}>
+                                <i class="mdi mdi-delete"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-tertiary); padding: var(--spacing-xl);">
+                        No users found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+        <h3 class="modal-title">Delete User</h3>
+        <p class="modal-message">
+            Are you sure you want to delete <strong id="deleteUserName"></strong>? 
+            This will permanently remove the user and all their data.
+        </p>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button class="modal-btn danger" id="confirmDeleteBtn">Delete User</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let deleteUserId = null;
+
+    async function toggleUserStatus(userId, username) {
+        try {
+            const response = await fetch('{% url "admin_toggle_user_status" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ user_id: userId })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update the status badge
+                const statusBadge = document.getElementById(`status-${userId}`);
+                if (statusBadge) {
+                    statusBadge.textContent = data.is_active ? 'Active' : 'Disabled';
+                    statusBadge.className = `badge ${data.is_active ? 'badge-active' : 'badge-inactive'}`;
+                }
+                
+                // Update the toggle button icon
+                const row = document.getElementById(`user-row-${userId}`);
+                const toggleBtn = row.querySelector('.action-btn.toggle i');
+                if (toggleBtn) {
+                    toggleBtn.className = `mdi mdi-${data.is_active ? 'account-off' : 'account-check'}`;
+                }
+                
+                // Update avatar opacity
+                const avatar = row.querySelector('.user-avatar');
+                if (avatar) {
+                    if (data.is_active) {
+                        avatar.classList.remove('inactive');
+                    } else {
+                        avatar.classList.add('inactive');
+                    }
+                }
+            } else {
+                alert(data.error || 'Failed to update user status');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating user status');
+        }
+    }
+
+    function confirmDeleteUser(userId, username) {
+        deleteUserId = userId;
+        document.getElementById('deleteUserName').textContent = username;
+        document.getElementById('deleteModal').classList.add('show');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('show');
+        deleteUserId = null;
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+        if (!deleteUserId) return;
+
+        try {
+            const response = await fetch('{% url "admin_delete_user" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ user_id: deleteUserId })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                // Remove the row from the table
+                const row = document.getElementById(`user-row-${deleteUserId}`);
+                if (row) {
+                    row.remove();
+                }
+                closeDeleteModal();
+            } else {
+                alert(data.error || 'Failed to delete user');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while deleting user');
+        }
+    });
+
+    // Close modal on overlay click
+    document.getElementById('deleteModal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('deleteModal')) {
+            closeDeleteModal();
+        }
+    });
+</script>
+{% endblock %}

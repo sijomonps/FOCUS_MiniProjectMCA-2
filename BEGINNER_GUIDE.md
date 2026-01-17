@@ -1,4 +1,4 @@
-# 🎓 Beginner's Guide to StudyFlow
+# 🎓 Beginner's Guide to FOCUS
 
 Welcome! This guide will help you understand the project structure even if you're new to Django.
 

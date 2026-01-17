@@ -193,4 +193,4 @@ Note any:
 - Bugs or glitches
 - Performance issues
 
-Enjoy exploring your enhanced StudyFlow UI! 🎨✨
+Enjoy exploring your enhanced FOCUS UI! 🎨✨

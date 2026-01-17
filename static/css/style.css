@@ -253,36 +253,142 @@ a:hover {
     width: 18px;
 }
 
+/* Admin Navigation Styles */
+.admin-nav-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: var(--spacing-md) var(--spacing-sm);
+}
+
+.admin-nav-link {
+    position: relative;
+}
+
+.admin-nav-link .icon i {
+    color: var(--color-red) !important;
+}
+
+.admin-nav-link:hover .icon i,
+.admin-nav-link.active .icon i {
+    color: var(--color-red) !important;
+}
+
+.admin-nav-link.active {
+    background: rgba(204, 102, 102, 0.1) !important;
+}
+
 .sidebar-footer {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md);
     border-top: 1px solid var(--border-color);
     margin-top: auto;
 }
 
-.user-profile {
-    padding: 8px;
-    background: var(--bg-tertiary);
+/* User Profile Card - Modern design with avatar */
+.user-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     transition: all var(--transition-fast);
 }
 
-.user-profile:hover {
-    background: var(--bg-hover);
+.user-profile-card:hover {
+    border-color: var(--border-color-light);
+    background: linear-gradient(135deg, var(--bg-hover) 0%, var(--bg-tertiary) 100%);
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--color-blue) 0%, #4a7c9b 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.user-avatar i {
+    font-size: 1.1rem;
+    color: white;
+}
+
+/* Admin user avatar */
+.user-avatar.admin {
+    background: linear-gradient(135deg, var(--color-red) 0%, #9b4a4a 100%);
+}
+
+/* Admin user profile card */
+.user-profile-card.admin {
+    border-color: rgba(204, 102, 102, 0.3);
+    background: linear-gradient(135deg, rgba(204, 102, 102, 0.05) 0%, var(--bg-secondary) 100%);
+}
+
+.user-profile-card.admin:hover {
+    border-color: rgba(204, 102, 102, 0.5);
+    background: linear-gradient(135deg, rgba(204, 102, 102, 0.1) 0%, var(--bg-tertiary) 100%);
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
 }
 
 .user-profile-label {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: var(--text-tertiary);
     margin-bottom: 2px;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
+    font-weight: 500;
 }
 
 .user-profile-name {
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-primary);
-    font-size: 0.75rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Logout Button - Refined design */
+.logout-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+}
+
+.logout-btn:hover {
+    background: rgba(204, 102, 102, 0.1);
+    border-color: var(--color-red);
+    color: var(--color-red);
+}
+
+.logout-btn i {
+    font-size: 1.1rem;
+    transition: transform var(--transition-fast);
+}
+
+.logout-btn:hover i {
+    transform: translateX(2px);
 }
 
 /* Main Content Area - Left-aligned with max-width container */
@@ -784,6 +890,92 @@ a:hover {
 
 .hidden {
     display: none !important;
+}
+
+/* Global Sidebar Timer */
+.global-timer-container {
+    margin: 0 12px 12px 12px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.global-timer-container.hidden {
+    display: none !important;
+}
+
+.global-timer-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--color-red);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--color-red);
+    animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.global-timer-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.global-timer-display {
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+/* Today's Study Time Tracker */
+.today-study-container {
+    margin: 0 12px 12px 12px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.today-study-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--color-green), var(--primary-color));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.today-study-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.today-study-display {
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-green);
+    line-height: 1.2;
 }
 
 /* ================================

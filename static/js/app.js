@@ -253,80 +253,95 @@ document.head.appendChild(style);
 function initGlobalTimer() {
     const timerContainer = document.getElementById('globalTimerContainer');
     const timerDisplay = document.getElementById('globalTimerDisplay');
+    const timerLabel = document.querySelector('.global-timer-label');
+    const timerDot = document.querySelector('.global-timer-dot');
 
     if (!timerContainer || !timerDisplay) return;
 
-    const indicator = timerContainer.querySelector('div[style*="width: 8px"]');
-    const label = timerContainer.querySelector('div[style*="font-size: 0.65rem"]');
-
-    // Check timer state every second
-    setInterval(() => {
-        const isRunning = localStorage.getItem('focus_running') === 'true';
-        const isOnBreak = localStorage.getItem('focus_onBreak') === 'true';
-
-        // Hide on study page to avoid redundancy (optional, but requested feature implies across tabs)
-        // If user wants it explicitly on side panel, maybe we allow it. 
-        // But study page has the BIG timer. Let's hide it on study page for cleaner UI.
+    // Update function that runs frequently
+    function updateGlobalTimerDisplay() {
+        const savedState = localStorage.getItem('focusTimerState');
+        
+        // Don't show on study page - it has its own big timer
         const isStudyPage = window.location.pathname.includes('/study');
         if (isStudyPage) {
             timerContainer.classList.add('hidden');
-            timerContainer.style.display = 'none';
             return;
         }
 
-        if (isRunning || isOnBreak) {
-            timerContainer.classList.remove('hidden');
-            timerContainer.style.display = 'flex';
-
-            let displayTime = 0;
-
-            if (isOnBreak) {
-                // Break Logic
-                const breakTime = parseInt(localStorage.getItem('focus_breakTime')) || 0;
-                const breakTs = parseInt(localStorage.getItem('focus_breakTs')) || 0;
-                
-                if (breakTs > 0) {
-                     const elapsed = Math.floor((Date.now() - breakTs) / 1000);
-                     displayTime = Math.max(0, breakTime - elapsed);
-                } else {
-                     displayTime = breakTime;
-                }
-                
-                if (indicator) {
-                    indicator.style.background = 'var(--color-green)';
-                    indicator.style.boxShadow = '0 0 8px var(--color-green)';
-                    indicator.style.animation = 'none';
-                }
-                if (label) label.textContent = 'Break Time';
-
-            } else {
-                // Study Logic
-                const savedTime = parseInt(localStorage.getItem('focus_time')) || 0;
-                const startTs = parseInt(localStorage.getItem('focus_startTs'));
-                
-                displayTime = savedTime;
-                
-                if (startTs && !isNaN(startTs)) {
-                    const elapsed = Math.floor((Date.now() - startTs) / 1000);
-                    displayTime += elapsed;
-                }
-                
-                if (indicator) {
-                    indicator.style.background = 'var(--color-red)';
-                    indicator.style.boxShadow = '0 0 8px var(--color-red)';
-                    indicator.style.animation = 'pulse 1.5s infinite';
-                }
-                if (label) label.textContent = 'Session Active';
-            }
-
-            // Format mm:ss
-            const m = Math.floor(displayTime / 60);
-            const s = displayTime % 60;
-            timerDisplay.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
-
-        } else {
+        if (!savedState) {
             timerContainer.classList.add('hidden');
-            timerContainer.style.display = 'none';
+            return;
         }
-    }, 1000);
+
+        try {
+            const state = JSON.parse(savedState);
+            
+            if (state.isRunning && state.timerEndTime) {
+                const now = Date.now();
+                const remaining = Math.max(0, Math.floor((state.timerEndTime - now) / 1000));
+                
+                if (remaining > 0) {
+                    // Timer is running - show it
+                    timerContainer.classList.remove('hidden');
+                    
+                    // Format time
+                    const m = Math.floor(remaining / 60);
+                    const s = remaining % 60;
+                    timerDisplay.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+                    
+                    // Update label with subject if available
+                    if (timerLabel && state.subject) {
+                        timerLabel.textContent = `Studying: ${state.subject}`;
+                    } else if (timerLabel) {
+                        timerLabel.textContent = 'Session Active';
+                    }
+                    
+                    // Ensure dot is pulsing red
+                    if (timerDot) {
+                        timerDot.style.background = 'var(--color-red)';
+                        timerDot.style.boxShadow = '0 0 8px var(--color-red)';
+                    }
+                } else {
+                    // Timer ended
+                    timerContainer.classList.add('hidden');
+                }
+            } else if (!state.isRunning && state.remainingTime && state.remainingTime < state.selectedDuration) {
+                // Timer is paused with remaining time
+                timerContainer.classList.remove('hidden');
+                
+                const m = Math.floor(state.remainingTime / 60);
+                const s = state.remainingTime % 60;
+                timerDisplay.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+                
+                if (timerLabel) {
+                    timerLabel.textContent = 'Paused';
+                }
+                
+                // Show yellow dot for paused
+                if (timerDot) {
+                    timerDot.style.background = 'var(--color-yellow)';
+                    timerDot.style.boxShadow = '0 0 8px var(--color-yellow)';
+                    timerDot.style.animation = 'none';
+                }
+            } else {
+                timerContainer.classList.add('hidden');
+            }
+        } catch (e) {
+            timerContainer.classList.add('hidden');
+        }
+    }
+
+    // Run immediately
+    updateGlobalTimerDisplay();
+    
+    // Update every 200ms for smooth countdown
+    setInterval(updateGlobalTimerDisplay, 200);
+    
+    // Also update when tab becomes visible
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            updateGlobalTimerDisplay();
+        }
+    });
 }

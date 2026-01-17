@@ -1,6 +1,6 @@
-# 📚 StudyFlow - Complete Documentation Index
+# 📚 FOCUS - Complete Documentation Index
 
-Welcome to StudyFlow! This file helps you navigate all documentation.
+Welcome to FOCUS! This file helps you navigate all documentation.
 
 ## 🚀 Getting Started (Read in Order)
 

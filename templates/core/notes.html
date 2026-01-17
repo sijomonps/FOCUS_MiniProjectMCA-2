@@ -1,260 +1,448 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Quick Notes - StudyFlow{% endblock %}
+{% block title %}Quick Notes - FOCUS{% endblock %}
 
 {% block extra_css %}
 <style>
-    .notes-layout {
-        display: grid;
-        grid-template-columns: 280px 1fr;
-        gap: calc(var(--spacing) * 3);
-        height: calc(100vh - 200px);
+    /* Simple Notes Layout with Top Subjects */
+    .main-content {
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: calc(100% - 240px) !important; /* Account for sidebar width */
+        margin-left: 240px !important; /* Keep sidebar margin on desktop */
+    }
+    
+    /* Mobile: Remove sidebar margin */
+    @media (max-width: 768px) {
+        .main-content {
+            width: 100% !important;
+            margin-left: 0 !important;
+            padding-top: 60px !important; /* Account for mobile header */
+        }
     }
 
-    /* Folders Sidebar */
-    .folders-sidebar {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-lg);
-        padding: calc(var(--spacing) * 2);
-        overflow-y: auto;
+    .content-wrapper {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
     }
 
-    .sidebar-header {
+    .notes-page {
+        min-height: calc(100vh - 60px);
+        background: var(--bg-primary);
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
+    }
+
+    /* Top Subject Bar */
+    .subjects-bar {
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        padding: 16px 24px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    .subjects-header {
         display: flex;
+        align-items: center;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: calc(var(--spacing) * 2);
+        margin-bottom: 16px;
     }
 
-    .sidebar-title {
-        font-size: 0.9rem;
+    .subjects-title {
+        font-size: 1.1rem;
         font-weight: 600;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .btn-add-folder {
-        background: var(--color-blue);
-        color: white;
-        border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: calc(var(--border-radius) * 1.5);
+        color: var(--text-primary);
         display: flex;
         align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all var(--transition-base);
+        gap: 8px;
     }
 
-    .btn-add-folder:hover {
-        background: #1976d2;
-        transform: scale(1.05);
-    }
-
-    .folder-list {
-        display: flex;
-        flex-direction: column;
-        gap: calc(var(--spacing) / 2);
-    }
-
-    .folder-item {
-        display: flex;
-        align-items: center;
-        gap: calc(var(--spacing) * 1.5);
-        padding: calc(var(--spacing) * 1.5);
-        border-radius: var(--border-radius);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        border: 1px solid transparent;
-    }
-
-    .folder-item:hover {
-        background-color: rgba(255, 255, 255, 0.03);
-        border-color: var(--border-color);
-    }
-
-    .folder-item.active {
-        background-color: rgba(33, 150, 243, 0.1);
-        border-color: var(--color-blue);
-    }
-
-    .folder-icon {
-        color: var(--color-orange);
+    .subjects-title i {
+        color: var(--primary-color);
         font-size: 1.3rem;
     }
 
-    .folder-info {
-        flex: 1;
-    }
-
-    .folder-name {
-        font-size: 0.95rem;
-        color: var(--text-primary);
+    .add-subject-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
         font-weight: 500;
-    }
-
-    .folder-count {
-        font-size: 0.75rem;
-        color: var(--text-tertiary);
-    }
-
-    .folder-delete {
-        opacity: 0;
-        color: var(--text-tertiary);
-        font-size: 1.1rem;
         cursor: pointer;
-        transition: all var(--transition-fast);
+        transition: all 0.2s ease;
     }
 
-    .folder-item:hover .folder-delete {
-        opacity: 1;
+    .add-subject-btn:hover {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
     }
 
-    .folder-delete:hover {
-        color: var(--color-red);
+    /* Subject Pills */
+    .subjects-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .subject-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .subject-pill:hover {
+        border-color: var(--primary-color);
+        color: var(--text-primary);
+        background: var(--bg-hover-dark);
+    }
+
+    .subject-pill.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .subject-pill i {
+        font-size: 1.1rem;
+    }
+
+    .subject-pill .pill-count {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        margin-left: 4px;
+    }
+
+    .subject-pill:not(.active) .pill-count {
+        background: var(--bg-tertiary);
+        color: var(--text-tertiary);
+    }
+
+    .subject-pill .delete-btn {
+        display: none;
+        margin-left: 4px;
+        padding: 2px;
+        border-radius: 50%;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .subject-pill.active:hover .delete-btn {
+        display: flex;
+    }
+
+    .subject-pill .delete-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
     }
 
     /* Notes Content Area */
     .notes-content {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-lg);
-        padding: calc(var(--spacing) * 3);
-        overflow-y: auto;
+        padding: 24px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
     }
 
     .notes-header {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: calc(var(--spacing) * 3);
+        justify-content: space-between;
+        margin-bottom: 24px;
     }
 
-    .notes-title {
+    .notes-header h1 {
         font-size: 1.5rem;
         font-weight: 600;
         color: var(--text-primary);
         display: flex;
         align-items: center;
-        gap: calc(var(--spacing) * 1.5);
+        gap: 10px;
     }
 
-    .btn-add-note {
-        background: var(--color-green);
-        color: white;
-        border: none;
-        padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
-        border-radius: var(--border-radius);
+    .notes-header h1 .count-badge {
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 4px 12px;
+        background: var(--bg-secondary);
+        border-radius: 20px;
+        color: var(--text-secondary);
+    }
+
+    .new-note-btn {
         display: flex;
         align-items: center;
-        gap: calc(var(--spacing));
-        cursor: pointer;
+        gap: 8px;
+        padding: 12px 24px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.95rem;
         font-weight: 500;
-        transition: all var(--transition-base);
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
 
-    .btn-add-note:hover {
-        background: #388e3c;
+    .new-note-btn:hover {
+        background: var(--primary-hover);
         transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.3);
     }
 
-    /* Note Cards */
+    /* Notes Grid */
     .notes-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: calc(var(--spacing) * 2);
+        grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+        gap: 20px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .note-card {
-        background-color: var(--bg-primary);
+        background: var(--bg-secondary);
         border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: calc(var(--spacing) * 2);
-        transition: all var(--transition-base);
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
         position: relative;
     }
 
     .note-card:hover {
-        border-color: var(--border-color-light);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border-color: var(--primary-color);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     }
 
-    .note-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: calc(var(--spacing) * 1.5);
-    }
-
-    .note-title {
-        font-size: 1.05rem;
+    .note-card-title {
+        font-size: 1.1rem;
         font-weight: 600;
         color: var(--text-primary);
-        flex: 1;
+        margin-bottom: 10px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
-    .note-delete {
-        color: var(--text-tertiary);
-        font-size: 1.1rem;
-        cursor: pointer;
-        opacity: 0;
-        transition: all var(--transition-fast);
-    }
-
-    .note-card:hover .note-delete {
-        opacity: 1;
-    }
-
-    .note-delete:hover {
-        color: var(--color-red);
-    }
-
-    .note-content {
-        color: var(--text-secondary);
-        line-height: 1.6;
+    .note-card-preview {
         font-size: 0.9rem;
-        margin-bottom: calc(var(--spacing) * 1.5);
-        white-space: pre-wrap;
-        word-wrap: break-word;
+        color: var(--text-tertiary);
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 16px;
     }
 
-    .note-footer {
-        font-size: 0.75rem;
+    .note-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .note-card-date {
+        font-size: 0.8rem;
         color: var(--text-tertiary);
         display: flex;
         align-items: center;
-        gap: calc(var(--spacing));
+        gap: 6px;
+    }
+
+    .note-card-actions {
+        display: flex;
+        gap: 6px;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+
+    .note-card:hover .note-card-actions {
+        opacity: 1;
+    }
+
+    .note-action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        background: var(--bg-primary);
+        color: var(--text-tertiary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+    }
+
+    .note-action-btn:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .note-action-btn.delete:hover {
+        background: #ef4444;
+    }
+    
+    .note-action-btn.pin {
+        color: var(--text-tertiary);
+    }
+    
+    .note-action-btn.pin:hover {
+        background: var(--color-yellow);
+        color: #000;
+    }
+    
+    .note-action-btn.pin.pinned {
+        background: var(--color-yellow);
+        color: #000;
+    }
+
+    /* Pinned Notes Section */
+    .pinned-section {
+        margin-bottom: 32px;
+    }
+    
+    .pinned-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+        color: var(--color-yellow);
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .pinned-header i {
+        font-size: 1.1rem;
+    }
+    
+    .pinned-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+        gap: 16px;
+    }
+    
+    .note-card.pinned {
+        border-color: var(--color-yellow);
+        position: relative;
+    }
+    
+    .note-card.pinned::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--color-yellow);
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .pin-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        color: var(--color-yellow);
+        font-size: 1rem;
+    }
+    
+    .notes-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 24px 0 16px;
+        color: var(--text-tertiary);
+        font-size: 0.85rem;
+    }
+    
+    .notes-divider::before,
+    .notes-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border-color);
     }
 
     /* Empty State */
     .empty-state {
         text-align: center;
-        padding: calc(var(--spacing) * 6) calc(var(--spacing) * 3);
+        padding: 60px 20px;
     }
 
     .empty-icon {
-        font-size: 4rem;
+        width: 100px;
+        height: 100px;
+        background: var(--bg-secondary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+    }
+
+    .empty-icon i {
+        font-size: 40px;
         color: var(--text-tertiary);
-        margin-bottom: calc(var(--spacing) * 2);
     }
 
     .empty-title {
         font-size: 1.25rem;
-        color: var(--text-secondary);
-        margin-bottom: calc(var(--spacing));
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
     }
 
     .empty-text {
+        font-size: 0.95rem;
         color: var(--text-tertiary);
-        margin-bottom: calc(var(--spacing) * 3);
+        margin-bottom: 24px;
     }
 
-    /* Modal */
+    .empty-action {
+        padding: 12px 24px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .empty-action:hover {
+        background: var(--primary-hover);
+    }
+
+    /* Modal Styles */
     .modal-overlay {
         display: none;
         position: fixed;
@@ -262,466 +450,1502 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.6);
         backdrop-filter: blur(4px);
         z-index: 1000;
         align-items: center;
         justify-content: center;
+        padding: 20px;
     }
 
     .modal-overlay.active {
         display: flex;
     }
 
-    .modal-content {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-lg);
-        padding: calc(var(--spacing) * 3);
-        width: 90%;
+    .modal {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        width: 100%;
         max-width: 600px;
-        max-height: 80vh;
-        overflow-y: auto;
+        max-height: 85vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal.large {
+        max-width: 700px;
     }
 
     .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: calc(var(--spacing) * 3);
+        justify-content: space-between;
     }
 
     .modal-title {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
         font-weight: 600;
         color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-title i {
+        color: var(--primary-color);
     }
 
     .modal-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: none;
+        background: transparent;
         color: var(--text-tertiary);
-        font-size: 1.5rem;
         cursor: pointer;
-        transition: color var(--transition-fast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .modal-close:hover {
+        background: var(--bg-hover-dark);
         color: var(--text-primary);
     }
 
+    .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    /* Form Elements */
     .form-group {
-        margin-bottom: calc(var(--spacing) * 2);
+        margin-bottom: 20px;
     }
 
     .form-label {
         display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+
+    .note-title-input {
+        font-size: 1.5rem;
+        font-weight: 600;
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        width: 100%;
+        padding: 0;
+        margin-bottom: 16px;
+    }
+
+    .note-title-input:focus {
+        outline: none;
+    }
+
+    .note-content-input {
+        width: 100%;
+        min-height: 250px;
+        padding: 0;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1rem;
+        line-height: 1.8;
+        resize: none;
+        font-family: inherit;
+    }
+
+    .note-content-input:focus {
+        outline: none;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
         font-size: 0.9rem;
         font-weight: 500;
-        color: var(--text-secondary);
-        margin-bottom: calc(var(--spacing));
-    }
-
-    .form-input,
-    .form-textarea {
-        width: 100%;
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: calc(var(--spacing) * 1.5);
-        color: var(--text-primary);
-        font-size: 0.95rem;
-        font-family: inherit;
-        transition: border-color var(--transition-fast);
-    }
-
-    .form-input:focus,
-    .form-textarea:focus {
-        outline: none;
-        border-color: var(--color-blue);
-    }
-
-    .form-textarea {
-        min-height: 200px;
-        resize: vertical;
-    }
-
-    .modal-actions {
-        display: flex;
-        gap: calc(var(--spacing) * 1.5);
-        justify-content: flex-end;
-        margin-top: calc(var(--spacing) * 3);
-    }
-
-    .btn-cancel {
-        background: transparent;
-        border: 1px solid var(--border-color);
-        color: var(--text-secondary);
-        padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
-        border-radius: var(--border-radius);
         cursor: pointer;
-        font-weight: 500;
-        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
-    .btn-cancel:hover {
-        border-color: var(--text-secondary);
-        color: var(--text-primary);
-    }
-
-    .btn-submit {
-        background: var(--color-blue);
+    .btn-primary {
+        background: var(--primary-color);
         color: white;
         border: none;
-        padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
-        border-radius: var(--border-radius);
-        cursor: pointer;
-        font-weight: 500;
-        transition: all var(--transition-base);
     }
 
-    .btn-submit:hover {
-        background: #1976d2;
+    .btn-primary:hover {
+        background: var(--primary-hover);
     }
 
-    @media (max-width: 768px) {
-        .notes-layout {
-            grid-template-columns: 100%;
-            height: auto;
-            display: flex;
-            flex-direction: column;
+    .btn-secondary {
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-hover-dark);
+    }
+
+    /* View Mode */
+    .view-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 20px;
+    }
+
+    .view-content {
+        font-size: 1rem;
+        line-height: 1.8;
+        color: var(--text-secondary);
+        white-space: pre-wrap;
+    }
+
+    .view-meta {
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+        display: flex;
+        gap: 20px;
+    }
+
+    .view-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .view-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN - All Screen Sizes
+       ============================================ */
+
+    /* Extra Large Screens (1440px+) */
+    @media (min-width: 1440px) {
+        .notes-grid {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .notes-content {
+            padding: 32px 48px;
+        }
+
+        .subjects-bar {
+            padding: 20px 48px;
+        }
+
+        .note-card {
+            padding: 24px;
+        }
+
+        .note-card-title {
+            font-size: 1.2rem;
+        }
+    }
+
+    /* Large Screens (1200px - 1439px) */
+    @media (min-width: 1200px) and (max-width: 1439px) {
+        .notes-grid {
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 22px;
+        }
+
+        .notes-content {
+            padding: 28px 36px;
+        }
+
+        .subjects-bar {
+            padding: 18px 36px;
+        }
+    }
+
+    /* Medium-Large Screens (1024px - 1199px) */
+    @media (min-width: 1024px) and (max-width: 1199px) {
+        .notes-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
 
-        .folders-sidebar {
-            max-height: 250px;
-            width: 100%;
+        .notes-content {
+            padding: 24px 28px;
+        }
+
+        .subjects-bar {
+            padding: 16px 28px;
+        }
+    }
+
+    /* Tablets (769px - 1023px) */
+    @media (min-width: 769px) and (max-width: 1023px) {
+        .notes-grid {
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 18px;
+        }
+
+        .notes-content {
+            padding: 20px 24px;
+        }
+
+        .subjects-bar {
+            padding: 14px 24px;
+        }
+
+        .modal {
+            max-width: 550px;
+        }
+
+        .modal.large {
+            max-width: 600px;
+        }
+
+        .note-card {
+            padding: 18px;
+        }
+
+        .note-card-title {
+            font-size: 1.05rem;
+        }
+
+        .subjects-list {
+            gap: 8px;
+        }
+
+        .subject-pill {
+            padding: 8px 14px;
+            font-size: 0.85rem;
+        }
+    }
+
+    /* Small Tablets and Large Phones (576px - 768px) */
+    @media (min-width: 576px) and (max-width: 768px) {
+        .subjects-bar {
+            padding: 14px 20px;
+        }
+
+        .subjects-header {
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .add-subject-btn {
+            width: auto;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+        }
+
+        .subjects-list {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+
+        .subject-pill {
+            flex-shrink: 0;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+        }
+
+        .notes-content {
+            padding: 18px 20px;
+        }
+
+        .notes-header {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .notes-header h1 {
+            font-size: 1.3rem;
+        }
+
+        .new-note-btn {
+            width: auto;
+            padding: 10px 18px;
+            font-size: 0.9rem;
         }
 
         .notes-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .note-card {
+            padding: 16px;
+        }
+
+        .note-card-title {
+            font-size: 1rem;
+            -webkit-line-clamp: 1;
+        }
+
+        .note-card-preview {
+            font-size: 0.85rem;
+            -webkit-line-clamp: 2;
+        }
+
+        .modal {
+            max-width: 90%;
+            max-height: 80vh;
+        }
+
+        .modal.large {
+            max-width: 95%;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .note-title-input {
+            font-size: 1.3rem;
+        }
+
+        .note-content-input {
+            min-height: 200px;
+        }
+
+        .empty-state {
+            padding: 40px 20px;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+        }
+
+        .empty-icon i {
+            font-size: 32px;
+        }
+    }
+
+    /* Mobile Devices (481px - 575px) */
+    @media (min-width: 481px) and (max-width: 575px) {
+        .subjects-bar {
+            padding: 12px 16px;
+        }
+
+        .subjects-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        .subjects-title {
+            font-size: 1rem;
+        }
+
+        .add-subject-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 10px 16px;
+        }
+
+        .subjects-list {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+            gap: 8px;
+        }
+
+        .subject-pill {
+            flex-shrink: 0;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+
+        .subject-pill i {
+            font-size: 1rem;
         }
 
         .notes-content {
             padding: 16px;
         }
 
-        .page-header {
-            padding: 0 8px;
-            /* Reduce padding slightly */
+        .notes-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 14px;
+        }
+
+        .notes-header h1 {
+            font-size: 1.2rem;
+        }
+
+        .notes-header h1 .count-badge {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+        }
+
+        .new-note-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 12px 20px;
+        }
+
+        .notes-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .note-card {
+            padding: 14px;
+        }
+
+        .note-card-title {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            -webkit-line-clamp: 1;
+        }
+
+        .note-card-preview {
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            -webkit-line-clamp: 2;
+        }
+
+        .note-card-footer {
+            padding-top: 10px;
+        }
+
+        .note-card-date {
+            font-size: 0.7rem;
+        }
+
+        .note-card-actions {
+            opacity: 1;
+        }
+
+        .note-action-btn {
+            width: 28px;
+            height: 28px;
+        }
+
+        .modal {
+            max-width: 95%;
+            max-height: 85vh;
+            margin: 10px;
+        }
+
+        .modal.large {
+            max-width: 95%;
+        }
+
+        .modal-header {
+            padding: 16px 18px;
+        }
+
+        .modal-title {
+            font-size: 1rem;
+        }
+
+        .modal-body {
+            padding: 18px;
+        }
+
+        .modal-footer {
+            padding: 14px 18px;
+        }
+
+        .note-title-input {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+        }
+
+        .note-content-input {
+            min-height: 180px;
+            font-size: 0.95rem;
+        }
+
+        .view-title {
+            font-size: 1.4rem;
+        }
+
+        .view-content {
+            font-size: 0.95rem;
+        }
+
+        .empty-state {
+            padding: 40px 16px;
+        }
+
+        .empty-icon {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 20px;
+        }
+
+        .empty-icon i {
+            font-size: 28px;
+        }
+
+        .empty-title {
+            font-size: 1.1rem;
+        }
+
+        .empty-text {
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-action {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Small Mobile Devices (up to 480px) */
+    @media (max-width: 480px) {
+        .subjects-bar {
+            padding: 10px 12px;
+        }
+
+        .subjects-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .subjects-title {
+            font-size: 0.95rem;
+        }
+
+        .subjects-title i {
+            font-size: 1.1rem;
+        }
+
+        .add-subject-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+        }
+
+        .subjects-list {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding-bottom: 6px;
+            -webkit-overflow-scrolling: touch;
+            gap: 6px;
+            margin: 0 -12px;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        .subject-pill {
+            flex-shrink: 0;
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            border-radius: 20px;
+        }
+
+        .subject-pill i {
+            font-size: 0.9rem;
+        }
+
+        .subject-pill .pill-count {
+            font-size: 0.65rem;
+            padding: 1px 6px;
+        }
+
+        .notes-content {
+            padding: 12px;
+        }
+
+        .notes-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .notes-header h1 {
+            font-size: 1.1rem;
+            flex-wrap: wrap;
+        }
+
+        .notes-header h1 .count-badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+        }
+
+        .new-note-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 11px 18px;
+            font-size: 0.85rem;
+        }
+
+        .notes-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .note-card {
+            padding: 14px;
+        }
+
+        .note-card-title {
+            font-size: 1rem;
+            margin-bottom: 6px;
+            -webkit-line-clamp: 2;
+        }
+
+        .note-card-preview {
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            -webkit-line-clamp: 2;
+            line-height: 1.5;
+        }
+
+        .note-card-footer {
+            padding-top: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .note-card-date {
+            font-size: 0.75rem;
+        }
+
+        .note-card-actions {
+            opacity: 1;
+            gap: 4px;
+        }
+
+        .note-action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+        }
+
+        /* Modal styles for small screens */
+        .modal-overlay {
+            padding: 10px;
+            align-items: flex-end;
+        }
+
+        .modal {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 16px 16px 0 0;
+            margin: 0;
+        }
+
+        .modal.large {
+            max-width: 100%;
+        }
+
+        .modal-header {
+            padding: 14px 16px;
+        }
+
+        .modal-title {
+            font-size: 0.95rem;
+            gap: 8px;
+        }
+
+        .modal-title i {
+            font-size: 1.1rem;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        .modal-footer {
+            padding: 12px 16px;
+            gap: 10px;
+        }
+
+        .note-title-input {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .note-content-input {
+            min-height: 150px;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .view-title {
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+        }
+
+        .view-content {
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .view-meta {
+            margin-top: 20px;
+            padding-top: 14px;
+            font-size: 0.8rem;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .view-actions {
+            gap: 4px;
+        }
+
+        .view-actions .modal-close {
+            width: 30px;
+            height: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            padding: 10px 14px;
+            font-size: 0.95rem;
+            border-radius: 8px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            font-size: 0.85rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 30px 12px;
+        }
+
+        .empty-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 16px;
+        }
+
+        .empty-icon i {
+            font-size: 24px;
+        }
+
+        .empty-title {
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .empty-text {
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+        }
+
+        .empty-action {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            justify-content: center;
+        }
+    }
+
+    /* Landscape Mode for Mobile */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .notes-page {
+            min-height: auto;
+        }
+
+        .subjects-bar {
+            padding: 10px 20px;
+        }
+
+        .subjects-header {
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .add-subject-btn {
+            width: auto;
+        }
+
+        .notes-content {
+            padding: 14px 20px;
+        }
+
+        .notes-header {
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .new-note-btn {
+            width: auto;
+        }
+
+        .notes-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .modal-overlay {
+            align-items: center;
+        }
+
+        .modal {
+            max-height: 85vh;
+            border-radius: 16px;
+        }
+
+        .note-content-input {
+            min-height: 120px;
+        }
+
+        .empty-state {
+            padding: 20px;
+        }
+    }
+
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+        .note-card-actions {
+            opacity: 1;
+        }
+
+        .note-card:hover {
+            transform: none;
+        }
+
+        .note-card:active {
+            transform: scale(0.98);
+        }
+
+        .subject-pill:hover {
+            background: var(--bg-primary);
+        }
+
+        .subject-pill:active {
+            background: var(--bg-hover-dark);
+        }
+
+        .subject-pill.active:hover,
+        .subject-pill.active:active {
+            background: var(--primary-color);
+        }
+
+        .subject-pill .delete-btn {
+            display: flex;
+            opacity: 0.7;
+        }
+
+        .btn:active,
+        .add-subject-btn:active,
+        .new-note-btn:active,
+        .empty-action:active {
+            transform: scale(0.98);
+        }
+    }
+
+    /* High contrast mode / accessibility */
+    @media (prefers-contrast: high) {
+        .note-card {
+            border-width: 2px;
+        }
+
+        .subject-pill {
+            border-width: 2px;
+        }
+
+        .note-card-actions {
+            opacity: 1;
+        }
+    }
+
+    /* Reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+        .note-card,
+        .subject-pill,
+        .btn,
+        .add-subject-btn,
+        .new-note-btn,
+        .modal,
+        .modal-overlay {
+            transition: none;
+        }
+
+        .note-card:hover {
+            transform: none;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <div class="page-header">
-        <h1 class="page-title"><i class="mdi mdi-notebook-outline"></i> Quick Notes</h1>
-        <p class="page-subtitle">Organize your notes by subject</p>
+<div class="notes-page">
+    <!-- Top Subject Bar -->
+    <div class="subjects-bar">
+        <div class="subjects-header">
+            <div class="subjects-title">
+                <i class="mdi mdi-bookshelf"></i>
+                <span>Your Subjects</span>
+            </div>
+            <button class="add-subject-btn" onclick="openSubjectModal()">
+                <i class="mdi mdi-plus"></i>
+                <span>Add Subject</span>
+            </button>
+        </div>
+        <div class="subjects-list">
+            <div class="subject-pill {% if not selected_folder %}active{% endif %}" onclick="selectSubject(null)">
+                <i class="mdi mdi-note-multiple"></i>
+                <span>All Notes</span>
+                <span class="pill-count">{{ total_notes }}</span>
+            </div>
+            {% for folder in folders %}
+            <div class="subject-pill {% if selected_folder.id == folder.id %}active{% endif %}" onclick="selectSubject({{ folder.id }})">
+                <i class="mdi mdi-book-outline"></i>
+                <span>{{ folder.name }}</span>
+                <span class="pill-count">{{ folder.note_count }}</span>
+                {% if selected_folder.id == folder.id %}
+                <span class="delete-btn" onclick="event.stopPropagation(); deleteSubject({{ folder.id }}, '{{ folder.name|escapejs }}')" title="Delete">
+                    <i class="mdi mdi-close"></i>
+                </span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
     </div>
 
-    <div class="notes-layout">
-        <!-- Folders Sidebar -->
-        <div class="folders-sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-title">Subjects</div>
-                <button class="btn-add-folder" onclick="showAddFolderModal()" title="Add Subject">
-                    <i class="mdi mdi-plus"></i>
-                </button>
-            </div>
-
-            <div class="folder-list">
-                <!-- All Notes (unorganized) -->
-                <div class="folder-item {% if not selected_folder %}active{% endif %}" onclick="selectFolder(null)">
-                    <i class="mdi mdi-file-document-multiple-outline folder-icon"></i>
-                    <div class="folder-info">
-                        <div class="folder-name">All Notes</div>
-                        <div class="folder-count">Unorganized</div>
-                    </div>
-                </div>
-
-                {% for folder in folders %}
-                <div class="folder-item {% if selected_folder and selected_folder.id == folder.id %}active{% endif %}"
-                    onclick="selectFolder({{ folder.id }})">
-                    <i class="mdi mdi-folder folder-icon"></i>
-                    <div class="folder-info">
-                        <div class="folder-name">{{ folder.name }}</div>
-                        <div class="folder-count">{{ folder.note_count }} note{{ folder.note_count|pluralize }}</div>
-                    </div>
-                    <i class="mdi mdi-delete-outline folder-delete"
-                        onclick="event.stopPropagation(); deleteFolder({{ folder.id }}, '{{ folder.name }}')"></i>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Notes Content -->
-        <div class="notes-content">
-            <div class="notes-header">
-                <div class="notes-title">
-                    <i
-                        class="mdi mdi-{% if selected_folder %}folder-open{% else %}file-document-multiple{% endif %}"></i>
-                    {{ selected_folder.name|default:"All Notes" }}
-                </div>
-                {% if selected_folder %}
-                <button class="btn-add-note" onclick="showAddNoteModal()">
-                    <i class="mdi mdi-plus"></i>
-                    <span>Add Note</span>
-                </button>
-                {% endif %}
-            </div>
-
-            {% if notes %}
-            <div class="notes-grid">
-                {% for note in notes %}
-                <div class="note-card">
-                    <div class="note-card-header">
-                        <div class="note-title">{{ note.title }}</div>
-                        <i class="mdi mdi-delete-outline note-delete"
-                            onclick="deleteNote({{ note.id }}, '{{ note.title }}')"></i>
-                    </div>
-                    <div class="note-content">{{ note.content }}</div>
-                    <div class="note-footer">
-                        <i class="mdi mdi-clock-outline"></i>
-                        <span>{{ note.created_at|date:"M d, Y" }}</span>
-                        {% if note.updated_at != note.created_at %}
-                        <span>• Edited</span>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i
-                        class="mdi mdi-{% if selected_folder %}note-plus-outline{% else %}folder-plus-outline{% endif %}"></i>
-                </div>
-                <div class="empty-title">
-                    {% if selected_folder %}
-                    No notes yet
-                    {% else %}
-                    No unorganized notes
-                    {% endif %}
-                </div>
-                <div class="empty-text">
-                    {% if selected_folder %}
-                    Click "Add Note" to create your first note in this subject.
-                    {% else %}
-                    Create a subject folder and start organizing your notes!
-                    {% endif %}
-                </div>
-                {% if not selected_folder %}
-                <button class="btn-add-folder" onclick="showAddFolderModal()" style="width: auto; padding: 12px 24px;">
-                    <i class="mdi mdi-folder-plus"></i>
-                    <span style="margin-left: 8px;">Create Subject Folder</span>
-                </button>
-                {% endif %}
-            </div>
+    <!-- Notes Content -->
+    <div class="notes-content">
+        <div class="notes-header">
+            <h1>
+                {% if selected_folder %}{{ selected_folder.name }}{% else %}All Notes{% endif %}
+                <span class="count-badge">{% with total=pinned_notes|length|add:notes|length %}{{ total }} note{{ total|pluralize }}{% endwith %}</span>
+            </h1>
+            {% if selected_folder %}
+            <button class="new-note-btn" onclick="openNoteModal()">
+                <i class="mdi mdi-plus"></i>
+                <span>New Note</span>
+            </button>
             {% endif %}
         </div>
+
+        {% if pinned_notes %}
+        <!-- Pinned Notes Section -->
+        <div class="pinned-section">
+            <div class="pinned-header">
+                <i class="mdi mdi-pin"></i>
+                <span>Pinned Notes ({{ pinned_notes|length }}/4)</span>
+            </div>
+            <div class="pinned-grid">
+                {% for note in pinned_notes %}
+                <div class="note-card pinned" onclick="viewNote({{ note.id }})" data-note-id="{{ note.id }}">
+                    <span class="pin-badge"><i class="mdi mdi-pin"></i></span>
+                    <div class="note-card-title">{{ note.title }}</div>
+                    <div class="note-card-preview">{{ note.content|truncatewords:30 }}</div>
+                    <div class="note-card-footer">
+                        <div class="note-card-date">
+                            <i class="mdi mdi-clock-outline"></i>
+                            {{ note.updated_at|date:"M d, Y" }}
+                        </div>
+                        <div class="note-card-actions">
+                            <button class="note-action-btn pin pinned" onclick="event.stopPropagation(); togglePin({{ note.id }})" title="Unpin">
+                                <i class="mdi mdi-pin-off"></i>
+                            </button>
+                            <button class="note-action-btn" onclick="event.stopPropagation(); editNote({{ note.id }})" title="Edit">
+                                <i class="mdi mdi-pencil"></i>
+                            </button>
+                            <button class="note-action-btn delete" onclick="event.stopPropagation(); deleteNote({{ note.id }}, '{{ note.title|escapejs }}')" title="Delete">
+                                <i class="mdi mdi-delete"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if notes %}
+        {% if pinned_notes %}
+        <div class="notes-divider">All Notes</div>
+        {% endif %}
+        <div class="notes-grid">
+            {% for note in notes %}
+            <div class="note-card" onclick="viewNote({{ note.id }})" data-note-id="{{ note.id }}">
+                <div class="note-card-title">{{ note.title }}</div>
+                <div class="note-card-preview">{{ note.content|truncatewords:30 }}</div>
+                <div class="note-card-footer">
+                    <div class="note-card-date">
+                        <i class="mdi mdi-clock-outline"></i>
+                        {{ note.updated_at|date:"M d, Y" }}
+                    </div>
+                    <div class="note-card-actions">
+                        <button class="note-action-btn pin" onclick="event.stopPropagation(); togglePin({{ note.id }})" title="Pin">
+                            <i class="mdi mdi-pin"></i>
+                        </button>
+                        <button class="note-action-btn" onclick="event.stopPropagation(); editNote({{ note.id }})" title="Edit">
+                            <i class="mdi mdi-pencil"></i>
+                        </button>
+                        <button class="note-action-btn delete" onclick="event.stopPropagation(); deleteNote({{ note.id }}, '{{ note.title|escapejs }}')" title="Delete">
+                            <i class="mdi mdi-delete"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% elif not pinned_notes %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="mdi mdi-{% if selected_folder %}note-plus{% else %}book-plus{% endif %}"></i>
+            </div>
+            <div class="empty-title">
+                {% if selected_folder %}No notes yet{% else %}Select a subject{% endif %}
+            </div>
+            <div class="empty-text">
+                {% if selected_folder %}
+                Create your first note in this subject.
+                {% else %}
+                Choose a subject above or create a new one to start taking notes.
+                {% endif %}
+            </div>
+            {% if selected_folder %}
+            <button class="empty-action" onclick="openNoteModal()">
+                <i class="mdi mdi-plus"></i>
+                Create Note
+            </button>
+            {% else %}
+            <button class="empty-action" onclick="openSubjectModal()">
+                <i class="mdi mdi-plus"></i>
+                Create Subject
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Add Folder Modal -->
-<div class="modal-overlay" id="addFolderModal">
-    <div class="modal-content">
+<!-- Create/Edit Note Modal -->
+<div class="modal-overlay" id="noteModal">
+    <div class="modal large">
         <div class="modal-header">
-            <div class="modal-title">Create Subject Folder</div>
-            <i class="mdi mdi-close modal-close" onclick="closeModal('addFolderModal')"></i>
+            <div class="modal-title">
+                <i class="mdi mdi-note-edit"></i>
+                <span id="noteModalTitle">New Note</span>
+            </div>
+            <button class="modal-close" onclick="closeModal('noteModal')">
+                <i class="mdi mdi-close"></i>
+            </button>
         </div>
-        <form id="addFolderForm" onsubmit="createFolder(event)">
+        <div class="modal-body">
+            <input type="text" class="note-title-input" id="noteTitle" placeholder="Note title..." autocomplete="off">
+            <textarea class="note-content-input" id="noteContent" placeholder="Start writing..."></textarea>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('noteModal')">Cancel</button>
+            <button class="btn btn-primary" id="noteSaveBtn" onclick="saveNote()">
+                <i class="mdi mdi-check"></i>
+                Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Create Subject Modal -->
+<div class="modal-overlay" id="subjectModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title">
+                <i class="mdi mdi-book-plus"></i>
+                <span>New Subject</span>
+            </div>
+            <button class="modal-close" onclick="closeModal('subjectModal')">
+                <i class="mdi mdi-close"></i>
+            </button>
+        </div>
+        <div class="modal-body">
             <div class="form-group">
                 <label class="form-label">Subject Name</label>
-                <input type="text" class="form-input" id="folderName"
-                    placeholder="e.g., Mathematics, History, Science..." required>
+                <input type="text" class="form-input" id="subjectName" placeholder="e.g., Mathematics, Physics..." autocomplete="off">
             </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-cancel" onclick="closeModal('addFolderModal')">Cancel</button>
-                <button type="submit" class="btn-submit">Create Folder</button>
-            </div>
-        </form>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('subjectModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="createSubject()">
+                <i class="mdi mdi-check"></i>
+                Create
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- Add Note Modal -->
-<div class="modal-overlay" id="addNoteModal">
-    <div class="modal-content">
+<!-- View Note Modal -->
+<div class="modal-overlay" id="viewModal">
+    <div class="modal large">
         <div class="modal-header">
-            <div class="modal-title">Create New Note</div>
-            <i class="mdi mdi-close modal-close" onclick="closeModal('addNoteModal')"></i>
+            <div class="modal-title">
+                <i class="mdi mdi-file-document"></i>
+                <span>Note</span>
+            </div>
+            <div class="view-actions">
+                <button class="modal-close" id="editFromViewBtn" onclick="editFromView()" title="Edit">
+                    <i class="mdi mdi-pencil"></i>
+                </button>
+                <button class="modal-close" onclick="deleteFromView()" title="Delete" style="color: #ef4444;">
+                    <i class="mdi mdi-delete"></i>
+                </button>
+                <button class="modal-close" onclick="closeModal('viewModal')">
+                    <i class="mdi mdi-close"></i>
+                </button>
+            </div>
         </div>
-        <form id="addNoteForm" onsubmit="createNote(event)">
-            <div class="form-group">
-                <label class="form-label">Title</label>
-                <input type="text" class="form-input" id="noteTitle" placeholder="Note title..." required>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Content</label>
-                <textarea class="form-textarea" id="noteContent" placeholder="Write your note here..."
-                    required></textarea>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn-cancel" onclick="closeModal('addNoteModal')">Cancel</button>
-                <button type="submit" class="btn-submit">Save Note</button>
-            </div>
-        </form>
+        <div class="modal-body" id="viewModeBody">
+            <h1 class="view-title" id="viewTitle"></h1>
+            <div class="view-content" id="viewContent"></div>
+            <div class="view-meta" id="viewMeta"></div>
+        </div>
+        <div class="modal-body" id="editModeBody" style="display: none;">
+            <input type="text" class="note-title-input" id="editTitle" placeholder="Note title...">
+            <textarea class="note-content-input" id="editContent" placeholder="Start writing..."></textarea>
+        </div>
+        <div class="modal-footer" id="editModeFooter" style="display: none;">
+            <button class="btn btn-secondary" onclick="cancelEditMode()">Cancel</button>
+            <button class="btn btn-primary" onclick="updateNote()">
+                <i class="mdi mdi-check"></i>
+                Save Changes
+            </button>
+        </div>
     </div>
 </div>
 
 <script>
     const csrftoken = '{{ csrf_token }}';
-    let currentFolderId = {{ selected_folder.id|default:"null" }};
+    const currentFolderId = {{ selected_folder.id|default:"null" }};
+    
+    // Store notes data (both pinned and regular notes)
+    const notesData = {
+        {% for note in pinned_notes %}
+        {{ note.id }}: {
+            id: {{ note.id }},
+            title: "{{ note.title|escapejs }}",
+            content: `{{ note.content|escapejs }}`,
+            created: "{{ note.created_at|date:'M d, Y' }}",
+            updated: "{{ note.updated_at|date:'M d, Y' }}",
+            isPinned: true
+        },
+        {% endfor %}
+        {% for note in notes %}
+        {{ note.id }}: {
+            id: {{ note.id }},
+            title: "{{ note.title|escapejs }}",
+            content: `{{ note.content|escapejs }}`,
+            created: "{{ note.created_at|date:'M d, Y' }}",
+            updated: "{{ note.updated_at|date:'M d, Y' }}",
+            isPinned: false
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+    let editingNoteId = null;
+    let viewingNoteId = null;
 
-
-    function selectFolder(folderId) {
+    // Navigation
+    function selectSubject(folderId) {
         const url = folderId ? `?folder=${folderId}` : '';
         window.location.href = '{% url "notes" %}' + url;
     }
-
-    function showAddFolderModal() {
-        document.getElementById('addFolderModal').classList.add('active');
-        document.getElementById('folderName').focus();
+    
+    // Toggle Pin Function
+    async function togglePin(noteId) {
+        try {
+            const response = await fetch('{% url "toggle_pin_note" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ note_id: noteId })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                // Reload to reflect changes
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to toggle pin');
+            }
+        } catch (error) {
+            console.error('Error toggling pin:', error);
+            alert('Failed to toggle pin');
+        }
     }
 
-    function showAddNoteModal() {
-        if (!currentFolderId) {
-            alert('Please select a folder first');
-            return;
+    // Modal Management
+    function openNoteModal(noteId = null) {
+        editingNoteId = noteId;
+        const title = document.getElementById('noteModalTitle');
+        const saveBtn = document.getElementById('noteSaveBtn');
+        const titleInput = document.getElementById('noteTitle');
+        const contentInput = document.getElementById('noteContent');
+        
+        if (noteId && notesData[noteId]) {
+            title.textContent = 'Edit Note';
+            titleInput.value = notesData[noteId].title;
+            contentInput.value = notesData[noteId].content;
+            saveBtn.innerHTML = '<i class="mdi mdi-check"></i> Update';
+        } else {
+            title.textContent = 'New Note';
+            titleInput.value = '';
+            contentInput.value = '';
+            saveBtn.innerHTML = '<i class="mdi mdi-check"></i> Save';
         }
-        document.getElementById('addNoteModal').classList.add('active');
-        document.getElementById('noteTitle').focus();
+        
+        document.getElementById('noteModal').classList.add('active');
+        titleInput.focus();
+    }
+
+    function openSubjectModal() {
+        document.getElementById('subjectModal').classList.add('active');
+        document.getElementById('subjectName').focus();
+    }
+
+    function viewNote(noteId) {
+        viewingNoteId = noteId;
+        const note = notesData[noteId];
+        if (!note) return;
+        
+        document.getElementById('viewTitle').textContent = note.title;
+        document.getElementById('viewContent').textContent = note.content;
+        
+        let metaHtml = `<span><i class="mdi mdi-calendar"></i> Created: ${note.created}</span>`;
+        if (note.created !== note.updated) {
+            metaHtml += `<span><i class="mdi mdi-pencil"></i> Edited: ${note.updated}</span>`;
+        }
+        document.getElementById('viewMeta').innerHTML = metaHtml;
+        
+        document.getElementById('viewModeBody').style.display = 'block';
+        document.getElementById('editModeBody').style.display = 'none';
+        document.getElementById('editModeFooter').style.display = 'none';
+        document.getElementById('editFromViewBtn').style.display = 'flex';
+        
+        document.getElementById('viewModal').classList.add('active');
+    }
+
+    function editNote(noteId) {
+        openNoteModal(noteId);
+    }
+
+    function editFromView() {
+        const note = notesData[viewingNoteId];
+        if (!note) return;
+        
+        document.getElementById('editTitle').value = note.title;
+        document.getElementById('editContent').value = note.content;
+        
+        document.getElementById('viewModeBody').style.display = 'none';
+        document.getElementById('editModeBody').style.display = 'block';
+        document.getElementById('editModeFooter').style.display = 'flex';
+        document.getElementById('editFromViewBtn').style.display = 'none';
+        
+        document.getElementById('editTitle').focus();
+    }
+
+    function cancelEditMode() {
+        document.getElementById('viewModeBody').style.display = 'block';
+        document.getElementById('editModeBody').style.display = 'none';
+        document.getElementById('editModeFooter').style.display = 'none';
+        document.getElementById('editFromViewBtn').style.display = 'flex';
     }
 
     function closeModal(modalId) {
         document.getElementById(modalId).classList.remove('active');
-        if (modalId === 'addFolderModal') {
-            document.getElementById('addFolderForm').reset();
-        } else if (modalId === 'addNoteModal') {
-            document.getElementById('addNoteForm').reset();
+        if (modalId === 'noteModal') {
+            editingNoteId = null;
+        } else if (modalId === 'viewModal') {
+            viewingNoteId = null;
+            cancelEditMode();
         }
     }
 
-    async function createFolder(event) {
-        event.preventDefault();
-        const folderName = document.getElementById('folderName').value.trim();
+    // API Functions
+    async function createSubject() {
+        const name = document.getElementById('subjectName').value.trim();
+        if (!name) return;
 
         try {
             const response = await fetch('{% url "create_subject_folder" %}', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                body: JSON.stringify({ name: folderName })
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ name })
             });
-
             const data = await response.json();
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.error || 'Failed to create folder');
-            }
+            if (data.success) window.location.reload();
+            else alert(data.error || 'Failed to create subject');
         } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to create folder');
+            alert('Failed to create subject');
         }
     }
 
-    async function createNote(event) {
-        event.preventDefault();
-        const title = document.getElementById('noteTitle').value.trim();
-        const content = document.getElementById('noteContent').value.trim();
-
-        try {
-            const response = await fetch('{% url "create_note" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                body: JSON.stringify({
-                    folder_id: currentFolderId,
-                    title: title,
-                    content: content
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.error || 'Failed to create note');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to create note');
-        }
-    }
-
-    async function deleteNote(noteId, noteTitle) {
-        if (!confirm(`Delete note "${noteTitle}"?`)) return;
-
-        try {
-            const response = await fetch('{% url "delete_note" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                body: JSON.stringify({ note_id: noteId })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert(data.error || 'Failed to delete note');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to delete note');
-        }
-    }
-
-    async function deleteFolder(folderId, folderName) {
-        if (!confirm(`Delete folder "${folderName}" and all its notes? This cannot be undone.`)) return;
+    async function deleteSubject(folderId, folderName) {
+        if (!confirm(`Delete "${folderName}" and all its notes?`)) return;
 
         try {
             const response = await fetch('{% url "delete_folder" %}', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
                 body: JSON.stringify({ folder_id: folderId })
             });
-
             const data = await response.json();
-            if (data.success) {
-                window.location.href = '{% url "notes" %}';
-            } else {
-                alert(data.error || 'Failed to delete folder');
-            }
+            if (data.success) window.location.href = '{% url "notes" %}';
+            else alert(data.error || 'Failed to delete subject');
         } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to delete folder');
+            alert('Failed to delete subject');
         }
     }
 
+    async function saveNote() {
+        const title = document.getElementById('noteTitle').value.trim() || 'Untitled';
+        const content = document.getElementById('noteContent').value.trim();
+        if (!content) return;
+
+        try {
+            const url = editingNoteId ? '{% url "update_note" %}' : '{% url "create_note" %}';
+            const body = editingNoteId 
+                ? { note_id: editingNoteId, title, content }
+                : { folder_id: currentFolderId, title, content };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+            if (data.success) window.location.reload();
+            else alert(data.error || 'Failed to save note');
+        } catch (error) {
+            alert('Failed to save note');
+        }
+    }
+
+    async function updateNote() {
+        const title = document.getElementById('editTitle').value.trim() || 'Untitled';
+        const content = document.getElementById('editContent').value.trim();
+        if (!content) return;
+
+        try {
+            const response = await fetch('{% url "update_note" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ note_id: viewingNoteId, title, content })
+            });
+            const data = await response.json();
+            if (data.success) window.location.reload();
+            else alert(data.error || 'Failed to update note');
+        } catch (error) {
+            alert('Failed to update note');
+        }
+    }
+
+    async function deleteNote(noteId, noteTitle) {
+        if (!confirm(`Delete "${noteTitle}"?`)) return;
+
+        try {
+            const response = await fetch('{% url "delete_note" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: JSON.stringify({ note_id: noteId })
+            });
+            const data = await response.json();
+            if (data.success) window.location.reload();
+            else alert(data.error || 'Failed to delete note');
+        } catch (error) {
+            alert('Failed to delete note');
+        }
+    }
+
+    function deleteFromView() {
+        if (viewingNoteId && notesData[viewingNoteId]) {
+            deleteNote(viewingNoteId, notesData[viewingNoteId].title);
+        }
+    }
+
+    // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
-                modal.classList.remove('active');
-            });
+            document.querySelectorAll('.modal-overlay.active').forEach(m => closeModal(m.id));
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            if (document.getElementById('noteModal').classList.contains('active')) saveNote();
+            else if (document.getElementById('viewModal').classList.contains('active') && 
+                     document.getElementById('editModeBody').style.display !== 'none') updateNote();
+            else if (document.getElementById('subjectModal').classList.contains('active')) createSubject();
         }
     });
 
+    // Click outside to close
     document.querySelectorAll('.modal-overlay').forEach(modal => {
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
+            if (e.target === modal) closeModal(modal.id);
         });
+    });
+
+    // Enter key in inputs
+    document.getElementById('subjectName')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); createSubject(); }
+    });
+    document.getElementById('noteTitle')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('noteContent').focus(); }
     });
 </script>
 {% endblock %}

@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - FOCUS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .admin-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, var(--color-red) 0%, #9b4a4a 100%);
+        color: white;
+        border-radius: var(--border-radius);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .admin-badge i {
+        font-size: 0.9rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .stat-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        transition: all var(--transition-fast);
+    }
+
+    .stat-card:hover {
+        border-color: var(--border-color-light);
+        transform: translateY(-2px);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--border-radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .stat-icon i {
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-icon.blue { background: linear-gradient(135deg, var(--color-blue) 0%, #4a7c9b 100%); }
+    .stat-icon.green { background: linear-gradient(135deg, var(--color-green) 0%, #4a7c5a 100%); }
+    .stat-icon.yellow { background: linear-gradient(135deg, var(--color-yellow) 0%, #9b8a4a 100%); }
+    .stat-icon.red { background: linear-gradient(135deg, var(--color-red) 0%, #9b4a4a 100%); }
+    .stat-icon.purple { background: linear-gradient(135deg, #8b7cb3 0%, #6b5a8f 100%); }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .admin-sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xl);
+    }
+
+    .admin-section {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .section-title i {
+        color: var(--text-tertiary);
+    }
+
+    .view-all-btn {
+        font-size: 0.75rem;
+        color: var(--color-blue);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: all var(--transition-fast);
+    }
+
+    .view-all-btn:hover {
+        color: var(--text-primary);
+    }
+
+    .user-list {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+    }
+
+    .user-list-item {
+        display: flex;
+        align-items: center;
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+        transition: background var(--transition-fast);
+    }
+
+    .user-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .user-list-item:hover {
+        background: var(--bg-hover);
+    }
+
+    .user-avatar-sm {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-blue) 0%, #4a7c9b 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: var(--spacing-md);
+        flex-shrink: 0;
+    }
+
+    .user-avatar-sm i {
+        color: white;
+        font-size: 1rem;
+    }
+
+    .user-avatar-sm.admin {
+        background: linear-gradient(135deg, var(--color-red) 0%, #9b4a4a 100%);
+    }
+
+    .user-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .user-item-name {
+        font-weight: 500;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .user-item-name .admin-tag {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        background: rgba(204, 102, 102, 0.2);
+        color: var(--color-red);
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .user-item-meta {
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+    }
+
+    .user-item-stats {
+        display: flex;
+        gap: var(--spacing-md);
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+    }
+
+    .user-item-stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .quick-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-md);
+        padding: var(--spacing-lg);
+    }
+
+    .quick-stat {
+        background: var(--bg-tertiary);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius);
+        text-align: center;
+    }
+
+    .quick-stat-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .quick-stat-label {
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .admin-sections {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <div class="admin-header">
+        <div>
+            <h1 class="page-title">Admin Dashboard</h1>
+            <p class="page-subtitle">System overview and user management</p>
+        </div>
+        <div class="admin-badge">
+            <i class="mdi mdi-shield-crown"></i>
+            Administrator
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon blue">
+                <i class="mdi mdi-account-group"></i>
+            </div>
+            <div class="stat-value">{{ total_users }}</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green">
+                <i class="mdi mdi-account-check"></i>
+            </div>
+            <div class="stat-value">{{ active_users }}</div>
+            <div class="stat-label">Active (7 days)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon yellow">
+                <i class="mdi mdi-clock-outline"></i>
+            </div>
+            <div class="stat-value">{{ total_study_hours }}h</div>
+            <div class="stat-label">Total Study Time</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple">
+                <i class="mdi mdi-clipboard-text"></i>
+            </div>
+            <div class="stat-value">{{ total_assignments }}</div>
+            <div class="stat-label">Total Assignments</div>
+        </div>
+    </div>
+
+    <!-- Admin Sections -->
+    <div class="admin-sections">
+        <!-- Recent Users -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="mdi mdi-account-clock"></i>
+                    Recent Users
+                </h2>
+                <a href="{% url 'admin_users' %}" class="view-all-btn">
+                    View All <i class="mdi mdi-arrow-right"></i>
+                </a>
+            </div>
+            <ul class="user-list">
+                {% for user in recent_users %}
+                <li class="user-list-item">
+                    <div class="user-avatar-sm {% if user.is_superuser %}admin{% endif %}">
+                        <i class="mdi mdi-account"></i>
+                    </div>
+                    <div class="user-item-info">
+                        <div class="user-item-name">
+                            {{ user.username }}
+                            {% if user.is_superuser %}
+                            <span class="admin-tag">ADMIN</span>
+                            {% endif %}
+                        </div>
+                        <div class="user-item-meta">
+                            Joined {{ user.date_joined|date:"M d, Y" }}
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="user-list-item">
+                    <span style="color: var(--text-tertiary);">No users yet</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Top Users by Study Time -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="mdi mdi-trophy"></i>
+                    Top Users
+                </h2>
+                <a href="{% url 'admin_users' %}" class="view-all-btn">
+                    View All <i class="mdi mdi-arrow-right"></i>
+                </a>
+            </div>
+            <ul class="user-list">
+                {% for stat in user_stats %}
+                <li class="user-list-item">
+                    <div class="user-avatar-sm {% if stat.user.is_superuser %}admin{% endif %}">
+                        <i class="mdi mdi-account"></i>
+                    </div>
+                    <div class="user-item-info">
+                        <div class="user-item-name">
+                            {{ stat.user.username }}
+                            {% if stat.user.is_superuser %}
+                            <span class="admin-tag">ADMIN</span>
+                            {% endif %}
+                        </div>
+                        <div class="user-item-stats">
+                            <span class="user-item-stat">
+                                <i class="mdi mdi-clock-outline"></i>
+                                {{ stat.study_hours }}h
+                            </span>
+                            <span class="user-item-stat">
+                                <i class="mdi mdi-clipboard-text"></i>
+                                {{ stat.assignments }}
+                            </span>
+                            <span class="user-item-stat">
+                                <i class="mdi mdi-note-text"></i>
+                                {{ stat.notes }}
+                            </span>
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="user-list-item">
+                    <span style="color: var(--text-tertiary);">No users yet</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="admin-section" style="margin-top: var(--spacing-xl);">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="mdi mdi-chart-bar"></i>
+                Platform Statistics
+            </h2>
+        </div>
+        <div class="quick-stats-grid">
+            <div class="quick-stat">
+                <div class="quick-stat-value">{{ total_sessions }}</div>
+                <div class="quick-stat-label">Study Sessions</div>
+            </div>
+            <div class="quick-stat">
+                <div class="quick-stat-value">{{ pending_assignments }}</div>
+                <div class="quick-stat-label">Pending Assignments</div>
+            </div>
+            <div class="quick-stat">
+                <div class="quick-stat-value">{{ completed_assignments }}</div>
+                <div class="quick-stat-label">Completed Assignments</div>
+            </div>
+            <div class="quick-stat">
+                <div class="quick-stat-value">{{ total_notes }}</div>
+                <div class="quick-stat-label">Total Notes</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

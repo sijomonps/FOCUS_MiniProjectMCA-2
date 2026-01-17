@@ -1,4 +1,4 @@
-# StudyFlow Configuration
+# FOCUS Configuration
 
 This folder contains the main Django project configuration files.
 

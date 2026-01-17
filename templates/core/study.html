@@ -1,577 +1,859 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Focus - StudyFlow{% endblock %}
-
-{% block favicon %}
-<link rel="icon"
-    href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234f46e5"><path d="M12 20C16.4 20 20 16.4 20 12S16.4 4 12 4 4 7.6 4 12 7.6 20 12 20M12 2C17.5 2 22 6.5 22 12S17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2M11 14H13V8H11V14Z" /></svg>'>
-{% endblock %}
+{% block title %}Focus Timer - FOCUS{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Minimal Timer Layout */
-    .timer-container {
+    /* Ultra Minimal Timer Layout */
+    .timer-page {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-height: 80vh;
-        max-width: 600px;
-        margin: 0 auto;
-        text-align: center;
+        min-height: calc(100vh - 100px);
+        padding: 2rem;
     }
 
-    /* Mode Switcher (Pill Buttons) */
-    .mode-switcher {
+    /* Duration Presets */
+    .duration-presets {
         display: flex;
-        gap: var(--spacing-md);
-        margin-bottom: var(--spacing-2xl);
-        background: var(--bg-secondary);
-        padding: 6px;
-        border-radius: 50px;
-        /* Fully rounded pill */
-        border: 1px solid var(--border-color);
+        gap: 12px;
+        margin-bottom: 3rem;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
-    .mode-btn {
-        background: transparent;
-        border: none;
+    .preset-btn {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
         color: var(--text-secondary);
-        padding: 8px 20px;
-        border-radius: 40px;
+        padding: 12px 24px;
+        border-radius: 50px;
         font-size: 0.95rem;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s ease;
     }
 
-    .mode-btn.active {
-        background: var(--bg-tertiary);
-        /* Highlight active mode */
+    .preset-btn:hover {
+        border-color: var(--text-secondary);
         color: var(--text-primary);
-        font-weight: 600;
-        box-shadow: var(--shadow-sm);
     }
 
-    .mode-btn:hover:not(.active) {
-        color: var(--text-primary);
-        background-color: rgba(255, 255, 255, 0.05);
+    .preset-btn.active {
+        background: var(--text-primary);
+        color: var(--bg-primary);
+        border-color: var(--text-primary);
     }
 
-    /* Huge Timer Display */
+    .preset-btn.custom-active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* Custom Duration Input */
+    .custom-input-wrapper {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        margin-top: 1rem;
+    }
+
+    .custom-input-wrapper.show {
+        display: flex;
+    }
+
+    .custom-input {
+        width: 80px;
+        padding: 10px 16px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 25px;
+        color: var(--text-primary);
+        font-size: 1rem;
+        text-align: center;
+    }
+
+    .custom-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+
+    .custom-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    /* Timer Display */
     .timer-display {
-        font-size: 7rem;
-        /* Very large */
-        font-weight: 700;
+        font-size: 8rem;
+        font-weight: 200;
         color: var(--text-primary);
         font-variant-numeric: tabular-nums;
         line-height: 1;
-        margin-bottom: var(--spacing-xl);
-        letter-spacing: -3px;
+        margin-bottom: 1rem;
+        letter-spacing: -4px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .timer-mode-label {
+        color: var(--text-tertiary);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 2rem;
     }
 
     @media (max-width: 768px) {
         .timer-display {
-            font-size: 4rem;
+            font-size: 4.5rem;
+            letter-spacing: -2px;
+        }
+        
+        .timer-page {
+            min-height: calc(100vh - 150px);
+            padding: 1rem;
         }
 
-        .timer-container {
-            min-height: 60vh;
+        .duration-presets {
+            gap: 8px;
+        }
+
+        .preset-btn {
+            padding: 10px 18px;
+            font-size: 0.85rem;
         }
     }
 
-    /* Custom Subject Select */
-    .custom-select-wrapper {
-        position: relative;
-        user-select: none;
+    /* Subject Select - Minimal */
+    .subject-select-wrapper {
+        margin-bottom: 2rem;
         width: 100%;
-        max-width: 320px;
-        margin-bottom: var(--spacing-2xl);
-        z-index: 100;
-        /* Ensure it floats above text */
+        max-width: 280px;
     }
 
-    .custom-select {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .custom-select-trigger {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 28px;
-        font-size: 1.1rem;
-        font-weight: 500;
-        color: var(--text-primary);
+    .subject-select {
+        width: 100%;
+        padding: 14px 24px;
         background: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: 50px;
+        color: var(--text-primary);
+        font-size: 1rem;
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        appearance: none;
+        text-align: center;
+        transition: all 0.2s;
     }
 
-    .custom-select-trigger:hover {
+    .subject-select:focus {
+        outline: none;
         border-color: var(--primary-color);
-        transform: translateY(-1px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
-    .custom-select.open .custom-select-trigger {
-        border-color: var(--primary-color);
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-        border-bottom: 1px solid transparent;
-        /* Meld with dropdown */
-        background: var(--bg-tertiary);
+    .subject-select option {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
     }
 
-    .custom-options {
-        position: absolute;
-        display: block;
-        top: 100%;
+    /* Control Buttons */
+    .controls {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .main-btn {
+        background: var(--text-primary);
+        color: var(--bg-primary);
+        border: none;
+        padding: 18px 56px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.2s ease;
+    }
+
+    .main-btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .main-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .main-btn.running {
+        background: var(--color-red);
+        color: white;
+    }
+
+    .reset-btn {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 18px 32px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .reset-btn:hover {
+        border-color: var(--text-secondary);
+        color: var(--text-primary);
+    }
+
+    /* Session Complete Message */
+    .session-complete {
+        position: fixed;
+        top: 0;
         left: 0;
         right: 0;
-        border: 1px solid var(--border-color);
-        border-top: none;
-        border-bottom-left-radius: 20px;
-        border-bottom-right-radius: 20px;
-        background: var(--bg-tertiary);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        z-index: 10;
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
-        transform: translateY(-10px);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        overflow: hidden;
-        max-height: 250px;
-        overflow-y: auto;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        flex-direction: column;
+        gap: 24px;
     }
 
-    .custom-select.open .custom-options {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: all;
-        transform: translateY(0);
+    .session-complete.show {
+        display: flex;
     }
 
-    .custom-option {
-        position: relative;
-        display: block;
-        padding: 12px 28px;
-        font-size: 1rem;
-        color: var(--text-secondary);
-        cursor: pointer;
-        transition: all 0.2s;
-        border-left: 3px solid transparent;
-    }
-
-    .custom-option:hover {
+    .session-complete h2 {
+        font-size: 2.5rem;
+        font-weight: 300;
         color: var(--text-primary);
-        background: rgba(255, 255, 255, 0.05);
-        border-left-color: var(--primary-color);
-        padding-left: 32px;
     }
 
-    .custom-option.selected {
-        color: var(--primary-color);
-        font-weight: 600;
-        background: rgba(var(--primary-rgb), 0.1);
-    }
-
-    .arrow {
-        position: relative;
-        height: 10px;
-        width: 10px;
-        margin-left: 10px;
-    }
-
-    .arrow::before,
-    .arrow::after {
-        content: '';
-        position: absolute;
-        bottom: 0px;
-        width: 2px;
-        height: 100%;
-        background-color: var(--text-secondary);
-        transition: all 0.3s;
-    }
-
-    .arrow::before {
-        left: -2px;
-        transform: rotate(45deg);
-    }
-
-    .arrow::after {
-        left: 3px;
-        transform: rotate(-45deg);
-    }
-
-    .custom-select.open .arrow::before {
-        transform: rotate(-45deg);
-    }
-
-    .custom-select.open .arrow::after {
-        transform: rotate(45deg);
-    }
-
-    /* Scrollbar for options */
-    .custom-options::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .custom-options::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .custom-options::-webkit-scrollbar-thumb {
-        background: var(--border-color);
-        border-radius: 3px;
-    }
-
-    /* Break Buttons */
-    .break-btn {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
+    .session-complete p {
         color: var(--text-secondary);
-        padding: 10px 20px;
-        border-radius: 30px;
-        font-size: 0.9rem;
+        font-size: 1.1rem;
+    }
+
+    .session-complete button {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 16px 48px;
+        font-size: 1rem;
+        border-radius: 50px;
         cursor: pointer;
-        transition: all 0.2s;
+        margin-top: 1rem;
+    }
+
+    /* Recorded Sessions - Minimal */
+    .recorded-info {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        color: var(--text-tertiary);
+        font-size: 0.8rem;
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    .break-btn:hover {
-        border-color: var(--color-green);
-        color: var(--color-green);
-        background: rgba(16, 185, 129, 0.1);
-    }
-
-    .break-btn.active {
+    .recorded-dot {
+        width: 6px;
+        height: 6px;
         background: var(--color-green);
-        color: white;
-        border-color: var(--color-green);
+        border-radius: 50%;
     }
 
-    .break-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+    /* Today's Study Time Indicator */
+    .today-study-indicator {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        padding: 10px 16px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        box-shadow: var(--shadow-md);
+        z-index: 100;
+    }
+
+    .today-study-indicator i {
+        color: var(--color-green);
+        font-size: 1.1rem;
+    }
+
+    .today-study-indicator span:last-child {
+        color: var(--color-green);
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .today-study-indicator {
+            top: auto;
+            bottom: 5rem;
+            right: 1rem;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
     }
 </style>
-
 {% endblock %}
 
 {% block content %}
-<div class="fade-in timer-container">
+<div class="timer-page fade-in">
+    
+    <!-- Duration Presets -->
+    <div class="duration-presets">
+        <button class="preset-btn" data-duration="25" onclick="selectDuration(25, this)">25 min</button>
+        <button class="preset-btn" data-duration="45" onclick="selectDuration(45, this)">45 min</button>
+        <button class="preset-btn" data-duration="60" onclick="selectDuration(60, this)">60 min</button>
+        <button class="preset-btn" data-duration="90" onclick="selectDuration(90, this)">90 min</button>
+        <button class="preset-btn" data-duration="custom" onclick="toggleCustomInput(this)">Custom</button>
+    </div>
+
+    <!-- Custom Duration Input -->
+    <div class="custom-input-wrapper" id="customInputWrapper">
+        <input type="number" class="custom-input" id="customMinutes" min="1" max="180" placeholder="30">
+        <span class="custom-label">minutes</span>
+        <button class="preset-btn" onclick="applyCustomDuration()" style="padding: 10px 20px;">Set</button>
+    </div>
 
     <!-- Timer Display -->
-    <div class="timer-display" id="timerDisplay">00:00</div>
+    <div class="timer-display" id="timerDisplay">25:00</div>
+    <div class="timer-mode-label" id="timerModeLabel">Focus Session</div>
 
-    <!-- Break Timer Display (hidden by default) -->
-    <div id="breakTimerSection" style="display: none; margin-bottom: var(--spacing-xl);">
-        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px;" id="breakLabel">Short Break
-        </div>
-        <div style="font-size: 3rem; font-weight: 600; color: var(--color-green);" id="breakTimerDisplay">5:00</div>
-    </div>
-
-    <!-- Break Buttons -->
-    <div class="break-buttons" style="display: flex; gap: 12px; margin-bottom: var(--spacing-xl);">
-        <button class="break-btn" id="shortBreakBtn" onclick="startBreak('short')">
-            <i class="mdi mdi-coffee-outline"></i> Short Break (5m)
-        </button>
-        <button class="break-btn" id="longBreakBtn" onclick="startBreak('long')">
-            <i class="mdi mdi-sleep"></i> Long Break (10m)
-        </button>
-    </div>
-
-
-    <!-- Custom Subject Select -->
-    <div class="custom-select-wrapper" id="subjectWrapper">
-        <select id="subjectInput" style="display: none;">
-            {% if not subjects %}
-            <option value="General Study">General Study</option>
-            {% else %}
-            <option value="" disabled selected>Select a subject...</option>
+    <!-- Subject Select -->
+    <div class="subject-select-wrapper">
+        <select class="subject-select" id="subjectSelect">
+            <option value="" disabled selected>Select subject...</option>
             {% for subject in subjects %}
             <option value="{{ subject }}">{{ subject }}</option>
             {% endfor %}
-            <option value="General Study">General Study</option>
-            {% endif %}
         </select>
-        <div class="custom-select" id="customSelect">
-            <div class="custom-select-trigger" id="customTrigger">
-                <span id="triggerText">Select a subject...</span>
-                <div class="arrow"></div>
-            </div>
-            <div class="custom-options" id="customOptions">
-                <!-- Populated via JS -->
-            </div>
-        </div>
     </div>
 
-    <!-- Main Action Button -->
-    <style>
-        .main-action-btn {
-            background: var(--text-primary);
-            color: var(--bg-primary);
-            border: none;
-            padding: 16px 48px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            border-radius: 50px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .main-action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .main-action-btn:active {
-            transform: translateY(0);
-        }
-
-        .controls-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
-
-    <div class="controls-row">
-        <button class="main-action-btn" id="mainBtn" onclick="toggleTimer()">START</button>
+    <!-- Controls -->
+    <div class="controls">
+        <button class="main-btn" id="mainBtn" onclick="toggleTimer()">Start</button>
+        <button class="reset-btn" id="resetBtn" onclick="resetTimer()">Reset</button>
     </div>
 
 </div>
 
-<!-- Audio for notification (Optional subtle sound) -->
-<!-- <audio id="alarmSound" src="{% static 'audio/alarm.mp3' %}"></audio> -->
+<!-- Session Complete Overlay -->
+<div class="session-complete" id="sessionComplete">
+    <h2>🎉 Session Complete!</h2>
+    <p id="sessionSummary">You focused for 25 minutes</p>
+    <button onclick="closeComplete()">Continue</button>
+</div>
+
+<!-- Recorded Sessions Indicator -->
+<div class="recorded-info" id="recordedInfo" style="display: none;">
+    <span class="recorded-dot"></span>
+    <span id="recordedText">Session recorded</span>
+</div>
+
+<!-- Today's Study Time Indicator (Study Page) -->
+<div class="today-study-indicator" id="todayStudyIndicator">
+    <i class="mdi mdi-clock-check-outline"></i>
+    <span>Today: </span>
+    <span id="todayStudyTime">0m</span>
+</div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Configuration
-    const BREAK_DURATIONS = {
-        'short': 5 * 60,
-        'long': 10 * 60
-    };
-
-    // Persistence Keys
-    const KEY_TIME = 'focus_time';
-    const KEY_RUNNING = 'focus_running';
-    const KEY_SUBJECT = 'focus_subject';
-    const KEY_SYNCED = 'focus_synced';
-    const KEY_START_TS = 'focus_startTs';
-    const KEY_DAY = 'focus_day'; // Track the day for 24hr reset
-    const KEY_BREAK = 'focus_onBreak';
-    const KEY_BREAK_TIME = 'focus_breakTime';
-    const KEY_BREAK_TYPE = 'focus_breakType';
-    const KEY_BREAK_TS = 'focus_breakTs';
-
-
-    let currentTime = 0;
+    // Timer Configuration
+    let selectedDuration = 25 * 60; // Default 25 minutes in seconds
+    let remainingTime = selectedDuration;
     let timerInterval = null;
     let isRunning = false;
-    let syncedTime = 0;
-    let wasRunningBeforeBreak = false;
-
-    // Break state
-    let isOnBreak = false;
-    let breakTime = 0;
-    let breakInterval = null;
-    let currentBreakType = null;
-
+    let sessionStartTime = null;
+    let totalFocusedTime = 0;
+    let timerEndTime = null; // Timestamp when timer should end
 
     // DOM Elements
     const timerDisplay = document.getElementById('timerDisplay');
+    const timerModeLabel = document.getElementById('timerModeLabel');
     const mainBtn = document.getElementById('mainBtn');
-    const subjectInput = document.getElementById('subjectInput');
-    const subjectWrapper = document.getElementById('subjectWrapper');
-    const breakTimerSection = document.getElementById('breakTimerSection');
-    const breakTimerDisplay = document.getElementById('breakTimerDisplay');
-    const breakLabel = document.getElementById('breakLabel');
-    const shortBreakBtn = document.getElementById('shortBreakBtn');
-    const longBreakBtn = document.getElementById('longBreakBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const subjectSelect = document.getElementById('subjectSelect');
+    const customInputWrapper = document.getElementById('customInputWrapper');
+    const customMinutesInput = document.getElementById('customMinutes');
+    const sessionComplete = document.getElementById('sessionComplete');
+    const sessionSummary = document.getElementById('sessionSummary');
+    const recordedInfo = document.getElementById('recordedInfo');
+    const globalTimerContainer = document.getElementById('globalTimerContainer');
+    const globalTimerDisplay = document.getElementById('globalTimerDisplay');
 
+    // ========================================
+    // Today's Study Time Helper Functions
+    // ========================================
+    function getTodayDateKey() {
+        const now = new Date();
+        return `studyTime_${now.getFullYear()}_${now.getMonth()}_${now.getDate()}`;
+    }
+
+    function getTodayStudyMinutes() {
+        const key = getTodayDateKey();
+        const saved = localStorage.getItem(key);
+        return saved ? parseInt(saved) : 0;
+    }
+
+    function addTodayStudyMinutes(minutes) {
+        const key = getTodayDateKey();
+        const current = getTodayStudyMinutes();
+        const newTotal = current + minutes;
+        localStorage.setItem(key, newTotal.toString());
+        
+        // Clean up old entries
+        cleanupOldStudyData();
+        
+        // Update the display in sidebar
+        updateTodayStudyDisplay();
+        
+        return newTotal;
+    }
+
+    function cleanupOldStudyData() {
+        const todayKey = getTodayDateKey();
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('studyTime_') && key !== todayKey) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+    }
+
+    function formatStudyTime(minutes) {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        if (hours > 0) {
+            return `${hours}h ${mins}m`;
+        }
+        return `${mins}m`;
+    }
+
+    function updateTodayStudyDisplay() {
+        const savedMinutes = getTodayStudyMinutes();
+        
+        // Calculate active session time if timer is running or paused with progress
+        let activeSessionMinutes = 0;
+        if (isRunning && timerEndTime && selectedDuration) {
+            // Timer is running - calculate elapsed time
+            const now = Date.now();
+            const remaining = Math.max(0, Math.floor((timerEndTime - now) / 1000));
+            const elapsed = selectedDuration - remaining;
+            activeSessionMinutes = Math.floor(elapsed / 60);
+        } else if (!isRunning && totalFocusedTime > 0) {
+            // Timer is paused - use accumulated totalFocusedTime
+            activeSessionMinutes = Math.floor(totalFocusedTime / 60);
+        }
+        
+        const totalMinutes = savedMinutes + activeSessionMinutes;
+        const formattedTime = formatStudyTime(totalMinutes);
+        
+        // Update sidebar display
+        const sidebarDisplay = document.getElementById('todayStudyDisplay');
+        if (sidebarDisplay) {
+            sidebarDisplay.textContent = formattedTime;
+        }
+        
+        // Update study page indicator with live tracking
+        const pageIndicator = document.getElementById('todayStudyTime');
+        const todayIndicator = document.getElementById('todayStudyIndicator');
+        if (pageIndicator) {
+            pageIndicator.textContent = formattedTime;
+            
+            // Add visual indicator when timer is active or paused with progress
+            if (todayIndicator && (isRunning || totalFocusedTime > 0)) {
+                todayIndicator.style.borderColor = isRunning ? 'var(--color-green)' : 'var(--color-yellow)';
+                todayIndicator.style.boxShadow = isRunning 
+                    ? '0 0 12px rgba(102, 153, 119, 0.3)' 
+                    : '0 0 12px rgba(204, 187, 102, 0.3)';
+            } else if (todayIndicator) {
+                todayIndicator.style.borderColor = '';
+                todayIndicator.style.boxShadow = '';
+            }
+        }
+    }
+
+    // Save timer state to localStorage for persistence across pages
+    function saveTimerState() {
+        const state = {
+            isRunning: isRunning,
+            timerEndTime: timerEndTime,
+            selectedDuration: selectedDuration,
+            remainingTime: remainingTime,
+            subject: subjectSelect.value,
+            totalFocusedTime: totalFocusedTime,
+            sessionStartTime: sessionStartTime
+        };
+        localStorage.setItem('focusTimerState', JSON.stringify(state));
+    }
+
+    // Load timer state from localStorage
+    function loadTimerState() {
+        const savedState = localStorage.getItem('focusTimerState');
+        if (savedState) {
+            try {
+                const state = JSON.parse(savedState);
+                if (state.isRunning && state.timerEndTime) {
+                    const now = Date.now();
+                    const remaining = Math.floor((state.timerEndTime - now) / 1000);
+                    
+                    if (remaining > 0) {
+                        // Timer still running - restore state
+                        isRunning = true;
+                        timerEndTime = state.timerEndTime;
+                        selectedDuration = state.selectedDuration;
+                        remainingTime = remaining;
+                        totalFocusedTime = state.totalFocusedTime || 0;
+                        sessionStartTime = state.sessionStartTime;
+                        
+                        // Restore subject selection
+                        if (state.subject) {
+                            subjectSelect.value = state.subject;
+                            subjectSelect.disabled = true;
+                        }
+                        
+                        // Update UI
+                        mainBtn.textContent = 'Pause';
+                        mainBtn.classList.add('running');
+                        timerModeLabel.textContent = 'Focusing...';
+                        
+                        // Update display immediately
+                        updateDisplay();
+                        updateGlobalTimer();
+                        
+                        // Restart the timer loop
+                        startTimerLoop();
+                        return true;
+                    } else {
+                        // Timer has ended while away
+                        if (state.subject) {
+                            subjectSelect.value = state.subject;
+                            selectedDuration = state.selectedDuration;
+                            totalFocusedTime = state.selectedDuration;
+                            remainingTime = 0;
+                            timerComplete();
+                        }
+                        clearTimerState();
+                    }
+                } else if (!state.isRunning && state.subject) {
+                    // Timer was paused - restore paused state
+                    selectedDuration = state.selectedDuration || selectedDuration;
+                    remainingTime = state.remainingTime || selectedDuration;
+                    subjectSelect.value = state.subject;
+                    totalFocusedTime = state.totalFocusedTime || 0;
+                    
+                    if (totalFocusedTime > 0) {
+                        mainBtn.textContent = 'Resume';
+                        timerModeLabel.textContent = 'Paused';
+                    }
+                    updateDisplay();
+                }
+            } catch (e) {
+                console.error('Error loading timer state:', e);
+                clearTimerState();
+            }
+        }
+        return false;
+    }
+
+    // Clear timer state
+    function clearTimerState() {
+        localStorage.removeItem('focusTimerState');
+    }
+
+    // Update global sidebar timer - sync with base.html's global timer
+    function updateGlobalTimer() {
+        // This triggers the global timer in base.html to update by re-saving state
+        // The base.html interval will pick up the changes
+        if (globalTimerContainer && globalTimerDisplay) {
+            if (isRunning && remainingTime > 0) {
+                globalTimerContainer.classList.remove('hidden');
+                globalTimerDisplay.textContent = formatTime(remainingTime);
+            } else {
+                globalTimerContainer.classList.add('hidden');
+            }
+        }
+    }
+
+    // Format time as MM:SS
     function formatTime(seconds) {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
         return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    function updateDisplay() {
-        timerDisplay.textContent = formatTime(currentTime);
-        if (isOnBreak) {
-            document.title = `☕ Break (${formatTime(breakTime)})`;
-        } else if (isRunning) {
-            document.title = `(${formatTime(currentTime)}) Focus`;
-        } else {
-            document.title = 'Focus - StudyFlow';
-        }
-    }
-
-    function updateBreakDisplay() {
-        breakTimerDisplay.textContent = formatTime(breakTime);
-    }
-
-    function getTodayString() {
-        const now = new Date();
-        return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-    }
-
-    function saveState() {
-        localStorage.setItem(KEY_TIME, currentTime);
-        localStorage.setItem(KEY_RUNNING, isRunning);
-        localStorage.setItem(KEY_SUBJECT, subjectInput.value);
-        localStorage.setItem(KEY_SYNCED, syncedTime);
-        localStorage.setItem(KEY_DAY, getTodayString()); // Save today's date
-        if (isRunning) {
-            localStorage.setItem(KEY_START_TS, Date.now());
-        } else {
-            localStorage.removeItem(KEY_START_TS);
-        }
-
-        // Save break state
-        localStorage.setItem(KEY_BREAK, isOnBreak);
-        if (isOnBreak) {
-            localStorage.setItem(KEY_BREAK_TIME, breakTime);
-            localStorage.setItem(KEY_BREAK_TYPE, currentBreakType);
-            localStorage.setItem(KEY_BREAK_TS, Date.now());
-        } else {
-            localStorage.removeItem(KEY_BREAK_TIME);
-            localStorage.removeItem(KEY_BREAK_TYPE);
-            localStorage.removeItem(KEY_BREAK_TS);
-        }
-    }
-
-    function loadState() {
-        const savedDay = localStorage.getItem(KEY_DAY);
-        const today = getTodayString();
-
-        // Check if it's a new day - reset timer
-        if (savedDay && savedDay !== today) {
-            console.log('New day detected, resetting timer');
-            // Save any unsaved progress before resetting
-            const savedTime = parseInt(localStorage.getItem(KEY_TIME)) || 0;
-            const savedSynced = parseInt(localStorage.getItem(KEY_SYNCED)) || 0;
-            if (savedTime > savedSynced && savedTime >= 60) {
-                attemptSave(); // Save previous day's progress
-            }
-            // Clear timer data for new day
-            localStorage.removeItem(KEY_TIME);
-            localStorage.removeItem(KEY_SYNCED);
-            localStorage.removeItem(KEY_RUNNING);
-            localStorage.removeItem(KEY_START_TS);
-            localStorage.removeItem(KEY_BREAK);
-            localStorage.removeItem(KEY_BREAK_TIME);
-            localStorage.removeItem(KEY_BREAK_TYPE);
-            localStorage.removeItem(KEY_BREAK_TS);
-            currentTime = 0;
-            syncedTime = 0;
-            localStorage.setItem(KEY_DAY, today);
-        }
-
-        const savedTime = parseInt(localStorage.getItem(KEY_TIME));
-        const savedRunning = localStorage.getItem(KEY_RUNNING) === 'true';
-        const savedSubject = localStorage.getItem(KEY_SUBJECT);
-        const savedSynced = parseInt(localStorage.getItem(KEY_SYNCED));
-        const savedStartTs = parseInt(localStorage.getItem(KEY_START_TS));
-
-        // Break state
-        const savedOnBreak = localStorage.getItem(KEY_BREAK) === 'true';
-        const savedBreakTime = parseInt(localStorage.getItem(KEY_BREAK_TIME));
-        const savedBreakType = localStorage.getItem(KEY_BREAK_TYPE);
-        const savedBreakTs = parseInt(localStorage.getItem(KEY_BREAK_TS));
-
-        if (!isNaN(savedTime)) currentTime = savedTime;
-        if (!isNaN(savedSynced)) syncedTime = savedSynced;
-
-
-        if (savedSubject) {
-            subjectInput.value = savedSubject;
-            updateCustomSelectDisplay(savedSubject);
-        }
-
-        // Restore break state
-        if (savedOnBreak && savedBreakType && !isNaN(savedBreakTime) && !isNaN(savedBreakTs)) {
-            const elapsed = Math.floor((Date.now() - savedBreakTs) / 1000);
-            const remainingBreak = savedBreakTime - elapsed;
-
-            if (remainingBreak > 0) {
-                isOnBreak = true;
-                currentBreakType = savedBreakType;
-                breakTime = remainingBreak;
-                wasRunningBeforeBreak = savedRunning;
-
-                breakLabel.textContent = savedBreakType === 'short' ? 'Short Break' : 'Long Break';
-                breakTimerSection.style.display = 'block';
-                updateBreakDisplay();
-
-                shortBreakBtn.classList.toggle('active', savedBreakType === 'short');
-                longBreakBtn.classList.toggle('active', savedBreakType === 'long');
-
-                mainBtn.disabled = true;
-                mainBtn.style.opacity = '0.5';
-
-                // Resume break countdown
-                breakInterval = setInterval(() => {
-                    if (breakTime > 0) {
-                        breakTime--;
-                        updateBreakDisplay();
-                        updateDisplay();
-                        if (breakTime % 5 === 0) saveState();
-                    } else {
-                        endBreak(true);
-                        alert('Break is over! Timer resumed.');
-                    }
-                }, 1000);
-            } else {
-                // Break expired while away
-                localStorage.removeItem(KEY_BREAK);
-                localStorage.removeItem(KEY_BREAK_TIME);
-                localStorage.removeItem(KEY_BREAK_TYPE);
-                localStorage.removeItem(KEY_BREAK_TS);
-            }
-        } else if (savedRunning && !isNaN(savedStartTs)) {
-            // If was running (not on break), calculate elapsed time
-            const elapsed = Math.floor((Date.now() - savedStartTs) / 1000);
-            currentTime += elapsed;
-            startTimer();
-        }
-
+    // Select Duration Preset
+    function selectDuration(minutes, btn) {
+        if (isRunning) return;
+        
+        // Update button states
+        document.querySelectorAll('.preset-btn').forEach(b => {
+            b.classList.remove('active', 'custom-active');
+        });
+        btn.classList.add('active');
+        
+        // Hide custom input
+        customInputWrapper.classList.remove('show');
+        
+        // Set duration
+        selectedDuration = minutes * 60;
+        remainingTime = selectedDuration;
         updateDisplay();
     }
 
-    function updateCustomSelectDisplay(value) {
-        const option = document.querySelector(`.custom-option[data-value="${value}"]`);
-        if (option) {
-            document.getElementById('triggerText').textContent = option.textContent;
-            document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
-            option.classList.add('selected');
+    // Toggle Custom Input
+    function toggleCustomInput(btn) {
+        if (isRunning) return;
+        
+        document.querySelectorAll('.preset-btn').forEach(b => {
+            b.classList.remove('active');
+        });
+        
+        customInputWrapper.classList.toggle('show');
+        
+        if (customInputWrapper.classList.contains('show')) {
+            btn.classList.add('custom-active');
+            customMinutesInput.focus();
+        } else {
+            btn.classList.remove('custom-active');
         }
     }
 
-    async function attemptSave() {
-        const deltaSeconds = currentTime - syncedTime;
-        if (deltaSeconds < 60) return;
+    // Apply Custom Duration
+    function applyCustomDuration() {
+        const minutes = parseInt(customMinutesInput.value);
+        if (minutes && minutes > 0 && minutes <= 180) {
+            selectedDuration = minutes * 60;
+            remainingTime = selectedDuration;
+            updateDisplay();
+            customInputWrapper.classList.remove('show');
+        }
+    }
 
-        const durationMins = Math.round(deltaSeconds / 60);
-        if (durationMins <= 0) return;
+    // Update Timer Display
+    function updateDisplay() {
+        timerDisplay.textContent = formatTime(remainingTime);
+        
+        if (isRunning) {
+            document.title = `(${formatTime(remainingTime)}) Focus - FOCUS`;
+        } else {
+            document.title = 'Focus Timer - FOCUS';
+        }
+    }
 
-        const subject = subjectInput.value.trim() || 'General Study';
+    // Toggle Timer (Start/Pause)
+    function toggleTimer() {
+        if (!subjectSelect.value) {
+            alert('Please select a subject before starting.');
+            return;
+        }
+
+        if (isRunning) {
+            pauseTimer();
+        } else {
+            startTimer();
+        }
+    }
+
+    // Start Timer
+    function startTimer() {
+        if (remainingTime <= 0) {
+            remainingTime = selectedDuration;
+        }
+
+        isRunning = true;
+        sessionStartTime = Date.now();
+        timerEndTime = Date.now() + (remainingTime * 1000); // Calculate end time
+        mainBtn.textContent = 'Pause';
+        mainBtn.classList.add('running');
+        timerModeLabel.textContent = 'Focusing...';
+        subjectSelect.disabled = true;
+
+        saveTimerState();
+        startTimerLoop();
+    }
+
+    // Timer loop using timestamp-based calculation (works even when tab is inactive)
+    function startTimerLoop() {
+        clearInterval(timerInterval);
+        
+        timerInterval = setInterval(() => {
+            const now = Date.now();
+            remainingTime = Math.max(0, Math.floor((timerEndTime - now) / 1000));
+            updateDisplay();
+            updateGlobalTimer();
+            updateTodayStudyDisplay(); // Live update today's study time
+            saveTimerState();
+
+            if (remainingTime <= 0) {
+                timerComplete();
+            }
+        }, 100); // Update more frequently for accuracy
+    }
+
+    // Pause Timer
+    function pauseTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        timerEndTime = null;
+        mainBtn.textContent = 'Resume';
+        mainBtn.classList.remove('running');
+        timerModeLabel.textContent = 'Paused';
+
+        // Calculate focused time so far
+        if (sessionStartTime) {
+            totalFocusedTime += Math.floor((Date.now() - sessionStartTime) / 1000);
+            sessionStartTime = null;
+        }
+
+        saveTimerState();
+        updateGlobalTimer();
+        updateTodayStudyDisplay(); // Keep today's study time updated when paused
+    }
+
+    // Reset Timer
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        timerEndTime = null;
+        
+        // Save session if any time was focused
+        const focusedMinutes = Math.floor(totalFocusedTime / 60);
+        if (focusedMinutes >= 1 && subjectSelect.value) {
+            saveSession(focusedMinutes);
+        }
+
+        // Reset everything
+        remainingTime = selectedDuration;
+        totalFocusedTime = 0;
+        sessionStartTime = null;
+        mainBtn.textContent = 'Start';
+        mainBtn.classList.remove('running');
+        timerModeLabel.textContent = 'Focus Session';
+        subjectSelect.disabled = false;
+        updateDisplay();
+        clearTimerState();
+        updateGlobalTimer();
+    }
+
+    // Timer Complete
+    function timerComplete() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        timerEndTime = null;
+
+        // Calculate total focused time
+        if (sessionStartTime) {
+            totalFocusedTime += Math.floor((Date.now() - sessionStartTime) / 1000);
+            sessionStartTime = null;
+        }
+
+        // Use selected duration if totalFocusedTime is 0 (timer completed normally)
+        if (totalFocusedTime === 0) {
+            totalFocusedTime = selectedDuration;
+        }
+
+        const focusedMinutes = Math.floor(totalFocusedTime / 60);
+        
+        // Play completion sound
+        playCompletionSound();
+
+        // Show browser notification
+        showNotification(focusedMinutes);
+
+        // Save the session
+        if (focusedMinutes >= 1) {
+            saveSession(focusedMinutes);
+        }
+
+        // Show completion overlay
+        sessionSummary.textContent = `You focused for ${focusedMinutes} minutes on ${subjectSelect.value}`;
+        sessionComplete.classList.add('show');
+
+        // Reset for next session
+        mainBtn.textContent = 'Start';
+        mainBtn.classList.remove('running');
+        timerModeLabel.textContent = 'Session Complete!';
+        subjectSelect.disabled = false;
+        remainingTime = selectedDuration;
+        totalFocusedTime = 0;
+        updateDisplay();
+        clearTimerState();
+        updateGlobalTimer();
+    }
+
+    // Play Completion Sound - Gentle 3-tone chime
+    function playCompletionSound() {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Play 3 gentle ascending tones
+            const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
+            const delays = [0, 200, 400];
+            
+            frequencies.forEach((freq, i) => {
+                setTimeout(() => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    oscillator.frequency.value = freq;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.6);
+                }, delays[i]);
+            });
+        } catch (e) {
+            console.log('Audio not supported');
+        }
+    }
+
+    // Show Browser Notification
+    function showNotification(minutes) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Focus Session Complete! 🎉', {
+                body: `Great job! You focused for ${minutes} minutes.`,
+                requireInteraction: true
+            });
+        }
+    }
+
+    // Request notification permission on load
+    function requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }
+
+    // Save Session to Backend
+    async function saveSession(minutes) {
+        const subject = subjectSelect.value;
+        if (!subject || minutes < 1) return;
 
         try {
             const response = await fetch("{% url 'save_study_session' %}", {
@@ -582,196 +864,104 @@
                 },
                 body: JSON.stringify({
                     subject: subject,
-                    duration: durationMins
+                    duration: minutes
                 })
             });
 
             if (response.ok) {
-                console.log(`Saved ${durationMins} minutes.`);
-                syncedTime = currentTime;
+                showRecordedIndicator();
+                // Add to today's study time tracker
+                const totalToday = addTodayStudyMinutes(minutes);
+                console.log(`Session saved: ${minutes} min. Total today: ${totalToday} min`);
             }
         } catch (e) {
-            console.error(e);
+            console.error('Failed to save session:', e);
         }
     }
 
-    function toggleTimer() {
-        if (isRunning) {
-            pauseTimer();
-        } else {
-            startTimer();
-        }
+    // Show Recorded Indicator
+    function showRecordedIndicator() {
+        recordedInfo.style.display = 'flex';
+        setTimeout(() => {
+            recordedInfo.style.display = 'none';
+        }, 3000);
     }
 
-    function startTimer() {
-        // Require subject selection
-        if (!subjectInput.value || subjectInput.value === '') {
-            alert('Please select a subject before starting the timer.');
-            return;
-        }
-
-        if (!isRunning && !isOnBreak) {
-            isRunning = true;
-            mainBtn.textContent = 'PAUSE';
-            mainBtn.style.opacity = '0.8';
-            saveState();
-
-            timerInterval = setInterval(() => {
-                currentTime++;
-                updateDisplay();
-                if (currentTime % 10 === 0) saveState();
-            }, 1000);
-        }
+    // Close Completion Overlay
+    function closeComplete() {
+        sessionComplete.classList.remove('show');
     }
 
-    function pauseTimer() {
-        if (isRunning) {
-            clearInterval(timerInterval);
-            isRunning = false;
-            mainBtn.textContent = 'START';
-            mainBtn.style.opacity = '1';
-            attemptSave();
-            saveState();
+    // Handle Enter key in custom input
+    customMinutesInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            applyCustomDuration();
         }
-    }
+    });
 
-    // Break functionality
-    function startBreak(type) {
-        // If already on this break, cancel it and auto-resume
-        if (isOnBreak && currentBreakType === type) {
-            endBreak(true);
-            return;
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && !e.target.matches('input, select')) {
+            e.preventDefault();
+            toggleTimer();
         }
-
-        // Track if timer was running before break
-        wasRunningBeforeBreak = isRunning;
-
-        // Pause main timer if running (without full pauseTimer to avoid save)
-        if (isRunning) {
-            clearInterval(timerInterval);
-            isRunning = false;
-            mainBtn.textContent = 'START';
+        if (e.code === 'Escape') {
+            closeComplete();
         }
+    });
 
-        // End any existing break
-        if (isOnBreak) {
-            clearInterval(breakInterval);
-        }
-
-        isOnBreak = true;
-        currentBreakType = type;
-        breakTime = BREAK_DURATIONS[type];
-
-        // Update UI
-        breakLabel.textContent = type === 'short' ? 'Short Break' : 'Long Break';
-        breakTimerSection.style.display = 'block';
-        updateBreakDisplay();
-
-        // Update button states
-        shortBreakBtn.classList.toggle('active', type === 'short');
-        longBreakBtn.classList.toggle('active', type === 'long');
-
-        // Disable main timer button during break
-        mainBtn.disabled = true;
-        mainBtn.style.opacity = '0.5';
-
-        saveState(); // Save break state
-
-        // Start break countdown
-        breakInterval = setInterval(() => {
-            if (breakTime > 0) {
-                breakTime--;
-                updateBreakDisplay();
-                updateDisplay();
-                if (breakTime % 5 === 0) saveState(); // Save periodically
-            } else {
-                endBreak(true);
-                alert('Break is over! Timer resumed.');
-            }
-        }, 1000);
-    }
-
-
-    function endBreak(autoResume = false) {
-        clearInterval(breakInterval);
-        isOnBreak = false;
-        currentBreakType = null;
-        breakTimerSection.style.display = 'none';
-
-        // Reset button states
-        shortBreakBtn.classList.remove('active');
-        longBreakBtn.classList.remove('active');
-
-        // Re-enable main timer button
-        mainBtn.disabled = false;
-        mainBtn.style.opacity = '1';
-        updateDisplay();
-        saveState(); // Clear break state in localStorage
-
-        // Auto-resume if timer was running before break
-        if (autoResume && wasRunningBeforeBreak) {
-            startTimer();
-        }
-        wasRunningBeforeBreak = false;
-    }
-
-    // Save state when leaving page (persist timer and break)
+    // Save state before leaving - DON'T pause, just ensure state is saved
     window.addEventListener('beforeunload', () => {
-        if (isRunning || isOnBreak) {
-            saveState();
-            if (isRunning) attemptSave();
+        if (isRunning) {
+            // Just save the current state - timer will continue based on timerEndTime
+            saveTimerState();
         }
     });
 
-    window.addEventListener('visibilitychange', () => {
-        if (document.hidden && (isRunning || isOnBreak)) {
-            saveState();
-        }
-    });
-
-
-    // Initialize Custom Select
-    function setupCustomSelect() {
-        const select = document.getElementById('subjectInput');
-        const customSelect = document.getElementById('customSelect');
-        const trigger = document.getElementById('customTrigger');
-        const triggerText = document.getElementById('triggerText');
-        const optionsList = document.getElementById('customOptions');
-
-        Array.from(select.options).forEach(option => {
-            if (option.disabled) return;
-
-            const div = document.createElement('div');
-            div.className = 'custom-option';
-            div.textContent = option.text;
-            div.dataset.value = option.value;
-
-            div.addEventListener('click', () => {
-                select.value = option.value;
-                triggerText.textContent = option.text;
-                document.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected'));
-                div.classList.add('selected');
-                customSelect.classList.remove('open');
-                saveState();
-            });
-
-            optionsList.appendChild(div);
-        });
-
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            customSelect.classList.toggle('open');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!customSelect.contains(e.target)) {
-                customSelect.classList.remove('open');
+    // Also save when navigating within the app (click on sidebar links)
+    document.querySelectorAll('.sidebar-nav a').forEach(link => {
+        link.addEventListener('click', () => {
+            if (isRunning) {
+                saveTimerState();
             }
         });
-    }
+    });
 
     // Initialize
-    setupCustomSelect();
-    loadState();
+    requestNotificationPermission();
+    
+    // Initialize today's study time display
+    updateTodayStudyDisplay();
+    
+    // Try to restore timer state first
+    const restored = loadTimerState();
+    if (!restored) {
+        updateDisplay();
+        // Set first preset as active
+        document.querySelector('.preset-btn[data-duration="25"]').classList.add('active');
+    } else {
+        // Update preset buttons to show correct selection
+        document.querySelectorAll('.preset-btn').forEach(b => {
+            b.classList.remove('active', 'custom-active');
+            if (parseInt(b.dataset.duration) * 60 === selectedDuration) {
+                b.classList.add('active');
+            }
+        });
+        updateDisplay();
+    }
+
+    // Handle visibility change - recalculate time when tab becomes visible
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && isRunning && timerEndTime) {
+            const now = Date.now();
+            remainingTime = Math.max(0, Math.floor((timerEndTime - now) / 1000));
+            updateDisplay();
+            updateGlobalTimer();
+            
+            if (remainingTime <= 0) {
+                timerComplete();
+            }
+        }
+    });
 </script>
 {% endblock %}

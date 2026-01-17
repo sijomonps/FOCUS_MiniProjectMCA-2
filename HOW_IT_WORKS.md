@@ -1,4 +1,4 @@
-# 🔄 StudyFlow - How It Works
+# 🔄 FOCUS - How It Works
 
 Visual guide to understand how the application flows from user action to result.
 

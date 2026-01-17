@@ -1,5 +1,5 @@
 """
-ASGI config for studyflow project.
+ASGI config for FOCUS project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 

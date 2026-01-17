@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ target_user.username }} - User Details - FOCUS Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        margin-bottom: var(--spacing-md);
+        transition: color var(--transition-fast);
+    }
+
+    .back-link:hover {
+        color: var(--text-primary);
+    }
+
+    .user-profile-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+    }
+
+    .user-avatar-lg {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-blue) 0%, #4a7c9b 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .user-avatar-lg i {
+        color: white;
+        font-size: 2rem;
+    }
+
+    .user-avatar-lg.admin {
+        background: linear-gradient(135deg, var(--color-red) 0%, #9b4a4a 100%);
+    }
+
+    .user-details h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .badge-admin {
+        background: rgba(204, 102, 102, 0.15);
+        color: var(--color-red);
+    }
+
+    .badge-active {
+        background: rgba(102, 153, 119, 0.15);
+        color: var(--color-green);
+    }
+
+    .badge-inactive {
+        background: rgba(153, 153, 153, 0.15);
+        color: var(--text-tertiary);
+    }
+
+    .user-meta {
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .stat-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .detail-sections {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xl);
+    }
+
+    .detail-section {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+    }
+
+    .section-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .section-title i {
+        color: var(--text-tertiary);
+    }
+
+    .section-content {
+        padding: var(--spacing-lg);
+        max-height: 350px;
+        overflow-y: auto;
+    }
+
+    .item-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .item-list li {
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.85rem;
+    }
+
+    .item-list li:last-child {
+        border-bottom: none;
+    }
+
+    .item-title {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .item-meta {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        margin-top: 2px;
+    }
+
+    .subject-breakdown {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .subject-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm);
+        background: var(--bg-tertiary);
+        border-radius: var(--border-radius);
+    }
+
+    .subject-name {
+        font-weight: 500;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+    }
+
+    .subject-time {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-state {
+        text-align: center;
+        color: var(--text-tertiary);
+        font-size: 0.85rem;
+        padding: var(--spacing-lg);
+    }
+
+    /* Full width section */
+    .full-width-section {
+        grid-column: 1 / -1;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .detail-sections {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .user-profile-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        .user-details h1 {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <a href="{% url 'admin_users' %}" class="back-link">
+        <i class="mdi mdi-arrow-left"></i> Back to Users
+    </a>
+
+    <div class="admin-header">
+        <div class="user-profile-header">
+            <div class="user-avatar-lg {% if target_user.is_superuser %}admin{% endif %}">
+                <i class="mdi mdi-account"></i>
+            </div>
+            <div class="user-details">
+                <h1>
+                    {{ target_user.username }}
+                    {% if target_user.is_superuser %}
+                    <span class="badge badge-admin">Admin</span>
+                    {% endif %}
+                    <span class="badge {% if target_user.is_active %}badge-active{% else %}badge-inactive{% endif %}">
+                        {% if target_user.is_active %}Active{% else %}Disabled{% endif %}
+                    </span>
+                </h1>
+                <div class="user-meta">
+                    {% if target_user.email %}{{ target_user.email }} • {% endif %}
+                    Joined {{ target_user.date_joined|date:"F d, Y" }}
+                    {% if target_user.last_login %}
+                    • Last login {{ target_user.last_login|date:"M d, Y H:i" }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_study_hours }}h</div>
+            <div class="stat-label">Total Study Time</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ pending_assignments }}</div>
+            <div class="stat-label">Pending Assignments</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ completed_assignments }}</div>
+            <div class="stat-label">Completed Assignments</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ notes|length }}</div>
+            <div class="stat-label">Notes</div>
+        </div>
+    </div>
+
+    <!-- Detail Sections -->
+    <div class="detail-sections">
+        <!-- Subject Breakdown -->
+        <div class="detail-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="mdi mdi-chart-pie"></i>
+                    Study Breakdown by Subject
+                </h2>
+            </div>
+            <div class="section-content">
+                {% if subject_breakdown %}
+                <div class="subject-breakdown">
+                    {% for item in subject_breakdown %}
+                    <div class="subject-item">
+                        <span class="subject-name">{{ item.subject }}</span>
+                        <span class="subject-time">{{ item.hours }}h ({{ item.minutes }}m)</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">No study sessions recorded</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Study Sessions -->
+        <div class="detail-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="mdi mdi-clock-outline"></i>
+                    Recent Study Sessions
+                </h2>
+            </div>
+            <div class="section-content">
+                {% if study_sessions %}
+                <ul class="item-list">
+                    {% for session in study_sessions %}
+                    <li>
+                        <div class="item-title">{{ session.subject }}</div>
+                        <div class="item-meta">{{ session.duration }} minutes • {{ session.date|date:"M d, Y" }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">No study sessions recorded</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Assignments -->
+        <div class="detail-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="mdi mdi-clipboard-text"></i>
+                    Assignments
+                </h2>
+            </div>
+            <div class="section-content">
+                {% if assignments %}
+                <ul class="item-list">
+                    {% for assignment in assignments %}
+                    <li>
+                        <div class="item-title">{{ assignment.title }}</div>
+                        <div class="item-meta">
+                            {{ assignment.subject }} • 
+                            Due {{ assignment.deadline|date:"M d, Y" }} • 
+                            <span style="color: {% if assignment.status == 'completed' %}var(--color-green){% else %}var(--color-yellow){% endif %};">
+                                {{ assignment.status|title }}
+                            </span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">No assignments</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="detail-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="mdi mdi-note-text"></i>
+                    Recent Notes
+                </h2>
+            </div>
+            <div class="section-content">
+                {% if notes %}
+                <ul class="item-list">
+                    {% for note in notes %}
+                    <li>
+                        <div class="item-title">{{ note.title|default:"Untitled Note" }}</div>
+                        <div class="item-meta">
+                            {% if note.subject_folder %}{{ note.subject_folder.name }} • {% endif %}
+                            {{ note.updated_at|date:"M d, Y" }}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">No notes</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Folders -->
+        <div class="detail-section full-width-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="mdi mdi-folder"></i>
+                    Subject Folders
+                </h2>
+            </div>
+            <div class="section-content">
+                {% if folders %}
+                <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm);">
+                    {% for folder in folders %}
+                    <div style="background: var(--bg-tertiary); padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--border-radius); font-size: 0.85rem;">
+                        <i class="mdi mdi-folder" style="color: var(--color-yellow); margin-right: 4px;"></i>
+                        {{ folder.name }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">No folders created</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
