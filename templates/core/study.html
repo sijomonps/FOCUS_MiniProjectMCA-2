@@ -111,7 +111,7 @@
             font-size: 4.5rem;
             letter-spacing: -2px;
         }
-        
+
         .timer-page {
             min-height: calc(100vh - 150px);
             padding: 1rem;
@@ -316,7 +316,7 @@
 
 {% block content %}
 <div class="timer-page fade-in">
-    
+
     <!-- Duration Presets -->
     <div class="duration-presets">
         <button class="preset-btn" data-duration="25" onclick="selectDuration(25, this)">25 min</button>
@@ -421,13 +421,13 @@
         const current = getTodayStudyMinutes();
         const newTotal = current + minutes;
         localStorage.setItem(key, newTotal.toString());
-        
+
         // Clean up old entries
         cleanupOldStudyData();
-        
+
         // Update the display in sidebar
         updateTodayStudyDisplay();
-        
+
         return newTotal;
     }
 
@@ -454,7 +454,7 @@
 
     function updateTodayStudyDisplay() {
         const savedMinutes = getTodayStudyMinutes();
-        
+
         // Calculate active session time if timer is running or paused with progress
         let activeSessionMinutes = 0;
         if (isRunning && timerEndTime && selectedDuration) {
@@ -467,27 +467,27 @@
             // Timer is paused - use accumulated totalFocusedTime
             activeSessionMinutes = Math.floor(totalFocusedTime / 60);
         }
-        
+
         const totalMinutes = savedMinutes + activeSessionMinutes;
         const formattedTime = formatStudyTime(totalMinutes);
-        
+
         // Update sidebar display
         const sidebarDisplay = document.getElementById('todayStudyDisplay');
         if (sidebarDisplay) {
             sidebarDisplay.textContent = formattedTime;
         }
-        
+
         // Update study page indicator with live tracking
         const pageIndicator = document.getElementById('todayStudyTime');
         const todayIndicator = document.getElementById('todayStudyIndicator');
         if (pageIndicator) {
             pageIndicator.textContent = formattedTime;
-            
+
             // Add visual indicator when timer is active or paused with progress
             if (todayIndicator && (isRunning || totalFocusedTime > 0)) {
                 todayIndicator.style.borderColor = isRunning ? 'var(--color-green)' : 'var(--color-yellow)';
-                todayIndicator.style.boxShadow = isRunning 
-                    ? '0 0 12px rgba(102, 153, 119, 0.3)' 
+                todayIndicator.style.boxShadow = isRunning
+                    ? '0 0 12px rgba(102, 153, 119, 0.3)'
                     : '0 0 12px rgba(204, 187, 102, 0.3)';
             } else if (todayIndicator) {
                 todayIndicator.style.borderColor = '';
@@ -519,7 +519,7 @@
                 if (state.isRunning && state.timerEndTime) {
                     const now = Date.now();
                     const remaining = Math.floor((state.timerEndTime - now) / 1000);
-                    
+
                     if (remaining > 0) {
                         // Timer still running - restore state
                         isRunning = true;
@@ -528,22 +528,22 @@
                         remainingTime = remaining;
                         totalFocusedTime = state.totalFocusedTime || 0;
                         sessionStartTime = state.sessionStartTime;
-                        
+
                         // Restore subject selection
                         if (state.subject) {
                             subjectSelect.value = state.subject;
                             subjectSelect.disabled = true;
                         }
-                        
+
                         // Update UI
                         mainBtn.textContent = 'Pause';
                         mainBtn.classList.add('running');
                         timerModeLabel.textContent = 'Focusing...';
-                        
+
                         // Update display immediately
                         updateDisplay();
                         updateGlobalTimer();
-                        
+
                         // Restart the timer loop
                         startTimerLoop();
                         return true;
@@ -564,7 +564,7 @@
                     remainingTime = state.remainingTime || selectedDuration;
                     subjectSelect.value = state.subject;
                     totalFocusedTime = state.totalFocusedTime || 0;
-                    
+
                     if (totalFocusedTime > 0) {
                         mainBtn.textContent = 'Resume';
                         timerModeLabel.textContent = 'Paused';
@@ -608,16 +608,16 @@
     // Select Duration Preset
     function selectDuration(minutes, btn) {
         if (isRunning) return;
-        
+
         // Update button states
         document.querySelectorAll('.preset-btn').forEach(b => {
             b.classList.remove('active', 'custom-active');
         });
         btn.classList.add('active');
-        
+
         // Hide custom input
         customInputWrapper.classList.remove('show');
-        
+
         // Set duration
         selectedDuration = minutes * 60;
         remainingTime = selectedDuration;
@@ -627,13 +627,13 @@
     // Toggle Custom Input
     function toggleCustomInput(btn) {
         if (isRunning) return;
-        
+
         document.querySelectorAll('.preset-btn').forEach(b => {
             b.classList.remove('active');
         });
-        
+
         customInputWrapper.classList.toggle('show');
-        
+
         if (customInputWrapper.classList.contains('show')) {
             btn.classList.add('custom-active');
             customMinutesInput.focus();
@@ -656,7 +656,7 @@
     // Update Timer Display
     function updateDisplay() {
         timerDisplay.textContent = formatTime(remainingTime);
-        
+
         if (isRunning) {
             document.title = `(${formatTime(remainingTime)}) Focus - FOCUS`;
         } else {
@@ -666,14 +666,20 @@
 
     // Toggle Timer (Start/Pause)
     function toggleTimer() {
+        console.log('toggleTimer called');
+        console.log('Subject selected:', subjectSelect.value);
+        console.log('Is running:', isRunning);
+
         if (!subjectSelect.value) {
             alert('Please select a subject before starting.');
             return;
         }
 
         if (isRunning) {
+            console.log('Pausing timer');
             pauseTimer();
         } else {
+            console.log('Starting timer');
             startTimer();
         }
     }
@@ -699,7 +705,7 @@
     // Timer loop using timestamp-based calculation (works even when tab is inactive)
     function startTimerLoop() {
         clearInterval(timerInterval);
-        
+
         timerInterval = setInterval(() => {
             const now = Date.now();
             remainingTime = Math.max(0, Math.floor((timerEndTime - now) / 1000));
@@ -739,7 +745,7 @@
         clearInterval(timerInterval);
         isRunning = false;
         timerEndTime = null;
-        
+
         // Save session if any time was focused
         const focusedMinutes = Math.floor(totalFocusedTime / 60);
         if (focusedMinutes >= 1 && subjectSelect.value) {
@@ -777,7 +783,7 @@
         }
 
         const focusedMinutes = Math.floor(totalFocusedTime / 60);
-        
+
         // Play completion sound
         playCompletionSound();
 
@@ -809,11 +815,11 @@
     function playCompletionSound() {
         try {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
+
             // Play 3 gentle ascending tones
             const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5
             const delays = [0, 200, 400];
-            
+
             frequencies.forEach((freq, i) => {
                 setTimeout(() => {
                     const oscillator = audioContext.createOscillator();
@@ -929,10 +935,10 @@
 
     // Initialize
     requestNotificationPermission();
-    
+
     // Initialize today's study time display
     updateTodayStudyDisplay();
-    
+
     // Try to restore timer state first
     const restored = loadTimerState();
     if (!restored) {
@@ -957,7 +963,7 @@
             remainingTime = Math.max(0, Math.floor((timerEndTime - now) / 1000));
             updateDisplay();
             updateGlobalTimer();
-            
+
             if (remainingTime <= 0) {
                 timerComplete();
             }

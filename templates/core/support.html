@@ -1,0 +1,978 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Support - FOCUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="support-page fade-in">
+    <!-- Page Header -->
+    <div class="page-header-full">
+        <div class="header-content">
+            <div class="header-title">
+                <div class="header-icon">
+                    <i class="mdi mdi-headset"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Support Center</h1>
+                    <p>Get help, report issues, or send feedback to the admin team</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{ support_messages|length|default:"0" }}</span>
+                    <span class="stat-label">Total Messages</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value pending">{{ pending_count|default:"0" }}</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value resolved">{{ resolved_count|default:"0" }}</span>
+                    <span class="stat-label">Resolved</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content - Full Width Grid -->
+    <div class="support-grid">
+        <!-- New Message Section -->
+        <div class="support-card new-message-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="mdi mdi-pencil-plus"></i>
+                    <h2>New Message</h2>
+                </div>
+            </div>
+            <div class="card-body">
+                <form id="supportForm">
+                    <!-- Message Type Selection -->
+                    <div class="form-group">
+                        <label>Message Type</label>
+                        <div class="message-type-grid">
+                            <label class="type-option">
+                                <input type="radio" name="message_type" value="general" checked>
+                                <div class="option-card">
+                                    <i class="mdi mdi-chat-outline"></i>
+                                    <span>General</span>
+                                </div>
+                            </label>
+                            <label class="type-option">
+                                <input type="radio" name="message_type" value="time_correction">
+                                <div class="option-card">
+                                    <i class="mdi mdi-clock-edit-outline"></i>
+                                    <span>Time Fix</span>
+                                </div>
+                            </label>
+                            <label class="type-option">
+                                <input type="radio" name="message_type" value="bug_report">
+                                <div class="option-card">
+                                    <i class="mdi mdi-bug-outline"></i>
+                                    <span>Bug Report</span>
+                                </div>
+                            </label>
+                            <label class="type-option">
+                                <input type="radio" name="message_type" value="feedback">
+                                <div class="option-card">
+                                    <i class="mdi mdi-lightbulb-outline"></i>
+                                    <span>Feedback</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Time Correction Section -->
+                    <div id="timeCorrectionSection" class="time-correction-section" style="display: none;">
+                        <div class="correction-header">
+                            <i class="mdi mdi-information-outline"></i>
+                            <span>Select the session to correct</span>
+                        </div>
+                        <select id="sessionSelect" class="form-control">
+                            <option value="">Select a study session...</option>
+                            {% for subject, sessions in session_subjects.items %}
+                            <optgroup label="{{ subject }}">
+                                {% for session in sessions %}
+                                <option value="{{ session.id }}" data-duration="{{ session.duration }}">
+                                    {{ session.date }} - {{ session.formatted_duration }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                        <div class="correction-type-row">
+                            <label class="correction-option">
+                                <input type="radio" name="correction_type" value="delete" checked>
+                                <span class="correction-label"><i class="mdi mdi-delete-outline"></i> Delete Session</span>
+                            </label>
+                            <label class="correction-option">
+                                <input type="radio" name="correction_type" value="modify">
+                                <span class="correction-label"><i class="mdi mdi-pencil-outline"></i> Modify Duration</span>
+                            </label>
+                            <input type="number" id="requestedDuration" class="form-control duration-input" min="1"
+                                placeholder="New duration (mins)" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="form-group">
+                        <label for="messageSubject">
+                            <i class="mdi mdi-format-title"></i> Subject
+                        </label>
+                        <input type="text" id="messageSubject" class="form-control"
+                            placeholder="Brief subject of your message">
+                    </div>
+
+                    <!-- Message Content -->
+                    <div class="form-group">
+                        <label for="messageContent">
+                            <i class="mdi mdi-text"></i> Message
+                        </label>
+                        <textarea id="messageContent" class="form-control" rows="5"
+                            placeholder="Describe your issue or request in detail..."></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-submit">
+                        <i class="mdi mdi-send"></i>
+                        <span>Send Message</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Message History -->
+        <div class="support-card messages-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="mdi mdi-message-text-outline"></i>
+                    <h2>Message History</h2>
+                </div>
+                {% if unread_count > 0 %}
+                <span class="unread-badge">
+                    <i class="mdi mdi-bell"></i>
+                    {{ unread_count }} new
+                </span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if support_messages %}
+                <div class="messages-list">
+                    {% for msg in support_messages %}
+                    <div class="message-item {% if msg.is_resolved %}resolved{% endif %} {% if msg.admin_response and not msg.is_read %}unread{% endif %}">
+                        <div class="message-header">
+                            <div class="message-meta">
+                                <span class="message-type {{ msg.message_type }}">
+                                    {% if msg.message_type == 'general' %}
+                                    <i class="mdi mdi-chat-outline"></i>
+                                    {% elif msg.message_type == 'time_correction' %}
+                                    <i class="mdi mdi-clock-edit-outline"></i>
+                                    {% elif msg.message_type == 'bug_report' %}
+                                    <i class="mdi mdi-bug-outline"></i>
+                                    {% else %}
+                                    <i class="mdi mdi-lightbulb-outline"></i>
+                                    {% endif %}
+                                    {{ msg.get_message_type_display }}
+                                </span>
+                                <span class="message-date">
+                                    <i class="mdi mdi-calendar"></i>
+                                    {{ msg.created_at|date:"M d, Y" }}
+                                </span>
+                            </div>
+                            <div class="message-status-badge {% if msg.is_resolved %}resolved{% else %}pending{% endif %}">
+                                {% if msg.is_resolved %}
+                                <i class="mdi mdi-check-circle"></i> Resolved
+                                {% else %}
+                                <i class="mdi mdi-clock-outline"></i> Pending
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if msg.subject %}
+                        <div class="message-subject">{{ msg.subject }}</div>
+                        {% endif %}
+                        
+                        <p class="message-content">{{ msg.content }}</p>
+
+                        {% if msg.study_session %}
+                        <div class="session-info">
+                            <i class="mdi mdi-timer"></i>
+                            <span>{{ msg.study_session.subject }} · {{ msg.study_session.duration }}min · {{ msg.study_session.date|date:"M d" }}</span>
+                            {% if msg.requested_duration %}
+                            <span class="duration-change">→ {{ msg.requested_duration }}min</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if msg.admin_response %}
+                        <div class="admin-response">
+                            <div class="response-header">
+                                <i class="mdi mdi-shield-account"></i>
+                                <span class="response-label">Admin Response</span>
+                            </div>
+                            <p>{{ msg.admin_response }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="no-messages">
+                    <div class="empty-icon">
+                        <i class="mdi mdi-message-text-clock-outline"></i>
+                    </div>
+                    <h3>No messages yet</h3>
+                    <p>Send your first message to get started</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    /* Support Page - Full Width Modern Design */
+    .support-page {
+        padding: 0;
+        width: 100%;
+        min-height: 100%;
+    }
+
+    /* Full Width Header */
+    .page-header-full {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4a7c9b 100%);
+        padding: 28px 32px;
+        margin: -24px -24px 24px -24px;
+        width: calc(100% + 48px);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 56px;
+        height: 56px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+    }
+
+    .header-icon i {
+        font-size: 1.8rem;
+        color: white;
+    }
+
+    .header-text h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 4px 0;
+    }
+
+    .header-text p {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.85);
+        margin: 0;
+    }
+
+    .header-stats {
+        display: flex;
+        gap: 24px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 12px 20px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        min-width: 90px;
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .stat-value.pending {
+        color: #ffd54f;
+    }
+
+    .stat-value.resolved {
+        color: #81c784;
+    }
+
+    .stat-label {
+        display: block;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Full Width Grid Layout */
+    .support-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        padding: 0 8px;
+    }
+
+    /* Cards */
+    .support-card {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        height: fit-content;
+    }
+
+    .support-card .card-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--bg-tertiary);
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-title i {
+        font-size: 1.3rem;
+        color: var(--primary-color);
+    }
+
+    .support-card .card-header h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    .unread-badge {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+    }
+
+    .support-card .card-body {
+        padding: 24px;
+    }
+
+    /* Message Type Grid */
+    .message-type-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .type-option {
+        cursor: pointer;
+    }
+
+    .type-option input {
+        display: none;
+    }
+
+    .type-option .option-card {
+        padding: 16px 12px;
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .type-option .option-card i {
+        display: block;
+        font-size: 1.5rem;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .type-option .option-card span {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .type-option input:checked + .option-card {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4a7c9b 100%);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 153, 187, 0.3);
+    }
+
+    .type-option input:checked + .option-card i,
+    .type-option input:checked + .option-card span {
+        color: white;
+    }
+
+    .type-option:hover .option-card {
+        border-color: var(--primary-color);
+    }
+
+    /* Time Correction Section */
+    .time-correction-section {
+        background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 152, 0, 0.2);
+    }
+
+    .correction-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        color: #ff9800;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .correction-header i {
+        font-size: 1.1rem;
+    }
+
+    .time-correction-section select {
+        margin-bottom: 14px;
+    }
+
+    .correction-type-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .correction-option {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .correction-option input {
+        accent-color: var(--primary-color);
+        width: 18px;
+        height: 18px;
+    }
+
+    .correction-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        padding: 8px 14px;
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .correction-option:hover .correction-label {
+        background: var(--bg-secondary);
+    }
+
+    .duration-input {
+        width: 150px;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    /* Form Controls */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .form-group label i {
+        color: var(--primary-color);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 153, 187, 0.15);
+    }
+
+    .form-control::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    /* Submit Button */
+    .btn-submit {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4a7c9b 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 15px rgba(102, 153, 187, 0.3);
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 153, 187, 0.4);
+    }
+
+    .btn-submit i {
+        font-size: 1.2rem;
+    }
+
+    /* Messages List */
+    .messages-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    .messages-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .messages-list::-webkit-scrollbar-track {
+        background: var(--bg-tertiary);
+        border-radius: 3px;
+    }
+
+    .messages-list::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+    .message-item {
+        background: var(--bg-tertiary);
+        border-radius: 14px;
+        padding: 20px;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+
+    .message-item:hover {
+        border-color: var(--primary-color);
+    }
+
+    .message-item.unread {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .message-item.resolved {
+        opacity: 0.75;
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .message-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .message-type {
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .message-type.general {
+        background: rgba(102, 153, 187, 0.15);
+        color: var(--primary-color);
+    }
+
+    .message-type.time_correction {
+        background: rgba(255, 152, 0, 0.15);
+        color: #ff9800;
+    }
+
+    .message-type.bug_report {
+        background: rgba(244, 67, 54, 0.15);
+        color: #f44336;
+    }
+
+    .message-type.feedback {
+        background: rgba(156, 39, 176, 0.15);
+        color: #9c27b0;
+    }
+
+    .message-date {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .message-status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .message-status-badge.resolved {
+        background: rgba(76, 175, 80, 0.15);
+        color: #4CAF50;
+    }
+
+    .message-status-badge.pending {
+        background: rgba(255, 152, 0, 0.15);
+        color: #ff9800;
+    }
+
+    .message-subject {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+        font-size: 1rem;
+    }
+
+    .message-content {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin: 0 0 14px 0;
+        font-size: 0.9rem;
+    }
+
+    .session-info {
+        padding: 12px 16px;
+        background: rgba(255, 152, 0, 0.1);
+        border-radius: 10px;
+        font-size: 0.85rem;
+        color: #ff9800;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .duration-change {
+        font-weight: 600;
+        color: #4CAF50;
+    }
+
+    .admin-response {
+        padding: 16px;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(129, 199, 132, 0.05) 100%);
+        border-radius: 12px;
+        border-left: 4px solid #4CAF50;
+    }
+
+    .response-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .response-header i {
+        color: #4CAF50;
+        font-size: 1.1rem;
+    }
+
+    .response-label {
+        font-size: 0.8rem;
+        color: #4CAF50;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .admin-response p {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    /* No Messages */
+    .no-messages {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-secondary);
+    }
+
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        background: var(--bg-tertiary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+
+    .empty-icon i {
+        font-size: 2.5rem;
+        color: var(--text-tertiary);
+    }
+
+    .no-messages h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+        color: var(--text-primary);
+    }
+
+    .no-messages p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .support-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .header-stats {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header-full {
+            padding: 20px;
+            margin: -16px -16px 20px -16px;
+            width: calc(100% + 32px);
+        }
+
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .header-title {
+            flex-direction: column;
+        }
+
+        .header-stats {
+            gap: 12px;
+        }
+
+        .stat-item {
+            padding: 10px 16px;
+            min-width: 70px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+        }
+
+        .message-type-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .support-card .card-body {
+            padding: 16px;
+        }
+
+        .support-grid {
+            padding: 0;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header-stats {
+            flex-wrap: wrap;
+        }
+
+        .correction-type-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .duration-input {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('supportForm');
+        const messageTypeInputs = document.querySelectorAll('input[name="message_type"]');
+        const timeCorrectionSection = document.getElementById('timeCorrectionSection');
+        const correctionTypeInputs = document.querySelectorAll('input[name="correction_type"]');
+        const durationInput = document.getElementById('requestedDuration');
+
+        // Handle message type change
+        messageTypeInputs.forEach(input => {
+            input.addEventListener('change', function () {
+                timeCorrectionSection.style.display = this.value === 'time_correction' ? 'block' : 'none';
+            });
+        });
+
+        // Handle correction type change - show duration input inline
+        correctionTypeInputs.forEach(input => {
+            input.addEventListener('change', function () {
+                durationInput.style.display = this.value === 'modify' ? 'inline-block' : 'none';
+            });
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const messageType = document.querySelector('input[name="message_type"]:checked').value;
+            const subject = document.getElementById('messageSubject').value;
+            const content = document.getElementById('messageContent').value;
+            const sessionId = document.getElementById('sessionSelect')?.value;
+            const correctionType = document.querySelector('input[name="correction_type"]:checked')?.value;
+            const requestedDuration = correctionType === 'modify' ? durationInput?.value : null;
+
+            if (!content.trim()) {
+                alert('Please enter a message');
+                return;
+            }
+
+            if (messageType === 'time_correction' && !sessionId) {
+                alert('Please select a study session');
+                return;
+            }
+
+            // Prepare content with correction details
+            let finalContent = content;
+            if (messageType === 'time_correction') {
+                if (correctionType === 'delete') {
+                    finalContent = `[REQUEST: DELETE SESSION]\n\n${content}`;
+                } else if (correctionType === 'modify') {
+                    finalContent = `[REQUEST: MODIFY DURATION to ${requestedDuration} minutes]\n\n${content}`;
+                }
+            }
+
+            try {
+                const response = await fetch('/api/support/send/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        message_type: messageType,
+                        subject: subject,
+                        content: finalContent,
+                        session_id: sessionId || null,
+                        requested_duration: requestedDuration || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    form.reset();
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to send message');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}

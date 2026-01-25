@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import json
 import random
 
-from .models import StudySession, Assignment, QuickNote, SubjectFolder
+from .models import StudySession, Assignment, QuickNote, SubjectFolder, SupportMessage
 from django.db import models
 
 
@@ -59,6 +59,8 @@ MOTIVATIONAL_QUOTES = [
 def signup_view(request):
     """User signup view"""
     if request.user.is_authenticated:
+        if request.user.is_superuser:
+            return redirect('admin_dashboard')
         return redirect('dashboard')
     
     if request.method == 'POST':
@@ -77,6 +79,8 @@ def signup_view(request):
 def login_view(request):
     """User login view"""
     if request.user.is_authenticated:
+        if request.user.is_superuser:
+            return redirect('admin_dashboard')
         return redirect('dashboard')
     
     if request.method == 'POST':
@@ -87,12 +91,23 @@ def login_view(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                # messages.success(request, f'Welcome back, {username}!')
+                # Redirect based on user type
+                if user.is_superuser:
+                    return redirect('admin_dashboard')
                 return redirect('dashboard')
     else:
         form = CustomAuthenticationForm()
     
-    return render(request, 'core/login.html', {'form': form})
+    # Get approved feedbacks for marquee
+    approved_feedbacks = SupportMessage.objects.filter(
+        message_type='feedback',
+        is_approved_feedback=True
+    ).select_related('sender').order_by('-created_at')[:10]
+    
+    return render(request, 'core/login.html', {
+        'form': form,
+        'approved_feedbacks': approved_feedbacks
+    })
 
 
 def logout_view(request):
@@ -204,9 +219,11 @@ def dashboard_view(request):
     all_assignments = Assignment.objects.filter(user=user).exclude(status='completed')
     calendar_assignments = []
     for assign in all_assignments:
+        # Convert to local timezone for consistent display
+        local_deadline = timezone.localtime(assign.deadline)
         calendar_assignments.append({
             'title': assign.title,
-            'deadline': assign.deadline.isoformat(), # This format is safer for JS
+            'deadline': local_deadline.strftime('%Y-%m-%dT%H:%M:%S'),
             'subject': assign.subject
         })
 
@@ -327,12 +344,29 @@ def save_study_session(request):
             date=timezone.now().date()
         )
         
+        # Get updated today's total
+        today_total = StudySession.get_today_total(request.user)
+        
         return JsonResponse({
             'success': True,
             'session_id': session.id,
-            'message': 'Study session saved successfully!'
+            'message': 'Study session saved successfully!',
+            'today_total_minutes': today_total
         })
     
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def get_today_study_time(request):
+    """Get user's total study time for today from database"""
+    try:
+        today_total = StudySession.get_today_total(request.user)
+        return JsonResponse({
+            'success': True,
+            'today_total_minutes': today_total
+        })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -347,11 +381,13 @@ def assignments_view(request):
     # Prepare assignment data for treemap
     assignments_data = []
     for assignment in pending_assignments:
+        # Convert to local timezone for consistent display
+        local_deadline = timezone.localtime(assignment.deadline)
         assignments_data.append({
             'id': assignment.id,
             'title': assignment.title,
             'subject': assignment.subject,
-            'deadline': assignment.deadline.isoformat(),
+            'deadline': local_deadline.strftime('%Y-%m-%dT%H:%M:%S'),
             'estimated_hours': float(assignment.estimated_hours),
             'hours_remaining': assignment.hours_remaining(),
             'days_remaining': assignment.days_remaining(),
@@ -378,8 +414,9 @@ def add_assignment(request):
         deadline_str = data.get('deadline')
         # Handle ISO format: 2024-12-25T23:59
         deadline_datetime = datetime.strptime(deadline_str, '%Y-%m-%dT%H:%M')
-        # Make timezone aware
-        deadline_datetime = timezone.make_aware(deadline_datetime)
+        # Make timezone aware using the current timezone
+        # This ensures the time is stored as the user intended
+        deadline_datetime = timezone.make_aware(deadline_datetime, timezone.get_current_timezone())
         
         assignment = Assignment.objects.create(
             user=request.user,
@@ -387,13 +424,17 @@ def add_assignment(request):
             deadline=deadline_datetime,
         )
         
+        # Return the deadline in a format that preserves local time display
+        # Convert back to local timezone for consistent display
+        local_deadline = timezone.localtime(assignment.deadline)
+        
         return JsonResponse({
             'success': True,
             'assignment': {
                 'id': assignment.id,
                 'title': assignment.title,
                 'subject': assignment.subject,
-                'deadline': assignment.deadline.isoformat(),
+                'deadline': local_deadline.strftime('%Y-%m-%dT%H:%M:%S'),
                 'estimated_hours': float(assignment.estimated_hours),
                 'hours_remaining': assignment.hours_remaining(),
                 'days_remaining': assignment.days_remaining(),
@@ -1246,5 +1287,348 @@ def admin_change_password(request):
     
     except User.DoesNotExist:
         return JsonResponse({'error': 'User not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# ========================================
+# SUPPORT / CHAT VIEWS
+# ========================================
+
+@login_required
+def support_view(request):
+    """Support/Chat page for users to communicate with admin"""
+    user = request.user
+    
+    # Get user's messages (sent and received)
+    user_messages = SupportMessage.objects.filter(
+        models.Q(sender=user) | models.Q(recipient=user)
+    ).order_by('-created_at')
+    
+    # Get user's study sessions for time correction requests
+    study_sessions = StudySession.objects.filter(user=user).order_by('-date', '-created_at')[:50]
+    
+    # Group sessions by subject for easy selection
+    session_subjects = {}
+    for session in study_sessions:
+        if session.subject not in session_subjects:
+            session_subjects[session.subject] = []
+        session_subjects[session.subject].append({
+            'id': session.id,
+            'date': session.date.strftime('%b %d, %Y'),
+            'duration': session.duration,
+            'formatted_duration': f"{session.duration // 60}h {session.duration % 60}m" if session.duration >= 60 else f"{session.duration}m"
+        })
+    
+    # Check for unread admin responses
+    unread_count = SupportMessage.objects.filter(
+        recipient=user,
+        is_read=False
+    ).count()
+    
+    # Count pending and resolved messages for stats
+    pending_count = SupportMessage.objects.filter(
+        sender=user,
+        is_resolved=False
+    ).count()
+    
+    resolved_count = SupportMessage.objects.filter(
+        sender=user,
+        is_resolved=True
+    ).count()
+    
+    context = {
+        'support_messages': user_messages,
+        'study_sessions': study_sessions,
+        'session_subjects': session_subjects,
+        'unread_count': unread_count,
+        'pending_count': pending_count,
+        'resolved_count': resolved_count,
+    }
+    
+    return render(request, 'core/support.html', context)
+
+
+@login_required
+@require_POST
+def send_support_message(request):
+    """Send a support message from user to admin"""
+    try:
+        data = json.loads(request.body)
+        message_type = data.get('message_type', 'general')
+        subject = data.get('subject', '')
+        content = data.get('content', '').strip()
+        session_id = data.get('session_id')
+        requested_duration = data.get('requested_duration')
+        
+        if not content:
+            return JsonResponse({'error': 'Message content is required'}, status=400)
+        
+        # Get the first superuser as recipient
+        admin = User.objects.filter(is_superuser=True).first()
+        if not admin:
+            return JsonResponse({'error': 'No admin available'}, status=400)
+        
+        # Get study session if this is a time correction request
+        study_session = None
+        if message_type == 'time_correction' and session_id:
+            try:
+                study_session = StudySession.objects.get(id=session_id, user=request.user)
+            except StudySession.DoesNotExist:
+                return JsonResponse({'error': 'Study session not found'}, status=404)
+        
+        message = SupportMessage.objects.create(
+            sender=request.user,
+            recipient=admin,
+            message_type=message_type,
+            subject=subject,
+            content=content,
+            study_session=study_session,
+            requested_duration=requested_duration if message_type == 'time_correction' else None
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message_id': message.id,
+            'message': 'Message sent successfully!'
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def get_user_messages(request):
+    """Get all messages for the current user"""
+    try:
+        user = request.user
+        user_messages = SupportMessage.objects.filter(
+            models.Q(sender=user) | models.Q(recipient=user)
+        ).order_by('-created_at')
+        
+        messages_data = []
+        for msg in user_messages:
+            messages_data.append({
+                'id': msg.id,
+                'sender': msg.sender.username,
+                'recipient': msg.recipient.username,
+                'message_type': msg.message_type,
+                'subject': msg.subject,
+                'content': msg.content,
+                'is_from_user': msg.sender == user,
+                'admin_response': msg.admin_response,
+                'is_resolved': msg.is_resolved,
+                'created_at': msg.created_at.strftime('%b %d, %Y at %I:%M %p'),
+                'responded_at': msg.responded_at.strftime('%b %d, %Y at %I:%M %p') if msg.responded_at else None,
+            })
+        
+        return JsonResponse({'success': True, 'messages': messages_data})
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# ========================================
+# ADMIN MESSAGE MANAGEMENT VIEWS
+# ========================================
+
+@login_required
+@superuser_required
+def admin_messages_view(request):
+    """Admin view for managing support messages"""
+    # Get all support messages
+    all_messages = SupportMessage.objects.all().order_by('-created_at')
+    
+    # Unresolved messages
+    unresolved = all_messages.filter(is_resolved=False)
+    
+    # Group by message type
+    time_corrections = unresolved.filter(message_type='time_correction')
+    general_messages = unresolved.filter(message_type='general')
+    bug_reports = unresolved.filter(message_type='bug_report')
+    feedback = unresolved.filter(message_type='feedback')
+    
+    # Resolved messages
+    resolved = all_messages.filter(is_resolved=True)
+    
+    context = {
+        'all_messages': all_messages,
+        'unresolved': unresolved,
+        'time_corrections': time_corrections,
+        'general_messages': general_messages,
+        'bug_reports': bug_reports,
+        'feedback': feedback,
+        'resolved': resolved,
+        'unresolved_count': unresolved.count(),
+    }
+    
+    return render(request, 'core/admin_messages.html', context)
+
+
+@login_required
+@superuser_required
+@require_POST
+def admin_respond_message(request):
+    """Admin responds to a support message"""
+    try:
+        data = json.loads(request.body)
+        message_id = data.get('message_id')
+        response = data.get('response', '').strip()
+        mark_resolved = data.get('mark_resolved', True)
+        
+        if not message_id:
+            return JsonResponse({'error': 'Message ID is required'}, status=400)
+        
+        if not response:
+            return JsonResponse({'error': 'Response is required'}, status=400)
+        
+        message = SupportMessage.objects.get(id=message_id)
+        message.admin_response = response
+        message.responded_at = timezone.now()
+        message.is_resolved = mark_resolved
+        message.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Response sent successfully!'
+        })
+    
+    except SupportMessage.DoesNotExist:
+        return JsonResponse({'error': 'Message not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@superuser_required
+@require_POST
+def admin_approve_feedback(request):
+    """Admin approves feedback to show on login page"""
+    try:
+        data = json.loads(request.body)
+        message_id = data.get('message_id')
+        approve = data.get('approve', True)
+        
+        if not message_id:
+            return JsonResponse({'error': 'Message ID is required'}, status=400)
+        
+        message = SupportMessage.objects.get(id=message_id)
+        
+        if message.message_type != 'feedback':
+            return JsonResponse({'error': 'Only feedback messages can be approved'}, status=400)
+        
+        message.is_approved_feedback = approve
+        message.save()
+        
+        action = 'approved' if approve else 'unapproved'
+        return JsonResponse({
+            'success': True,
+            'message': f'Feedback {action} successfully!'
+        })
+    
+    except SupportMessage.DoesNotExist:
+        return JsonResponse({'error': 'Message not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# ========================================
+# ADMIN STUDY SESSION MANAGEMENT VIEWS
+# ========================================
+
+@login_required
+@superuser_required
+def admin_study_sessions_view(request):
+    """Admin view for managing all study sessions"""
+    # Get all study sessions grouped by user
+    all_sessions = StudySession.objects.all().order_by('-date', '-created_at')
+    
+    # Get filter parameters
+    user_filter = request.GET.get('user')
+    subject_filter = request.GET.get('subject')
+    date_filter = request.GET.get('date')
+    
+    if user_filter:
+        all_sessions = all_sessions.filter(user__username__icontains=user_filter)
+    if subject_filter:
+        all_sessions = all_sessions.filter(subject__icontains=subject_filter)
+    if date_filter:
+        all_sessions = all_sessions.filter(date=date_filter)
+    
+    # Get all users and subjects for filters
+    all_users = User.objects.all().order_by('username')
+    all_subjects = StudySession.objects.values_list('subject', flat=True).distinct()
+    
+    context = {
+        'sessions': all_sessions[:100],  # Limit to 100 for performance
+        'all_users': all_users,
+        'all_subjects': all_subjects,
+        'user_filter': user_filter,
+        'subject_filter': subject_filter,
+        'date_filter': date_filter,
+    }
+    
+    return render(request, 'core/admin_study_sessions.html', context)
+
+
+@login_required
+@superuser_required
+@require_POST
+def admin_edit_session(request):
+    """Admin edits a study session duration"""
+    try:
+        data = json.loads(request.body)
+        session_id = data.get('session_id')
+        new_duration = data.get('duration')
+        new_subject = data.get('subject')
+        
+        if not session_id:
+            return JsonResponse({'error': 'Session ID is required'}, status=400)
+        
+        session = StudySession.objects.get(id=session_id)
+        
+        if new_duration is not None:
+            session.duration = int(new_duration)
+        if new_subject:
+            session.subject = new_subject
+        
+        session.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Session updated successfully!'
+        })
+    
+    except StudySession.DoesNotExist:
+        return JsonResponse({'error': 'Session not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@superuser_required
+@require_POST
+def admin_delete_session(request):
+    """Admin deletes a study session"""
+    try:
+        data = json.loads(request.body)
+        session_id = data.get('session_id')
+        
+        if not session_id:
+            return JsonResponse({'error': 'Session ID is required'}, status=400)
+        
+        session = StudySession.objects.get(id=session_id)
+        username = session.user.username
+        subject = session.subject
+        duration = session.duration
+        session.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Deleted {duration}min {subject} session for {username}'
+        })
+    
+    except StudySession.DoesNotExist:
+        return JsonResponse({'error': 'Session not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

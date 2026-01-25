@@ -277,6 +277,24 @@ a:hover {
     background: rgba(204, 102, 102, 0.1) !important;
 }
 
+/* Navigation Badge for counts */
+.nav-badge {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: auto;
+    min-width: 18px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(255, 107, 107, 0.3);
+}
+
+.sidebar-nav a.active .nav-badge {
+    background: rgba(255, 255, 255, 0.25);
+}
+
 .sidebar-footer {
     padding: var(--spacing-md);
     border-top: 1px solid var(--border-color);

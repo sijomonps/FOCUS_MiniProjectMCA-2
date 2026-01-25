@@ -89,7 +89,25 @@ function initDashboard(config) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const mins = context.raw;
+                                if (mins >= 60) {
+                                    const hours = Math.floor(mins / 60);
+                                    const remainingMins = mins % 60;
+                                    if (remainingMins > 0) {
+                                        return `${hours}h ${remainingMins}m`;
+                                    }
+                                    return `${hours}h`;
+                                }
+                                return `${mins}m`;
+                            }
+                        }
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,

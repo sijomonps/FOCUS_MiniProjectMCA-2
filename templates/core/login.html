@@ -55,8 +55,40 @@
             <div class="auth-card auth-secondary-card">
                 <p>Don't have an account? <a href="{% url 'signup' %}" class="auth-link">Sign up</a></p>
             </div>
+            
+            <!-- Feedback Marquee - Inside form container -->
+            {% if approved_feedbacks %}
+            <div class="feedback-section">
+                <div class="feedback-title">
+                    <i class="mdi mdi-message-text-outline"></i> Feedback from Users
+                </div>
+                <div class="feedback-marquee-container">
+                    <div class="feedback-marquee">
+                        <div class="feedback-marquee-content">
+                            {% for feedback in approved_feedbacks %}
+                            <span class="feedback-item">
+                                <i class="mdi mdi-format-quote-open"></i>
+                                {{ feedback.content|truncatechars:100 }}
+                                <span class="feedback-author">— {{ feedback.sender.username }}</span>
+                            </span>
+                            <span class="feedback-separator">•</span>
+                            {% endfor %}
+                            {% for feedback in approved_feedbacks %}
+                            <span class="feedback-item">
+                                <i class="mdi mdi-format-quote-open"></i>
+                                {{ feedback.content|truncatechars:100 }}
+                                <span class="feedback-author">— {{ feedback.sender.username }}</span>
+                            </span>
+                            <span class="feedback-separator">•</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
+    
     <div class="auth-footer">
         Welcome to FOCUS <span class="material-symbols-outlined"
             style="font-size: 0.8rem; vertical-align: middle;">center_focus_strong</span><br>Developed by Sijomon P S as
@@ -74,6 +106,90 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         overflow: hidden;
         position: relative;
+    }
+    
+    /* Feedback Section Styles */
+    .feedback-section {
+        margin-top: 20px;
+        width: 100%;
+        max-width: 350px;
+    }
+    
+    .feedback-title {
+        text-align: center;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .feedback-title i {
+        font-size: 0.9rem;
+        color: rgba(102, 153, 187, 0.7);
+    }
+    
+    /* Feedback Marquee Styles */
+    .feedback-marquee-container {
+        width: 100%;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 10px 0;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .feedback-marquee {
+        display: flex;
+        width: 100%;
+    }
+    
+    .feedback-marquee-content {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        animation: marquee 15s linear infinite;
+    }
+    
+    .feedback-item {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.85rem;
+        padding: 0 15px;
+        font-style: italic;
+    }
+    
+    .feedback-item i {
+        color: rgba(102, 153, 187, 0.8);
+        margin-right: 4px;
+    }
+    
+    .feedback-author {
+        color: rgba(102, 153, 187, 1);
+        font-weight: 600;
+        font-style: normal;
+        margin-left: 8px;
+    }
+    
+    .feedback-separator {
+        color: rgba(255, 255, 255, 0.3);
+        padding: 0 10px;
+    }
+    
+    @keyframes marquee {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-50%);
+        }
+    }
+    
+    .feedback-marquee-container:hover .feedback-marquee-content {
+        animation-play-state: paused;
     }
 
     .auth-footer {

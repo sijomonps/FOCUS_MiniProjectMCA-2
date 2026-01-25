@@ -1,0 +1,1266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messages - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="admin-messages-page fade-in">
+    <!-- Full Width Header -->
+    <div class="page-header-full">
+        <div class="header-content">
+            <div class="header-title">
+                <div class="header-icon">
+                    <i class="mdi mdi-email-multiple"></i>
+                </div>
+                <div class="header-text">
+                    <h1>Support Messages</h1>
+                    <p>Manage user support requests and feedback</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{ all_messages.count }}</span>
+                    <span class="stat-label">Total</span>
+                </div>
+                <div class="stat-item pending">
+                    <span class="stat-value">{{ unresolved_count }}</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+                <div class="stat-item resolved">
+                    <span class="stat-value">{{ resolved.count }}</span>
+                    <span class="stat-label">Resolved</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Pills -->
+    <div class="filter-section">
+        <div class="filter-pills">
+            <button class="filter-pill active" data-filter="all">
+                <i class="mdi mdi-all-inclusive"></i>
+                <span>All</span>
+                <span class="pill-count">{{ all_messages.count }}</span>
+            </button>
+            <button class="filter-pill" data-filter="time_correction">
+                <i class="mdi mdi-clock-edit-outline"></i>
+                <span>Time Fix</span>
+                <span class="pill-count">{{ time_corrections.count }}</span>
+            </button>
+            <button class="filter-pill" data-filter="general">
+                <i class="mdi mdi-chat-outline"></i>
+                <span>General</span>
+                <span class="pill-count">{{ general_messages.count }}</span>
+            </button>
+            <button class="filter-pill" data-filter="bug_report">
+                <i class="mdi mdi-bug-outline"></i>
+                <span>Bugs</span>
+                <span class="pill-count">{{ bug_reports.count }}</span>
+            </button>
+            <button class="filter-pill" data-filter="feedback">
+                <i class="mdi mdi-lightbulb-outline"></i>
+                <span>Feedback</span>
+                <span class="pill-count">{{ feedback.count }}</span>
+            </button>
+            <button class="filter-pill resolved-pill" data-filter="resolved">
+                <i class="mdi mdi-check-circle-outline"></i>
+                <span>Resolved</span>
+                <span class="pill-count">{{ resolved.count }}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Messages List -->
+    <div class="messages-container">
+        {% if all_messages %}
+        {% for msg in all_messages %}
+        <div class="message-card {% if msg.is_resolved %}resolved{% endif %}" data-type="{{ msg.message_type }}"
+            data-resolved="{{ msg.is_resolved|yesno:'true,false' }}">
+            
+            <div class="card-main">
+                <!-- Message Header -->
+                <div class="card-header">
+                    <div class="sender-info">
+                        <div class="sender-avatar">
+                            <i class="mdi mdi-account"></i>
+                        </div>
+                        <div class="sender-details">
+                            <span class="sender-name">{{ msg.sender.username }}</span>
+                            <span class="send-time">
+                                <i class="mdi mdi-clock-outline"></i>
+                                {{ msg.created_at|date:"M d, Y" }} at {{ msg.created_at|time:"g:i A" }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-badges">
+                        <span class="type-badge {{ msg.message_type }}">
+                            {% if msg.message_type == 'general' %}
+                            <i class="mdi mdi-chat-outline"></i>
+                            {% elif msg.message_type == 'time_correction' %}
+                            <i class="mdi mdi-clock-edit-outline"></i>
+                            {% elif msg.message_type == 'bug_report' %}
+                            <i class="mdi mdi-bug-outline"></i>
+                            {% else %}
+                            <i class="mdi mdi-lightbulb-outline"></i>
+                            {% endif %}
+                            {{ msg.get_message_type_display }}
+                        </span>
+                        <span class="status-badge {% if msg.is_resolved %}resolved{% else %}pending{% endif %}">
+                            {% if msg.is_resolved %}
+                            <i class="mdi mdi-check-circle"></i> Resolved
+                            {% else %}
+                            <i class="mdi mdi-clock-outline"></i> Pending
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Message Content -->
+                <div class="card-body">
+                    {% if msg.subject %}
+                    <h3 class="message-subject">{{ msg.subject }}</h3>
+                    {% endif %}
+                    <div class="message-content">{{ msg.content|linebreaks }}</div>
+
+                    {% if msg.message_type == 'feedback' %}
+                    <div class="feedback-actions">
+                        {% if msg.is_approved_feedback %}
+                        <div class="feedback-status approved">
+                            <i class="mdi mdi-check-circle"></i>
+                            <span>Showing on login page</span>
+                        </div>
+                        <button class="btn-action danger" onclick="toggleFeedbackApproval({{ msg.id }}, false)">
+                            <i class="mdi mdi-close"></i> Remove from Login
+                        </button>
+                        {% else %}
+                        <button class="btn-action success" onclick="toggleFeedbackApproval({{ msg.id }}, true)">
+                            <i class="mdi mdi-check"></i> Show on Login Page
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if msg.study_session %}
+                    <div class="session-card">
+                        <div class="session-header">
+                            <i class="mdi mdi-timer"></i>
+                            <span>Study Session</span>
+                        </div>
+                        <div class="session-details">
+                            <div class="session-info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Subject</span>
+                                    <span class="info-value">{{ msg.study_session.subject }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Duration</span>
+                                    <span class="info-value">{{ msg.study_session.duration }} min</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Date</span>
+                                    <span class="info-value">{{ msg.study_session.date|date:"M d, Y" }}</span>
+                                </div>
+                                {% if msg.requested_duration %}
+                                <div class="info-item requested">
+                                    <span class="info-label">Requested</span>
+                                    <span class="info-value">{{ msg.requested_duration }} min</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="session-actions">
+                                <button class="btn-action" onclick="editSession({{ msg.study_session.id }}, '{{ msg.study_session.subject }}', {{ msg.study_session.duration }})">
+                                    <i class="mdi mdi-pencil"></i> Edit
+                                </button>
+                                <button class="btn-action danger" onclick="deleteSession({{ msg.study_session.id }})">
+                                    <i class="mdi mdi-delete"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Admin Response -->
+                {% if msg.admin_response %}
+                <div class="admin-response-section">
+                    <div class="response-header">
+                        <i class="mdi mdi-reply"></i>
+                        <span>Your Response</span>
+                    </div>
+                    <p>{{ msg.admin_response }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Reply Form -->
+                {% if not msg.is_resolved %}
+                <div class="reply-section">
+                    <div class="reply-header">
+                        <i class="mdi mdi-reply"></i>
+                        <span>Reply to this message</span>
+                    </div>
+                    <textarea id="response-{{ msg.id }}" placeholder="Type your response here..."></textarea>
+                    <div class="reply-actions">
+                        <label class="resolve-toggle">
+                            <input type="checkbox" id="resolve-{{ msg.id }}" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Mark as resolved</span>
+                        </label>
+                        <button class="btn-send" onclick="sendResponse({{ msg.id }})">
+                            <i class="mdi mdi-send"></i>
+                            <span>Send Reply</span>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="mdi mdi-email-check-outline"></i>
+            </div>
+            <h3>No Messages</h3>
+            <p>There are no support messages at this time.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Edit Session Modal -->
+<div id="editSessionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Session</h2>
+            <button class="close-btn" onclick="closeEditModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editSessionId">
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="editSessionSubject" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Duration (minutes)</label>
+                <input type="number" id="editSessionDuration" class="form-control" min="1">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+            <button class="btn-primary" onclick="saveSessionEdit()">Save</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Admin Messages - Full Width Modern Design */
+    .admin-messages-page {
+        padding: 0;
+        width: 100%;
+        min-height: 100%;
+    }
+
+    /* Full Width Header */
+    .page-header-full {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4a7c9b 100%);
+        padding: 28px 32px;
+        margin: -24px -24px 24px -24px;
+        width: calc(100% + 48px);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .header-icon {
+        width: 56px;
+        height: 56px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+    }
+
+    .header-icon i {
+        font-size: 1.8rem;
+        color: white;
+    }
+
+    .header-text h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 4px 0;
+    }
+
+    .header-text p {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.85);
+        margin: 0;
+    }
+
+    .header-stats {
+        display: flex;
+        gap: 16px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 12px 20px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        min-width: 80px;
+    }
+
+    .stat-item.pending {
+        background: rgba(255, 152, 0, 0.3);
+    }
+
+    .stat-item.resolved {
+        background: rgba(76, 175, 80, 0.3);
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .stat-label {
+        display: block;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Filter Section */
+    .filter-section {
+        margin-bottom: 24px;
+        padding: 0 8px;
+    }
+
+    .filter-pills {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .filter-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: var(--bg-secondary);
+        border: 2px solid var(--border-color);
+        border-radius: 25px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .filter-pill i {
+        font-size: 1.1rem;
+    }
+
+    .filter-pill:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .filter-pill.active {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4a7c9b 100%);
+        border-color: var(--primary-color);
+        color: white;
+    }
+
+    .filter-pill.resolved-pill.active {
+        background: linear-gradient(135deg, #4CAF50 0%, #43A047 100%);
+        border-color: #4CAF50;
+    }
+
+    .pill-count {
+        background: rgba(0, 0, 0, 0.15);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .filter-pill.active .pill-count {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Messages Container */
+    .messages-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 0 8px;
+    }
+
+    /* Message Card */
+    .message-card {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .message-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .message-card.resolved {
+        opacity: 0.75;
+    }
+
+    .message-card[style*="display: none"] {
+        display: none !important;
+    }
+
+    .card-main {
+        padding: 0;
+    }
+
+    /* Card Header */
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 20px 24px;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-color);
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .sender-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .sender-avatar {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4a7c9b 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sender-avatar i {
+        font-size: 1.4rem;
+        color: white;
+    }
+
+    .sender-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .sender-name {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .send-time {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .card-badges {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .type-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .type-badge.general {
+        background: rgba(102, 153, 187, 0.15);
+        color: var(--primary-color);
+    }
+
+    .type-badge.time_correction {
+        background: rgba(255, 152, 0, 0.15);
+        color: #ff9800;
+    }
+
+    .type-badge.bug_report {
+        background: rgba(244, 67, 54, 0.15);
+        color: #f44336;
+    }
+
+    .type-badge.feedback {
+        background: rgba(156, 39, 176, 0.15);
+        color: #9c27b0;
+    }
+
+    .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-badge.pending {
+        background: rgba(255, 152, 0, 0.15);
+        color: #ff9800;
+    }
+
+    .status-badge.resolved {
+        background: rgba(76, 175, 80, 0.15);
+        color: #4CAF50;
+    }
+
+    /* Card Body */
+    .card-body {
+        padding: 24px;
+    }
+
+    .message-subject {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 12px 0;
+    }
+
+    .message-content {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        font-size: 0.95rem;
+        margin-bottom: 16px;
+    }
+
+    .message-content p {
+        margin: 0 0 8px 0;
+    }
+
+    .message-content p:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Feedback Actions */
+    .feedback-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .feedback-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .feedback-status.approved {
+        color: #4CAF50;
+    }
+
+    /* Session Card */
+    .session-card {
+        background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+        border: 1px solid rgba(255, 152, 0, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+    .session-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: rgba(255, 152, 0, 0.1);
+        color: #ff9800;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .session-details {
+        padding: 16px;
+    }
+
+    .session-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .info-item.requested .info-value {
+        color: #4CAF50;
+    }
+
+    .session-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 16px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .btn-action.danger:hover {
+        background: #f44336;
+        border-color: #f44336;
+    }
+
+    .btn-action.success {
+        background: rgba(76, 175, 80, 0.15);
+        color: #4CAF50;
+        border-color: rgba(76, 175, 80, 0.3);
+    }
+
+    .btn-action.success:hover {
+        background: #4CAF50;
+        color: white;
+    }
+
+    /* Admin Response Section */
+    .admin-response-section {
+        padding: 20px 24px;
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(129, 199, 132, 0.05) 100%);
+        border-top: 1px solid var(--border-color);
+    }
+
+    .admin-response-section .response-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #4CAF50;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .admin-response-section p {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    /* Reply Section */
+    .reply-section {
+        padding: 20px 24px;
+        background: var(--bg-tertiary);
+        border-top: 1px solid var(--border-color);
+    }
+
+    .reply-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--primary-color);
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 14px;
+    }
+
+    .reply-section textarea {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        resize: vertical;
+        min-height: 100px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: all 0.2s ease;
+    }
+
+    .reply-section textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 153, 187, 0.15);
+    }
+
+    .reply-section textarea::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    .reply-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .resolve-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+    }
+
+    .resolve-toggle input {
+        display: none;
+    }
+
+    .toggle-slider {
+        width: 44px;
+        height: 24px;
+        background: var(--border-color);
+        border-radius: 12px;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-slider::before {
+        content: '';
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        background: white;
+        border-radius: 50%;
+        top: 3px;
+        left: 3px;
+        transition: all 0.3s ease;
+    }
+
+    .resolve-toggle input:checked + .toggle-slider {
+        background: #4CAF50;
+    }
+
+    .resolve-toggle input:checked + .toggle-slider::before {
+        transform: translateX(20px);
+    }
+
+    .toggle-label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .btn-send {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4a7c9b 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 153, 187, 0.3);
+    }
+
+    .btn-send:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 153, 187, 0.4);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 80px 40px;
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+    }
+
+    .empty-icon {
+        width: 100px;
+        height: 100px;
+        background: var(--bg-tertiary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+    }
+
+    .empty-icon i {
+        font-size: 3rem;
+        color: var(--text-tertiary);
+    }
+
+    .empty-state h3 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+        color: var(--text-primary);
+    }
+
+    .empty-state p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: var(--bg-secondary);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 420px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: var(--text-primary);
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+        transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+        color: var(--text-primary);
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 14px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 153, 187, 0.15);
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: var(--border-color);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4a7c9b 100%);
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-primary:hover {
+        opacity: 0.9;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-header-full {
+            padding: 20px;
+            margin: -16px -16px 20px -16px;
+            width: calc(100% + 32px);
+        }
+
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .header-title {
+            flex-direction: column;
+        }
+
+        .header-stats {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .filter-section,
+        .messages-container {
+            padding: 0;
+        }
+
+        .filter-pills {
+            justify-content: center;
+        }
+
+        .card-header {
+            padding: 16px;
+        }
+
+        .card-body {
+            padding: 16px;
+        }
+
+        .reply-section,
+        .admin-response-section {
+            padding: 16px;
+        }
+
+        .session-info-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .reply-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-send {
+            justify-content: center;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Filter pills functionality
+        const filterPills = document.querySelectorAll('.filter-pill');
+        const messageCards = document.querySelectorAll('.message-card');
+
+        filterPills.forEach(pill => {
+            pill.addEventListener('click', function () {
+                const filter = this.dataset.filter;
+
+                // Update active pill
+                filterPills.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+
+                // Filter messages
+                messageCards.forEach(card => {
+                    const type = card.dataset.type;
+                    const isResolved = card.dataset.resolved === 'true';
+
+                    if (filter === 'all') {
+                        card.style.display = 'block';
+                    } else if (filter === 'resolved') {
+                        card.style.display = isResolved ? 'block' : 'none';
+                    } else {
+                        card.style.display = (type === filter && !isResolved) ? 'block' : 'none';
+                    }
+                });
+            });
+        });
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    async function sendResponse(messageId) {
+        const responseText = document.getElementById(`response-${messageId}`).value.trim();
+        const markResolved = document.getElementById(`resolve-${messageId}`).checked;
+
+        if (!responseText) {
+            alert('Please enter a response');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/message/respond/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    message_id: messageId,
+                    response: responseText,
+                    mark_resolved: markResolved
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to send');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred');
+        }
+    }
+
+    function editSession(sessionId, subject, duration) {
+        document.getElementById('editSessionId').value = sessionId;
+        document.getElementById('editSessionSubject').value = subject;
+        document.getElementById('editSessionDuration').value = duration;
+        document.getElementById('editSessionModal').classList.add('show');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editSessionModal').classList.remove('show');
+    }
+
+    async function saveSessionEdit() {
+        const sessionId = document.getElementById('editSessionId').value;
+        const subject = document.getElementById('editSessionSubject').value;
+        const duration = document.getElementById('editSessionDuration').value;
+
+        try {
+            const response = await fetch('/api/admin/session/edit/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    subject: subject,
+                    duration: duration
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                closeEditModal();
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to update');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred');
+        }
+    }
+
+    async function deleteSession(sessionId) {
+        if (!confirm('Delete this study session? This cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/session/delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to delete');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred');
+        }
+    }
+
+    async function toggleFeedbackApproval(messageId, approve) {
+        const action = approve ? 'approve' : 'remove';
+        if (!confirm(`Are you sure you want to ${action} this feedback for the login page?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/feedback/approve/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    message_id: messageId,
+                    approve: approve
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Failed to update');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred');
+        }
+    }
+
+    // Close modal on outside click
+    document.getElementById('editSessionModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeEditModal();
+        }
+    });
+</script>
+{% endblock %}

@@ -198,3 +198,35 @@ class QuickNote(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.title}"
+
+
+# Support Message Model (for user-admin communication)
+class SupportMessage(models.Model):
+    MESSAGE_TYPES = [
+        ('general', 'General'),
+        ('time_correction', 'Time Correction Request'),
+        ('bug_report', 'Bug Report'),
+        ('feedback', 'Feedback'),
+    ]
+    
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages', null=True, blank=True)
+    message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='general')
+    subject = models.CharField(max_length=200)
+    content = models.TextField(max_length=2000)
+    # For time correction requests
+    study_session = models.ForeignKey(StudySession, on_delete=models.SET_NULL, null=True, blank=True, related_name='correction_requests')
+    requested_duration = models.IntegerField(null=True, blank=True, help_text="Requested corrected duration in minutes")
+    is_read = models.BooleanField(default=False)
+    is_resolved = models.BooleanField(default=False)
+    # For feedback approval (shows on login page)
+    is_approved_feedback = models.BooleanField(default=False)
+    admin_response = models.TextField(max_length=2000, blank=True, null=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.sender.username} - {self.subject}"

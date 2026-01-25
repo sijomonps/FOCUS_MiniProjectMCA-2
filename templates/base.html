@@ -82,6 +82,13 @@
                             <span>Quick Notes</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{% url 'support' %}" class="{% if request.path == '/support/' %}active{% endif %}"
+                            data-tooltip="Contact admin for support">
+                            <span class="icon"><i class="mdi mdi-headset"></i></span>
+                            <span>Support</span>
+                        </a>
+                    </li>
                 </ul>
                 {% endif %}
 
@@ -110,6 +117,25 @@
                             data-tooltip="Manage Passwords">
                             <span class="icon"><i class="mdi mdi-lock-reset"></i></span>
                             <span>Passwords</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_messages' %}" 
+                            class="admin-nav-link {% if '/admin-panel/messages' in request.path %}active{% endif %}"
+                            data-tooltip="Support Messages">
+                            <span class="icon"><i class="mdi mdi-email-outline"></i></span>
+                            <span>Messages</span>
+                            {% if unresolved_message_count %}
+                            <span class="nav-badge">{{ unresolved_message_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin_study_sessions' %}" 
+                            class="admin-nav-link {% if '/admin-panel/study-sessions' in request.path %}active{% endif %}"
+                            data-tooltip="Study Sessions">
+                            <span class="icon"><i class="mdi mdi-clock-edit-outline"></i></span>
+                            <span>Study Sessions</span>
                         </a>
                     </li>
                 </ul>
@@ -209,22 +235,48 @@
         }
 
         const csrf = getCookie('csrftoken');
+        
+        // Check if we're on the study page - study.html handles its own timer updates
+        const isOnStudyPage = window.location.pathname.includes('/study');
 
         // ========================================
         // Today's Study Time Tracker
         // ========================================
+        let serverTodayMinutes = 0; // Store server-fetched value
+        
         function getTodayDateKey() {
             const now = new Date();
             return `studyTime_${now.getFullYear()}_${now.getMonth()}_${now.getDate()}`;
         }
 
         function getTodayStudyMinutes() {
-            const key = getTodayDateKey();
-            const saved = localStorage.getItem(key);
-            return saved ? parseInt(saved) : 0;
+            // Return the server-synced value
+            return serverTodayMinutes;
+        }
+        
+        // Fetch today's study time from server (database)
+        async function syncTodayStudyTime() {
+            try {
+                const response = await fetch('/api/study/today/');
+                const data = await response.json();
+                if (data.success) {
+                    serverTodayMinutes = data.today_total_minutes || 0;
+                    // Update localStorage to match server
+                    const key = getTodayDateKey();
+                    localStorage.setItem(key, serverTodayMinutes.toString());
+                    updateTodayStudyDisplay();
+                }
+            } catch (error) {
+                console.error('Error fetching today study time:', error);
+                // Fallback to localStorage if server fails
+                const key = getTodayDateKey();
+                const saved = localStorage.getItem(key);
+                serverTodayMinutes = saved ? parseInt(saved) : 0;
+            }
         }
 
         function saveTodayStudyMinutes(minutes) {
+            serverTodayMinutes = minutes;
             const key = getTodayDateKey();
             localStorage.setItem(key, minutes.toString());
             // Clean up old entries (keep only today)
@@ -253,24 +305,44 @@
         }
 
         function updateTodayStudyDisplay() {
+            // On study page, study.html handles its own updates - skip to avoid conflicts
+            if (isOnStudyPage) return;
+            
             const display = document.getElementById('todayStudyDisplay');
             const savedMinutes = getTodayStudyMinutes();
             
             // Calculate active session time if timer is running or paused
             let activeSessionMinutes = 0;
+            let isTimerActive = false;
             const savedState = localStorage.getItem('focusTimerState');
             if (savedState) {
                 try {
                     const state = JSON.parse(savedState);
-                    if (state.isRunning && state.timerEndTime && state.selectedDuration) {
-                        // Timer is running - calculate elapsed time
-                        const now = Date.now();
-                        const remaining = Math.max(0, Math.floor((state.timerEndTime - now) / 1000));
-                        const elapsed = state.selectedDuration - remaining;
-                        activeSessionMinutes = Math.floor(elapsed / 60);
-                    } else if (!state.isRunning && state.totalFocusedTime && state.totalFocusedTime > 0) {
-                        // Timer is paused - use accumulated totalFocusedTime
-                        activeSessionMinutes = Math.floor(state.totalFocusedTime / 60);
+                    
+                    if (state.isStopwatchMode) {
+                        // Stopwatch mode - count up from stored start time
+                        if (state.isRunning && state.stopwatchStartTime) {
+                            // Calculate elapsed directly from start time (more accurate)
+                            const elapsedSeconds = Math.floor((Date.now() - state.stopwatchStartTime) / 1000);
+                            activeSessionMinutes = Math.floor(elapsedSeconds / 60);
+                            isTimerActive = true;
+                        } else if (!state.isRunning && state.elapsedTime > 0) {
+                            // Paused stopwatch - use stored elapsed time
+                            activeSessionMinutes = Math.floor(state.elapsedTime / 60);
+                        }
+                    } else {
+                        // Countdown mode
+                        if (state.isRunning && state.timerEndTime && state.selectedDuration) {
+                            // Timer is running - calculate elapsed time
+                            isTimerActive = true;
+                            const now = Date.now();
+                            const remaining = Math.max(0, Math.floor((state.timerEndTime - now) / 1000));
+                            const elapsed = state.selectedDuration - remaining;
+                            activeSessionMinutes = Math.floor(elapsed / 60);
+                        } else if (!state.isRunning && state.totalFocusedTime && state.totalFocusedTime > 0) {
+                            // Timer is paused - use accumulated totalFocusedTime
+                            activeSessionMinutes = Math.floor(state.totalFocusedTime / 60);
+                        }
                     }
                 } catch (e) {}
             }
@@ -339,6 +411,9 @@
         let globalTimerUpdateInterval = null;
 
         function updateGlobalTimer() {
+            // Skip if on study page - study.html handles its own updates to prevent conflicts
+            if (isOnStudyPage) return;
+            
             const savedState = localStorage.getItem('focusTimerState');
             const globalTimerContainer = document.getElementById('globalTimerContainer');
             const globalTimerDisplay = document.getElementById('globalTimerDisplay');
@@ -355,6 +430,47 @@
             try {
                 const state = JSON.parse(savedState);
                 
+                // Handle Stopwatch Mode (count up)
+                if (state.isStopwatchMode) {
+                    if (state.isRunning && state.stopwatchStartTime) {
+                        // Calculate elapsed directly from start time for accuracy
+                        const elapsedSeconds = Math.floor((Date.now() - state.stopwatchStartTime) / 1000);
+                        globalTimerContainer.classList.remove('hidden');
+                        globalTimerDisplay.textContent = formatGlobalTime(elapsedSeconds);
+                        
+                        if (globalTimerLabel && state.subject) {
+                            globalTimerLabel.textContent = `Stopwatch: ${state.subject}`;
+                        } else if (globalTimerLabel) {
+                            globalTimerLabel.textContent = 'Stopwatch Running';
+                        }
+                        
+                        // Green dot for stopwatch
+                        if (globalTimerDot) {
+                            globalTimerDot.style.background = 'var(--color-green)';
+                            globalTimerDot.style.boxShadow = '0 0 8px var(--color-green)';
+                            globalTimerDot.style.animation = 'pulse-dot 1.5s ease-in-out infinite';
+                        }
+                    } else if (!state.isRunning && state.elapsedTime > 0) {
+                        // Stopwatch paused
+                        globalTimerContainer.classList.remove('hidden');
+                        globalTimerDisplay.textContent = formatGlobalTime(state.elapsedTime);
+                        
+                        if (globalTimerLabel) {
+                            globalTimerLabel.textContent = 'Stopwatch Paused';
+                        }
+                        
+                        if (globalTimerDot) {
+                            globalTimerDot.style.background = 'var(--color-yellow)';
+                            globalTimerDot.style.boxShadow = '0 0 8px var(--color-yellow)';
+                            globalTimerDot.style.animation = 'none';
+                        }
+                    } else {
+                        globalTimerContainer.classList.add('hidden');
+                    }
+                    return;
+                }
+                
+                // Handle Countdown Mode
                 if (state.isRunning && state.timerEndTime) {
                     const now = Date.now();
                     const remaining = Math.max(0, Math.floor((state.timerEndTime - now) / 1000));
@@ -417,6 +533,11 @@
                 clearInterval(globalTimerUpdateInterval);
             }
             
+            // Don't run on study page - study.html handles its own timer updates
+            if (isOnStudyPage) {
+                return;
+            }
+            
             // Update immediately
             updateGlobalTimer();
             updateTodayStudyDisplay();
@@ -424,22 +545,25 @@
             // Then update every 200ms for smooth countdown and live tracking
             globalTimerUpdateInterval = setInterval(() => {
                 updateGlobalTimer();
-                updateTodayStudyDisplay(); // Update every tick for live tracking
+                updateTodayStudyDisplay();
             }, 200);
         }
 
         // Check timer state on page load
         document.addEventListener('DOMContentLoaded', () => {
             checkMidnightReset();
+            // Sync today's study time from server (database)
+            syncTodayStudyTime();
             startGlobalTimerUpdates();
         });
         
         // Handle visibility change - update timer when tab becomes visible again
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
+            if (!document.hidden && !isOnStudyPage) {
                 checkMidnightReset();
+                // Re-sync with server when tab becomes visible
+                syncTodayStudyTime();
                 updateGlobalTimer();
-                updateTodayStudyDisplay();
             }
         });
 

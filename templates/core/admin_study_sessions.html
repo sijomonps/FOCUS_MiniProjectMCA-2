@@ -1,0 +1,844 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Study Sessions - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="admin-sessions-page fade-in">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-left">
+            <a href="{% url 'admin_dashboard' %}" class="back-link">
+                <i class="mdi mdi-arrow-left"></i>
+            </a>
+            <div class="header-icon">
+                <i class="mdi mdi-clock-outline"></i>
+            </div>
+            <div>
+                <h1>Study Sessions</h1>
+                <p class="subtitle">View and manage all study sessions</p>
+            </div>
+        </div>
+        <div class="header-stats">
+            <div class="stat-item">
+                <span class="stat-value">{{ sessions|length }}</span>
+                <span class="stat-label">Total Sessions</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card">
+        <form method="GET" class="filters-form">
+            <div class="filter-group">
+                <label>User</label>
+                <select name="user" class="form-control">
+                    <option value="">All Users</option>
+                    {% for user in all_users %}
+                    <option value="{{ user.username }}" {% if user_filter == user.username %}selected{% endif %}>
+                        {{ user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Subject</label>
+                <select name="subject" class="form-control">
+                    <option value="">All Subjects</option>
+                    {% for subject in all_subjects %}
+                    <option value="{{ subject }}" {% if subject_filter == subject %}selected{% endif %}>
+                        {{ subject }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Date</label>
+                <input type="date" name="date" class="form-control" value="{{ date_filter|default:'' }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter">
+                    <i class="mdi mdi-filter"></i> Filter
+                </button>
+                <a href="{% url 'admin_study_sessions' %}" class="btn-clear">
+                    <i class="mdi mdi-close"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sessions Table -->
+    <div class="sessions-card">
+        <div class="table-container">
+            <table class="sessions-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Subject</th>
+                        <th>Duration</th>
+                        <th>Date</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions %}
+                    <tr data-session-id="{{ session.id }}">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">{{ session.user.username|slice:":1"|upper }}</div>
+                                <span>{{ session.user.username }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="subject-tag">{{ session.subject }}</span>
+                        </td>
+                        <td>
+                            <span class="duration">{{ session.duration }} min</span>
+                        </td>
+                        <td class="date-cell">{{ session.date|date:"M d, Y" }}</td>
+                        <td class="date-cell">{{ session.created_at|date:"M d, H:i" }}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-action edit"
+                                    onclick="editSession({{ session.id }}, '{{ session.subject }}', {{ session.duration }})"
+                                    title="Edit">
+                                    <i class="mdi mdi-pencil"></i>
+                                </button>
+                                <button class="btn-action delete" onclick="deleteSession({{ session.id }})"
+                                    title="Delete">
+                                    <i class="mdi mdi-delete"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="no-data">
+                            <i class="mdi mdi-inbox"></i>
+                            <p>No study sessions found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Session Modal -->
+<div id="editSessionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="mdi mdi-pencil"></i> Edit Session</h2>
+            <button class="close-btn" onclick="closeEditModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editSessionId">
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="editSessionSubject" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Duration (minutes)</label>
+                <input type="number" id="editSessionDuration" class="form-control" min="1">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+            <button class="btn-primary" onclick="saveSessionEdit()">
+                <i class="mdi mdi-content-save"></i> Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Admin Study Sessions - Clean Full Width Design */
+    .admin-sessions-page {
+        padding: 24px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .back-link {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.25s ease;
+        border: 1px solid var(--border-color);
+    }
+    
+    .back-link i {
+        font-size: 1.2rem;
+    }
+
+    .back-link:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        transform: translateX(-3px);
+    }
+
+    .header-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(102, 153, 187, 0.25);
+    }
+
+    .header-icon i {
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 4px 0;
+    }
+
+    .page-header .subtitle {
+        color: var(--text-tertiary);
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .header-stats {
+        display: flex;
+        gap: 16px;
+    }
+
+    .stat-item {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 14px 24px;
+        text-align: center;
+        transition: all 0.25s ease;
+    }
+    
+    .stat-item:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Filters - Modern Card Style */
+    .filters-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    }
+
+    .filters-form {
+        display: flex;
+        gap: 20px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .filter-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 153, 187, 0.15);
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-filter,
+    .btn-clear {
+        padding: 12px 20px;
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+
+    .btn-filter {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(102, 153, 187, 0.25);
+    }
+
+    .btn-filter:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 153, 187, 0.35);
+    }
+
+    .btn-clear {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-clear:hover {
+        background: var(--border-color);
+        color: var(--text-primary);
+        transform: translateY(-2px);
+    }
+
+    /* Sessions Table */
+    .sessions-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .sessions-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .sessions-table th,
+    .sessions-table td {
+        padding: 14px 18px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .sessions-table th {
+        background: var(--bg-tertiary);
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .sessions-table td {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .sessions-table tbody tr {
+        transition: background 0.15s ease;
+    }
+
+    .sessions-table tbody tr:hover {
+        background: var(--bg-tertiary);
+    }
+
+    .sessions-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .user-cell span {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .subject-tag {
+        background: rgba(102, 153, 187, 0.15);
+        color: var(--primary-color);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .duration {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .date-cell {
+        color: var(--text-tertiary);
+        font-size: 0.85rem;
+    }
+
+    .action-btns {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+    .btn-action.edit {
+        background: rgba(255, 152, 0, 0.15);
+        color: #ff9800;
+    }
+
+    .btn-action.edit:hover {
+        background: #ff9800;
+        color: white;
+    }
+
+    .btn-action.delete {
+        background: rgba(244, 67, 54, 0.15);
+        color: #f44336;
+    }
+
+    .btn-action.delete:hover {
+        background: #f44336;
+        color: white;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 50px 20px !important;
+        color: var(--text-tertiary);
+    }
+
+    .no-data i {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+        opacity: 0.4;
+        display: block;
+    }
+
+    .no-data p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+    }
+
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: var(--bg-secondary);
+        border-radius: 14px;
+        width: 90%;
+        max-width: 420px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    .modal-header {
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--bg-tertiary);
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .modal-header h2 i {
+        color: var(--primary-color);
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .close-btn:hover {
+        color: var(--text-primary);
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-body .form-group {
+        margin-bottom: 16px;
+    }
+
+    .modal-body .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    .modal-body .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .modal-body .form-control {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+
+    .modal-body .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 153, 187, 0.15);
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .modal-footer {
+        padding: 16px 20px;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: var(--bg-tertiary);
+    }
+
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+        background: var(--border-color);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+        box-shadow: 0 4px 12px rgba(102, 153, 187, 0.3);
+        transform: translateY(-1px);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+        .admin-sessions-page {
+            padding: 16px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .filters-form {
+            flex-direction: column;
+        }
+
+        .filter-group {
+            width: 100%;
+        }
+
+        .filter-actions {
+            width: 100%;
+        }
+
+        .filter-actions .btn-filter,
+        .filter-actions .btn-clear {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .sessions-table th,
+        .sessions-table td {
+            padding: 12px 14px;
+        }
+    }
+</style>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 14px 20px;
+        border-radius: 10px;
+        background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 10000;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    `;
+        notification.innerHTML = `
+        <i class="mdi ${type === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle'}"></i>
+        <span>${message}</span>
+    `;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transition = 'opacity 0.3s';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    function editSession(sessionId, subject, duration) {
+        document.getElementById('editSessionId').value = sessionId;
+        document.getElementById('editSessionSubject').value = subject;
+        document.getElementById('editSessionDuration').value = duration;
+        document.getElementById('editSessionModal').classList.add('show');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editSessionModal').classList.remove('show');
+    }
+
+    async function saveSessionEdit() {
+        const sessionId = document.getElementById('editSessionId').value;
+        const subject = document.getElementById('editSessionSubject').value;
+        const duration = document.getElementById('editSessionDuration').value;
+
+        if (!subject.trim()) {
+            showNotification('Subject is required', 'error');
+            return;
+        }
+
+        if (!duration || duration < 1) {
+            showNotification('Duration must be at least 1 minute', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/session/edit/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    subject: subject,
+                    duration: duration
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('Session updated!', 'success');
+                closeEditModal();
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                showNotification(data.error || 'Failed to update', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('An error occurred', 'error');
+        }
+    }
+
+    async function deleteSession(sessionId) {
+        if (!confirm('Delete this study session? This cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/admin/session/delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    session_id: sessionId
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification(data.message, 'success');
+                // Remove row from table with animation
+                const row = document.querySelector(`tr[data-session-id="${sessionId}"]`);
+                if (row) {
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-10px)';
+                    row.style.transition = 'all 0.3s ease';
+                    setTimeout(() => row.remove(), 300);
+                }
+            } else {
+                showNotification(data.error || 'Failed to delete', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('An error occurred', 'error');
+        }
+    }
+
+    // Close modal on outside click
+    document.getElementById('editSessionModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeEditModal();
+        }
+    });
+</script>
+{% endblock %}

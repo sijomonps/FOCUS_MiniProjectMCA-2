@@ -2,14 +2,14 @@
 // Enhanced UI Interactions
 // ================================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Initialize all enhanced features
     initSmoothScrolling();
     initTooltips();
     initAnimations();
     initKeyboardShortcuts();
     initThemeEnhancements();
-    initGlobalTimer();
+    // Global timer is handled in base.html inline script to avoid duplication
 });
 
 // Smooth scrolling for anchor links
@@ -56,11 +56,11 @@ function showTooltip(e) {
         border: 1px solid var(--border-color);
     `;
     document.body.appendChild(tooltip);
-    
+
     const rect = e.target.getBoundingClientRect();
     tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
     tooltip.style.top = rect.top - tooltip.offsetHeight - 8 + 'px';
-    
+
     e.target._tooltip = tooltip;
 }
 
@@ -77,7 +77,7 @@ function initAnimations() {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
     };
-    
+
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -86,7 +86,7 @@ function initAnimations() {
             }
         });
     }, observerOptions);
-    
+
     document.querySelectorAll('.card, .stat-card').forEach(el => {
         observer.observe(el);
     });
@@ -101,7 +101,7 @@ function initKeyboardShortcuts() {
             // You can add search functionality here
             console.log('Quick search triggered');
         }
-        
+
         // ESC to close modals
         if (e.key === 'Escape') {
             const modal = document.querySelector('.modal-overlay.active');
@@ -118,7 +118,7 @@ function initThemeEnhancements() {
     window.addEventListener('load', () => {
         document.body.classList.add('loaded');
     });
-    
+
     // Auto-dismiss messages after 5 seconds
     const messages = document.querySelectorAll('.message');
     messages.forEach(message => {
@@ -195,9 +195,9 @@ function showToast(message, type = 'info') {
         z-index: 9999;
         animation: slideInRight 0.3s ease;
     `;
-    
+
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.style.animation = 'slideOutRight 0.3s ease';
         setTimeout(() => toast.remove(), 300);
@@ -248,100 +248,5 @@ document.head.appendChild(style);
 
 
 // ================================
-// Global Timer Logic
+// Global Timer is handled in base.html
 // ================================
-function initGlobalTimer() {
-    const timerContainer = document.getElementById('globalTimerContainer');
-    const timerDisplay = document.getElementById('globalTimerDisplay');
-    const timerLabel = document.querySelector('.global-timer-label');
-    const timerDot = document.querySelector('.global-timer-dot');
-
-    if (!timerContainer || !timerDisplay) return;
-
-    // Update function that runs frequently
-    function updateGlobalTimerDisplay() {
-        const savedState = localStorage.getItem('focusTimerState');
-        
-        // Don't show on study page - it has its own big timer
-        const isStudyPage = window.location.pathname.includes('/study');
-        if (isStudyPage) {
-            timerContainer.classList.add('hidden');
-            return;
-        }
-
-        if (!savedState) {
-            timerContainer.classList.add('hidden');
-            return;
-        }
-
-        try {
-            const state = JSON.parse(savedState);
-            
-            if (state.isRunning && state.timerEndTime) {
-                const now = Date.now();
-                const remaining = Math.max(0, Math.floor((state.timerEndTime - now) / 1000));
-                
-                if (remaining > 0) {
-                    // Timer is running - show it
-                    timerContainer.classList.remove('hidden');
-                    
-                    // Format time
-                    const m = Math.floor(remaining / 60);
-                    const s = remaining % 60;
-                    timerDisplay.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
-                    
-                    // Update label with subject if available
-                    if (timerLabel && state.subject) {
-                        timerLabel.textContent = `Studying: ${state.subject}`;
-                    } else if (timerLabel) {
-                        timerLabel.textContent = 'Session Active';
-                    }
-                    
-                    // Ensure dot is pulsing red
-                    if (timerDot) {
-                        timerDot.style.background = 'var(--color-red)';
-                        timerDot.style.boxShadow = '0 0 8px var(--color-red)';
-                    }
-                } else {
-                    // Timer ended
-                    timerContainer.classList.add('hidden');
-                }
-            } else if (!state.isRunning && state.remainingTime && state.remainingTime < state.selectedDuration) {
-                // Timer is paused with remaining time
-                timerContainer.classList.remove('hidden');
-                
-                const m = Math.floor(state.remainingTime / 60);
-                const s = state.remainingTime % 60;
-                timerDisplay.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
-                
-                if (timerLabel) {
-                    timerLabel.textContent = 'Paused';
-                }
-                
-                // Show yellow dot for paused
-                if (timerDot) {
-                    timerDot.style.background = 'var(--color-yellow)';
-                    timerDot.style.boxShadow = '0 0 8px var(--color-yellow)';
-                    timerDot.style.animation = 'none';
-                }
-            } else {
-                timerContainer.classList.add('hidden');
-            }
-        } catch (e) {
-            timerContainer.classList.add('hidden');
-        }
-    }
-
-    // Run immediately
-    updateGlobalTimerDisplay();
-    
-    // Update every 200ms for smooth countdown
-    setInterval(updateGlobalTimerDisplay, 200);
-    
-    // Also update when tab becomes visible
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-            updateGlobalTimerDisplay();
-        }
-    });
-}

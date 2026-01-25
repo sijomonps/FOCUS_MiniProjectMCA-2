@@ -387,22 +387,42 @@ Ideas for future versions:
 ## 📁 Project Structure
 
 ```
-Mini Project/
-├── 📁 core/                 # Main application
-│   ├── models.py           # Database models
-│   ├── views.py            # Page logic
-│   └── urls.py             # URL routing
-├── 📁 templates/           # HTML templates
-│   ├── base.html           # Main layout
-│   └── core/               # Page templates
-├── 📁 static/              # CSS, JS, images
-│   ├── css/style.css       # Styling
-│   └── js/                 # JavaScript files
-├── 📁 studyflow/           # Django settings
-├── manage.py               # Django management
-├── requirements.txt        # Dependencies
-└── README.md               # This file!
+FOCUS/
+├── 📱 CORE APPLICATION
+│   ├── core/                          # Main Django app (all features)
+│   ├── studyflow/                     # Django project configuration
+│   ├── templates/                     # HTML templates
+│   ├── static/                        # CSS, JS, images
+│   └── manage.py                      # Django management script
+│
+├── 📚 DOCUMENTATION
+│   └── docs/                          # All project documentation
+│       ├── QUICK_START.md             # Getting started guide
+│       ├── BEGINNER_GUIDE.md          # Beginner-friendly tutorial
+│       ├── HOW_IT_WORKS.md            # Feature explanations
+│       ├── PROJECT_WALKTHROUGH.md     # Complete project tour
+│       └── DEPLOYMENT.md              # Deployment instructions
+│
+├── 🛠️ UTILITIES
+│   └── scripts/                       # Utility scripts
+│       ├── add_sample_data.py         # Add test data
+│       └── set_password.py            # Password management
+│
+├── 📦 PROJECT RESOURCES
+│   └── project_resources/             # Project assets & submissions
+│       ├── diagrams/                  # ER diagrams, flowcharts
+│       ├── screenshots/               # Application screenshots
+│       ├── submissions/               # Project submission files
+│       └── references/                # Reference documents (PDFs)
+│
+└── 📖 ROOT FILES
+    ├── README.md                      # Main project README (this file!)
+    ├── PROJECT_ORGANIZATION.md        # Detailed structure guide
+    ├── requirements.txt               # Python dependencies
+    └── db.sqlite3                     # SQLite database
 ```
+
+**📘 For detailed structure explanation, see [PROJECT_ORGANIZATION.md](PROJECT_ORGANIZATION.md)**
 
 ---
 
