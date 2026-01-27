@@ -76,18 +76,154 @@
         color: var(--color-green);
     }
 
-    /* Advanced Dynamic Treemap Layout */
-    .treemap-container {
+    /* Kanban Board Layout */
+    .kanban-board {
         display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        grid-auto-rows: 100px;
-        grid-auto-flow: row;
-        gap: var(--spacing-xs);
-        margin-bottom: var(--spacing-xl);
-        min-height: 300px;
-        width: 100%;
-        max-width: 100%;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: var(--spacing-md);
         padding: 0 var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+        width: 100%;
+        min-height: 500px;
+    }
+
+    .kanban-column {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        min-height: 400px;
+        overflow: hidden;
+    }
+
+    .kanban-column-header {
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--bg-tertiary);
+        flex-shrink: 0;
+    }
+
+    .kanban-column-title {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--text-primary);
+    }
+
+    .kanban-column-title i {
+        font-size: 1.2rem;
+    }
+
+    .kanban-column-count {
+        background: var(--bg-primary);
+        color: var(--text-secondary);
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        min-width: 28px;
+        text-align: center;
+    }
+
+    /* Column specific colors */
+    .kanban-column.todo .kanban-column-header {
+        border-bottom-color: var(--color-orange);
+    }
+    .kanban-column.todo .kanban-column-title i {
+        color: var(--color-orange);
+    }
+    .kanban-column.todo .kanban-column-count {
+        background: rgba(249, 115, 22, 0.15);
+        color: var(--color-orange);
+    }
+
+    .kanban-column.in-progress .kanban-column-header {
+        border-bottom-color: var(--color-primary);
+    }
+    .kanban-column.in-progress .kanban-column-title i {
+        color: var(--color-primary);
+    }
+    .kanban-column.in-progress .kanban-column-count {
+        background: rgba(79, 70, 229, 0.15);
+        color: var(--color-primary);
+    }
+
+    .kanban-column.completed .kanban-column-header {
+        border-bottom-color: var(--color-green);
+    }
+    .kanban-column.completed .kanban-column-title i {
+        color: var(--color-green);
+    }
+    .kanban-column.completed .kanban-column-count {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--color-green);
+    }
+
+    .kanban-column-body {
+        padding: var(--spacing-sm);
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .kanban-column-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .kanban-column-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .kanban-column-body::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+    .kanban-column-body::-webkit-scrollbar-thumb:hover {
+        background: var(--text-tertiary);
+    }
+
+    /* Empty state for columns */
+    .kanban-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--spacing-xl);
+        color: var(--text-tertiary);
+        text-align: center;
+        flex: 1;
+    }
+
+    .kanban-empty i {
+        font-size: 2.5rem;
+        margin-bottom: var(--spacing-sm);
+        opacity: 0.5;
+    }
+
+    .kanban-empty p {
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    /* Drag and drop styles */
+    .kanban-column-body.drag-over {
+        background: rgba(79, 70, 229, 0.05);
+        border: 2px dashed var(--color-primary);
+        border-radius: var(--border-radius);
+    }
+
+    .assignment-cube.dragging {
+        opacity: 0.5;
+        transform: rotate(3deg);
     }
 
     .card {
@@ -95,21 +231,25 @@
         margin-right: var(--spacing-lg);
     }
 
-    /* Assignment Cube - Enhanced */
+    /* Assignment Cube - Enhanced for Kanban */
     .assignment-cube {
-        background-color: var(--bg-secondary);
-        border: none;
-        border-radius: var(--border-radius-lg);
-        padding: 14px;
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-md);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         flex-direction: column;
         position: relative;
         overflow: hidden;
-        box-shadow: var(--shadow);
+        box-shadow: var(--shadow-sm);
         animation: fadeIn 0.4s ease-out backwards;
-        cursor: pointer;
+        cursor: grab;
         min-height: 0;
+    }
+
+    .assignment-cube:active {
+        cursor: grabbing;
     }
 
     /* Cube content wrapper */
@@ -121,7 +261,7 @@
         flex: 1;
         position: relative;
         z-index: 2;
-        gap: 6px;
+        gap: 8px;
     }
 
     /* Assignment info section */
@@ -129,80 +269,43 @@
         flex: 0 0 auto;
     }
 
-    /* Dynamic Grid Spans - Based on Urgency/Time */
-    .span-1x1 {
-        grid-column: span 1;
-        grid-row: span 1;
-    }
-
-    .span-2x1 {
-        grid-column: span 2;
-        grid-row: span 1;
-    }
-
-    .span-1x2 {
-        grid-column: span 1;
-        grid-row: span 2;
-    }
-
-    .span-2x2 {
-        grid-column: span 2;
-        grid-row: span 2;
-    }
-
-    .span-2x3 {
-        grid-column: span 2;
-        grid-row: span 3;
-    }
-
-    .span-3x2 {
-        grid-column: span 3;
-        grid-row: span 2;
+    /* Remove old grid spans for kanban layout */
+    .span-1x1, .span-2x1, .span-1x2, .span-2x2, .span-2x3, .span-3x2 {
+        grid-column: unset;
+        grid-row: unset;
     }
 
     /* Mobile responsive adjustments */
-    @media (max-width: 768px) {
-
-        .span-2x2,
-        .span-2x3,
-        .span-3x2 {
+    @media (max-width: 992px) {
+        .kanban-board {
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-sm);
+        }
+        
+        .kanban-column.completed {
             grid-column: span 2;
-            grid-row: span 2;
-        }
-
-        .span-2x1 {
-            grid-column: span 1;
-            grid-row: span 1;
-        }
-
-        .treemap-container {
-            grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: 90px;
         }
     }
 
-    @media (max-width: 600px) {
-
-        .span-1x2,
-        .span-2x2,
-        .span-2x3,
-        .span-3x2 {
-            grid-column: span 1;
-            grid-row: span 1;
+    @media (max-width: 768px) {
+        .kanban-board {
+            grid-template-columns: 1fr;
+            padding: 0 var(--spacing-sm);
         }
-
-        .treemap-container {
-            grid-template-columns: repeat(3, 1fr);
-            grid-auto-rows: 90px;
+        
+        .kanban-column {
+            min-height: 250px;
+        }
+        
+        .kanban-column.completed {
+            grid-column: span 1;
         }
     }
 
     @media (max-width: 480px) {
-        .treemap-container {
-            grid-template-columns: repeat(2, 1fr);
-            /* 2 columns for phones */
+        .kanban-board {
             padding: 0 var(--spacing-sm);
-            gap: 8px;
+            gap: var(--spacing-sm);
         }
 
         .main-content {
@@ -232,44 +335,26 @@
             padding: 10px;
         }
         
-        /* Smaller text for all spans on mobile */
-        .assignment-title,
-        .span-1x1 .assignment-title,
-        .span-2x1 .assignment-title,
-        .span-1x2 .assignment-title,
-        .span-2x2 .assignment-title,
-        .span-2x3 .assignment-title,
-        .span-3x2 .assignment-title {
-            font-size: 0.68rem;
+        /* Smaller text on mobile */
+        .assignment-title {
+            font-size: 0.8rem;
             -webkit-line-clamp: 2;
             margin-bottom: 2px;
             line-height: 1.15;
         }
         
-        .assignment-subject,
-        .span-2x2 .assignment-subject,
-        .span-2x3 .assignment-subject,
-        .span-3x2 .assignment-subject {
-            font-size: 0.55rem;
+        .assignment-subject {
+            font-size: 0.7rem;
             line-height: 1.1;
         }
 
-        .time-remaining-large,
-        .span-1x1 .time-remaining-large,
-        .span-2x1 .time-remaining-large,
-        .span-1x2 .time-remaining-large,
-        .span-2x2 .time-remaining-large,
-        .span-2x3 .time-remaining-large,
-        .span-3x2 .time-remaining-large {
-            font-size: 0.9rem;
+        .time-remaining-large {
+            font-size: 1rem;
             margin-bottom: 1px;
         }
         
-        .time-label,
-        .span-2x2 .time-label,
-        .span-2x3 .time-label,
-        .span-3x2 .time-label {
-            font-size: 0.5rem;
+        .time-label {
+            font-size: 0.6rem;
             letter-spacing: 0.3px;
         }
         
@@ -279,9 +364,9 @@
         
         /* Smaller action buttons on mobile */
         .action-btn {
-            width: 18px;
-            height: 18px;
-            font-size: 0.65rem;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
         }
         
         .assignment-actions {
@@ -310,44 +395,48 @@
             width: 100%;
             flex-wrap: wrap;
         }
+        
+        .kanban-column-header {
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+        
+        .kanban-column-title {
+            font-size: 0.85rem;
+        }
+        
+        .kanban-column-title i {
+            font-size: 1rem;
+        }
     }
     
     /* Extra small phones */
     @media (max-width: 360px) {
-        .treemap-container {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
-        }
-        
         .assignment-cube {
             padding: 8px;
         }
         
-        .assignment-title,
-        .span-1x1 .assignment-title,
-        .span-2x1 .assignment-title,
-        .span-1x2 .assignment-title,
-        .span-2x2 .assignment-title {
-            font-size: 0.6rem;
+        .assignment-title {
+            font-size: 0.75rem;
         }
         
         .assignment-subject {
-            font-size: 0.5rem;
+            font-size: 0.65rem;
         }
         
         .time-remaining-large {
-            font-size: 0.8rem;
+            font-size: 0.9rem;
         }
         
         .time-label {
-            font-size: 0.45rem;
+            font-size: 0.55rem;
         }
     }
 
     .assignment-cube:hover {
-        transform: translateY(-6px) scale(1.03);
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         z-index: 5;
+        border-color: var(--color-primary);
     }
 
     .assignment-cube.completed {
@@ -356,14 +445,14 @@
         pointer-events: none;
     }
 
-    /* Typography - Dynamic sizing */
+    /* Typography */
     .assignment-title {
         font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: 3px;
-        line-height: 1.2;
+        margin-bottom: 4px;
+        line-height: 1.3;
         z-index: 1;
-        font-size: 0.75rem;
+        font-size: 0.9rem;
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
@@ -372,32 +461,9 @@
         word-break: break-word;
     }
 
-    /* Scale font sizes by urgency */
-    .span-1x1 .assignment-title {
-        font-size: 0.75rem;
-        -webkit-line-clamp: 2;
-    }
-
-    .span-2x1 .assignment-title,
-    .span-1x2 .assignment-title {
-        font-size: 0.85rem;
-        -webkit-line-clamp: 2;
-    }
-
-    .span-2x2 .assignment-title {
-        font-size: 0.95rem;
-        -webkit-line-clamp: 3;
-    }
-
-    .span-2x3 .assignment-title,
-    .span-3x2 .assignment-title {
-        font-size: 1.1rem;
-        -webkit-line-clamp: 3;
-    }
-
     .assignment-subject {
-        font-size: 0.65rem;
-        color: rgba(0, 0, 0, 0.6);
+        font-size: 0.75rem;
+        color: var(--text-secondary);
         font-weight: 500;
         z-index: 1;
         line-height: 1.2;
@@ -406,66 +472,66 @@
         white-space: nowrap;
     }
 
-    .span-2x2 .assignment-subject,
-    .span-2x3 .assignment-subject,
-    .span-3x2 .assignment-subject {
-        font-size: 0.75rem;
-    }
-
-    /* Time Display - Dynamic sizing */
+    /* Time Display */
     .time-container {
         margin-top: auto;
-        padding-top: 0;
+        padding-top: var(--spacing-xs);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex: 0 0 auto;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .time-info {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
-        flex: 0 0 auto;
     }
 
     .time-remaining-large {
         font-weight: 800;
         line-height: 1;
-        margin-bottom: 2px;
-    }
-
-    .span-1x1 .time-remaining-large {
         font-size: 1.1rem;
     }
 
-    .span-2x1 .time-remaining-large,
-    .span-1x2 .time-remaining-large {
-        font-size: 1.25rem;
-    }
-
-    .span-2x2 .time-remaining-large {
-        font-size: 1.5rem;
-    }
-
-    .span-2x3 .time-remaining-large,
-    .span-3x2 .time-remaining-large {
-        font-size: 1.9rem;
-    }
-
     .time-label {
-        font-size: 0.6rem;
+        font-size: 0.65rem;
         font-weight: 600;
-        opacity: 0.8;
+        opacity: 0.7;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        line-height: 1.1;
+        line-height: 1.2;
+        margin-top: 2px;
     }
 
-    .span-2x2 .time-label,
-    .span-2x3 .time-label,
-    .span-3x2 .time-label {
-        font-size: 0.7rem;
+    /* Move to column button */
+    .move-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.85rem;
+    }
+
+    .move-btn:hover {
+        background: var(--color-primary);
+        color: white;
+        border-color: var(--color-primary);
+        transform: scale(1.1);
     }
 
     /* Action Buttons */
     .assignment-actions {
         position: absolute;
-        top: 6px;
-        right: 6px;
+        top: 8px;
+        right: 8px;
         display: flex;
         gap: 4px;
         z-index: 10;
@@ -478,271 +544,162 @@
     }
 
     .action-btn {
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
         border: none;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        background: rgba(255, 255, 255, 0.95);
-        color: var(--text-primary);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        transition: transform 0.2s;
-        font-size: 0.75rem;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s;
+        font-size: 0.8rem;
     }
 
     .action-btn:hover {
         transform: scale(1.15);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
 
     .btn-complete {
         color: var(--color-green);
     }
 
+    .btn-complete:hover {
+        background: var(--color-green);
+        color: white;
+    }
+
     .btn-delete {
         color: var(--color-red);
     }
 
-    /* Advanced Color System - Gradient based on urgency */
-    /* CRITICAL (<6h) - Largest boxes, Deep Red */
-    .cube-critical {
-        background: linear-gradient(135deg, #B71C1C 0%, #D32F2F 100%);
-        color: #ffffff !important;
-        box-shadow: 0 8px 24px rgba(183, 28, 28, 0.4);
-    }
-
-    .cube-critical .assignment-title,
-    .cube-critical .time-remaining-large,
-    .cube-critical .time-label,
-    .cube-critical .assignment-subject {
-        color: #ffffff;
-    }
-
-    .cube-critical .action-btn {
-        background: rgba(255, 255, 255, 0.25);
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .cube-critical .action-btn:hover {
-        background: rgba(255, 255, 255, 0.45);
-    }
-
-    /* URGENT (<24h) - Large boxes, Red-Orange */
-    .cube-urgent {
-        background: linear-gradient(135deg, #D32F2F 0%, #E64A19 100%);
-        color: #ffffff !important;
-        box-shadow: 0 6px 20px rgba(211, 47, 47, 0.35);
-    }
-
-    .cube-urgent .assignment-title,
-    .cube-urgent .time-remaining-large,
-    .cube-urgent .time-label,
-    .cube-urgent .assignment-subject {
-        color: #ffffff;
-    }
-
-    .cube-urgent .action-btn {
-        background: rgba(255, 255, 255, 0.2);
+    .btn-delete:hover {
+        background: var(--color-red);
         color: white;
     }
 
-    .cube-urgent .action-btn:hover {
-        background: rgba(255, 255, 255, 0.4);
+    /* Urgency indicator strip */
+    .urgency-strip {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        border-radius: var(--border-radius) 0 0 var(--border-radius);
     }
 
-    /* SOON (<48h) - Medium boxes, Orange */
-    .cube-soon {
-        background: linear-gradient(135deg, #E64A19 0%, #F57C00 100%);
-        color: #ffffff !important;
-        box-shadow: 0 4px 16px rgba(230, 74, 25, 0.3);
-    }
+    /* Color System - Based on urgency */
+    .urgency-critical .urgency-strip { background: linear-gradient(180deg, #B71C1C, #D32F2F); }
+    .urgency-critical .time-remaining-large { color: #D32F2F; }
 
-    .cube-soon .assignment-title,
-    .cube-soon .time-remaining-large,
-    .cube-soon .time-label,
-    .cube-soon .assignment-subject {
-        color: #ffffff;
-    }
+    .urgency-urgent .urgency-strip { background: linear-gradient(180deg, #D32F2F, #E64A19); }
+    .urgency-urgent .time-remaining-large { color: #E64A19; }
 
-    .cube-soon .action-btn {
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-    }
+    .urgency-soon .urgency-strip { background: linear-gradient(180deg, #E64A19, #F57C00); }
+    .urgency-soon .time-remaining-large { color: #F57C00; }
 
-    .cube-soon .action-btn:hover {
-        background: rgba(255, 255, 255, 0.35);
-    }
+    .urgency-approaching .urgency-strip { background: linear-gradient(180deg, #F57C00, #FFA726); }
+    .urgency-approaching .time-remaining-large { color: #F57C00; }
 
-    /* APPROACHING (<5 Days) - Medium boxes, Amber */
-    .cube-approaching {
-        background: linear-gradient(135deg, #F57C00 0%, #FFA726 100%);
-        color: #3e2723;
-        box-shadow: 0 4px 14px rgba(245, 124, 0, 0.25);
-    }
+    .urgency-upcoming .urgency-strip { background: linear-gradient(180deg, #FFA726, #FFCA28); }
+    .urgency-upcoming .time-remaining-large { color: #F9A825; }
 
-    .cube-approaching .assignment-title,
-    .cube-approaching .time-remaining-large,
-    .cube-approaching .time-label {
-        color: #3e2723;
-    }
+    .urgency-future .urgency-strip { background: linear-gradient(180deg, #AED581, #C5E1A5); }
+    .urgency-future .time-remaining-large { color: #558B2F; }
 
-    .cube-approaching .assignment-subject {
-        color: rgba(62, 39, 35, 0.7);
-    }
-
-    /* UPCOMING (<1 Week) - Small boxes, Yellow */
-    .cube-upcoming {
-        background: linear-gradient(135deg, #FFA726 0%, #FFCA28 100%);
-        color: #3e2723;
-        box-shadow: 0 3px 12px rgba(255, 167, 38, 0.2);
-    }
-
-    .cube-upcoming .assignment-title,
-    .cube-upcoming .time-remaining-large {
-        color: #3e2723;
-    }
-
-    .cube-upcoming .assignment-subject {
-        color: rgba(62, 39, 35, 0.65);
-    }
-
-    /* FUTURE (<2 Weeks) - Smaller boxes, Light Green */
-    .cube-future {
-        background: linear-gradient(135deg, #AED581 0%, #C5E1A5 100%);
-        color: #1b5e20;
-        box-shadow: 0 2px 10px rgba(174, 213, 129, 0.2);
-    }
-
-    .cube-future .assignment-title,
-    .cube-future .time-remaining-large {
-        color: #1b5e20;
-    }
-
-    .cube-future .assignment-subject {
-        color: rgba(27, 94, 32, 0.7);
-    }
-
-    /* FAR FUTURE (>2 Weeks) - Smallest boxes, Blue */
-    .cube-far {
-        background: linear-gradient(135deg, #81D4FA 0%, #B3E5FC 100%);
-        color: #01579b;
-        box-shadow: 0 2px 8px rgba(129, 212, 250, 0.15);
-    }
-
-    .cube-far .assignment-title,
-    .cube-far .time-remaining-large {
-        color: #01579b;
-    }
-
-    .cube-far .assignment-subject {
-        color: rgba(1, 87, 155, 0.7);
-    }
+    .urgency-far .urgency-strip { background: linear-gradient(180deg, #81D4FA, #B3E5FC); }
+    .urgency-far .time-remaining-large { color: #0288D1; }
 
     /* Pulse animation for critical items */
     @keyframes pulse {
-
-        0%,
-        100% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.02);
-        }
+        0%, 100% { box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3); }
+        50% { box-shadow: 0 2px 16px rgba(211, 47, 47, 0.5); }
     }
 
-    .cube-critical {
+    .urgency-critical {
         animation: pulse 2s ease-in-out infinite;
+        border-color: rgba(211, 47, 47, 0.3);
     }
 
-    .cube-critical:hover {
+    .urgency-critical:hover {
         animation: none;
     }
 
-    /* Completed List */
-    .completed-item {
-        padding: var(--spacing-md) var(--spacing-lg);
-        background-color: var(--bg-tertiary);
+    /* Completed Items in Kanban */
+    .completed-cube {
+        background: var(--bg-primary);
         border: 1px solid var(--border-color);
         border-radius: var(--border-radius);
+        padding: var(--spacing-md);
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: all var(--transition-fast);
-    }
-
-    .completed-item:hover {
-        border-color: var(--text-tertiary);
-    }
-
-    .completed-item-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .completed-item-title {
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 4px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .completed-item-subject {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-    }
-
-    .completed-item-meta {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-shrink: 0;
-    }
-
-    .completed-item-date {
-        font-size: 0.85rem;
-        color: var(--text-tertiary);
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .completed-item-date i {
-        color: var(--color-green);
-    }
-
-    .completed-item-delete {
-        background: transparent;
-        border: none;
-        color: var(--text-tertiary);
-        cursor: pointer;
-        padding: 6px;
-        border-radius: 6px;
-        opacity: 0;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        position: relative;
         transition: all 0.2s;
     }
 
-    .completed-item:hover .completed-item-delete {
+    .completed-cube:hover {
+        border-color: var(--text-tertiary);
+    }
+
+    .completed-cube .assignment-title {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .completed-cube .assignment-subject {
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+    }
+
+    .completed-cube .completed-date {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.7rem;
+        color: var(--color-green);
+        margin-top: var(--spacing-xs);
+    }
+
+    .completed-cube .completed-date i {
+        font-size: 0.85rem;
+    }
+
+    .completed-cube .delete-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: all 0.2s;
+        font-size: 0.75rem;
+    }
+
+    .completed-cube:hover .delete-btn {
         opacity: 1;
     }
 
-    .completed-item-delete:hover {
+    .completed-cube .delete-btn:hover {
         background: rgba(239, 68, 68, 0.1);
         color: var(--color-red);
     }
 
-    .completed-item.hidden {
-        display: none;
-    }
-
+    /* See More Button */
     #seeMoreBtn {
-        margin-top: var(--spacing-md);
+        margin-top: var(--spacing-sm);
         width: 100%;
         padding: var(--spacing-sm);
         background: var(--bg-tertiary);
@@ -752,6 +709,7 @@
         cursor: pointer;
         transition: all var(--transition-fast);
         font-weight: 600;
+        font-size: 0.8rem;
     }
 
     #seeMoreBtn:hover {
@@ -766,7 +724,6 @@
             opacity: 0;
             transform: translateY(10px);
         }
-
         to {
             opacity: 1;
             transform: translateY(0);
@@ -873,6 +830,121 @@
         color: white;
     }
 
+    /* Optional label styling */
+    .optional-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        font-weight: 400;
+    }
+
+    /* Textarea styling */
+    .form-textarea {
+        resize: vertical;
+        min-height: 80px;
+        font-family: inherit;
+    }
+
+    /* Select styling */
+    .form-select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+    }
+
+    /* Priority badge in cube */
+    .priority-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        z-index: 3;
+    }
+
+    .priority-high {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+    }
+
+    .priority-normal {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+    }
+
+    .priority-low {
+        background: rgba(107, 114, 128, 0.15);
+        color: #6b7280;
+    }
+
+    /* View modal styles */
+    .view-modal-content {
+        background: var(--bg-tertiary);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-row.description-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .detail-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+
+    .detail-label i {
+        font-size: 1rem;
+        color: var(--text-tertiary);
+    }
+
+    .detail-value {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .detail-description {
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    /* Has description indicator */
+    .has-description-indicator {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        color: var(--text-tertiary);
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+
     /* Improved Form Group Styling */
     .form-group {
         margin-bottom: var(--spacing-md);
@@ -925,7 +997,7 @@
     <div class="page-header flex-between">
         <div>
             <h1 class="page-title"><i class="mdi mdi-clipboard-text-outline"></i> Assignments</h1>
-            <p class="page-subtitle">Manage your deadlines</p>
+            <p class="page-subtitle">Manage your deadlines with Kanban</p>
         </div>
         <div class="header-actions">
             <div class="stats-badges">
@@ -942,59 +1014,68 @@
         </div>
     </div>
 
-    <!-- Treemap View -->
-    {% if pending_assignments %}
-    <div class="card mb-4" style="background: transparent; border: none; padding: 0;">
-        <div class="treemap-container" id="treemapContainer">
-            <!-- Assignments will be rendered here -->
+    <!-- Kanban Board -->
+    <div class="kanban-board">
+        <!-- To Do Column -->
+        <div class="kanban-column todo">
+            <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                    <i class="mdi mdi-clipboard-list-outline"></i>
+                    <span>To Do</span>
+                </div>
+                <span class="kanban-column-count" id="todoCount">0</span>
+            </div>
+            <div class="kanban-column-body" id="todoColumn" data-status="todo">
+                <!-- To Do items will be rendered here -->
+            </div>
         </div>
-    </div>
-    {% else %}
-    <div class="card mb-4">
-        <div class="card-body text-center" style="padding: var(--spacing-3xl);">
-            <div style="font-size: 4.5rem; margin-bottom: var(--spacing-lg);"><i class="mdi mdi-party-popper"></i></div>
-            <h3 style="color: var(--text-primary); margin-bottom: var(--spacing-sm); font-size: 1.5rem;">All Clear!</h3>
-            <p style="color: var(--text-secondary); margin: 0;">No pending assignments. You're doing great!</p>
-        </div>
-    </div>
-    {% endif %}
 
-    <!-- Completed Assignments -->
-    <div class="card" id="completedSection" {% if not completed_assignments %}style="display: none;" {% endif %}>
-        <div class="card-header">
-            <h3 class="card-title">
-                <span><i class="mdi mdi-check-circle"></i></span>
-                <span>Recently Completed</span>
-            </h3>
+        <!-- In Progress Column -->
+        <div class="kanban-column in-progress">
+            <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                    <i class="mdi mdi-progress-clock"></i>
+                    <span>In Progress</span>
+                </div>
+                <span class="kanban-column-count" id="inProgressCount">0</span>
+            </div>
+            <div class="kanban-column-body" id="inProgressColumn" data-status="in_progress">
+                <!-- In Progress items will be rendered here -->
+            </div>
         </div>
-        <div class="card-body">
-            <div id="completedList" style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+
+        <!-- Completed Column -->
+        <div class="kanban-column completed">
+            <div class="kanban-column-header">
+                <div class="kanban-column-title">
+                    <i class="mdi mdi-check-circle"></i>
+                    <span>Recently Completed</span>
+                </div>
+                <span class="kanban-column-count" id="completedCount">{{ completed_assignments|length }}</span>
+            </div>
+            <div class="kanban-column-body" id="completedColumn" data-status="completed">
                 {% for assignment in completed_assignments %}
-                <div class="completed-item" data-id="{{ assignment.id }}">
-                    <div class="completed-item-info">
-                        <div class="completed-item-title">{{ assignment.title }}</div>
-                        <div class="completed-item-subject">{{ assignment.subject }}</div>
-                    </div>
-                    <div class="completed-item-meta">
-                        <div class="completed-item-date">
-                            <i class="mdi mdi-check-circle"></i>
-                            <span>{{ assignment.completed_at|date:"M d, Y" }}</span>
-                        </div>
-                        <button class="completed-item-delete"
-                            onclick="deleteCompletedAssignment({{ assignment.id }}, this)" title="Delete">
-                            <i class="mdi mdi-delete-outline"></i>
-                        </button>
+                <div class="completed-cube" data-id="{{ assignment.id }}">
+                    <button class="delete-btn" onclick="deleteCompletedAssignment({{ assignment.id }}, this)" title="Delete">
+                        <i class="mdi mdi-delete-outline"></i>
+                    </button>
+                    <div class="assignment-title">{{ assignment.title }}</div>
+                    <div class="assignment-subject">{{ assignment.subject }}</div>
+                    <div class="completed-date">
+                        <i class="mdi mdi-check-circle"></i>
+                        <span>{{ assignment.completed_at|date:"M d, Y" }}</span>
                     </div>
                 </div>
                 {% empty %}
-                <div class="text-tertiary" style="text-align: center; padding: var(--spacing-lg);">
-                    No completed assignments yet.
+                <div class="kanban-empty" id="completedEmpty">
+                    <i class="mdi mdi-checkbox-marked-circle-outline"></i>
+                    <p>No completed tasks yet</p>
                 </div>
                 {% endfor %}
+                <button id="seeMoreBtn" style="display: none;">
+                    <i class="mdi mdi-chevron-down"></i> See More
+                </button>
             </div>
-            <button id="seeMoreBtn" class="btn" style="display: none;">
-                <i class="mdi mdi-chevron-down"></i> See More
-            </button>
         </div>
     </div>
 </div>
@@ -1023,6 +1104,25 @@
                     placeholder="e.g., Math Homework, Essay Draft" required>
             </div>
 
+            <div class="form-group">
+                <label for="assignmentDescription" class="form-label">
+                    <i class="mdi mdi-text"></i> Description <span class="optional-label">(optional)</span>
+                </label>
+                <textarea id="assignmentDescription" class="form-input form-textarea"
+                    placeholder="Add notes or details about this assignment..." rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="assignmentPriority" class="form-label">
+                    <i class="mdi mdi-flag"></i> Priority
+                </label>
+                <select id="assignmentPriority" class="form-input form-select">
+                    <option value="low">Low</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
                     <label for="assignmentAssignedDate" class="form-label">
@@ -1041,9 +1141,9 @@
 
             <div class="form-group">
                 <label for="assignmentTime" class="form-label">
-                    <i class="mdi mdi-clock-outline"></i> Deadline Time
+                    <i class="mdi mdi-clock-outline"></i> Deadline Time <span class="optional-label">(optional - defaults to 11:59 PM)</span>
                 </label>
-                <input type="time" id="assignmentTime" class="form-input" value="23:59" required>
+                <input type="time" id="assignmentTime" class="form-input" value="23:59">
                 <div class="time-hint" id="timeHint"></div>
             </div>
 
@@ -1065,6 +1165,47 @@
         </form>
     </div>
 </div>
+
+<!-- View Assignment Details Modal -->
+<div class="modal-overlay" id="viewModal">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-header-content">
+                <div class="modal-icon" id="viewModalIcon">
+                    <i class="mdi mdi-clipboard-text-outline"></i>
+                </div>
+                <div>
+                    <h2 class="modal-title" id="viewModalTitle">Assignment Details</h2>
+                    <p class="modal-subtitle" id="viewModalSubtitle">View assignment information</p>
+                </div>
+            </div>
+            <button class="modal-close" id="closeViewModalBtn">&times;</button>
+        </div>
+        <div class="view-modal-content">
+            <div class="detail-row">
+                <span class="detail-label"><i class="mdi mdi-flag"></i> Priority</span>
+                <span class="detail-value" id="viewPriority">Normal</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label"><i class="mdi mdi-calendar"></i> Deadline</span>
+                <span class="detail-value" id="viewDeadline">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label"><i class="mdi mdi-clock-outline"></i> Time Remaining</span>
+                <span class="detail-value" id="viewTimeRemaining">-</span>
+            </div>
+            <div class="detail-row description-row" id="descriptionRow" style="display: none;">
+                <span class="detail-label"><i class="mdi mdi-text"></i> Description</span>
+                <p class="detail-description" id="viewDescription"></p>
+            </div>
+        </div>
+        <div class="flex gap-2" style="margin-top: var(--spacing-xl);">
+            <button type="button" id="closeViewBtn" class="btn btn-secondary" style="flex: 1;">
+                <i class="mdi mdi-close"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -1073,7 +1214,9 @@
     let assignments = {{ assignments_json| safe }};
 
     // Elements
-    const treemapContainer = document.getElementById('treemapContainer');
+    const todoColumn = document.getElementById('todoColumn');
+    const inProgressColumn = document.getElementById('inProgressColumn');
+    const completedColumn = document.getElementById('completedColumn');
     const addModal = document.getElementById('addModal');
     const addAssignmentBtn = document.getElementById('addAssignmentBtn');
     const closeModalBtn = document.getElementById('closeModalBtn');
@@ -1081,8 +1224,6 @@
     const addAssignmentForm = document.getElementById('addAssignmentForm');
     const dateInput = document.getElementById('assignmentDeadline');
     const timeInput = document.getElementById('assignmentTime');
-    const completedSection = document.getElementById('completedSection');
-    const completedList = document.getElementById('completedList');
 
     // Setup Date Input Min Value (Prevent Past Dates)
     function setupDateValidation() {
@@ -1178,61 +1319,236 @@
         });
     });
 
-    // Render Grid with Advanced Dynamic Sizing
-    function renderTreemap() {
-        if (!treemapContainer) return;
+    // Render Kanban Board
+    function renderKanban() {
+        // Clear columns (except completed which is server-rendered initially)
+        todoColumn.innerHTML = '';
+        inProgressColumn.innerHTML = '';
 
-        treemapContainer.innerHTML = '';
+        // Separate assignments by status
+        const todoAssignments = assignments.filter(a => a.status === 'todo' || !a.status);
+        const inProgressAssignments = assignments.filter(a => a.status === 'in_progress');
 
-        // Sort: Urgent assignments (less time) first
-        assignments.sort((a, b) => {
-            const timeA = calculateHoursRemaining(a.deadline);
-            const timeB = calculateHoursRemaining(b.deadline);
-            return timeA - timeB;
-        });
+        // Sort by urgency (most urgent first)
+        todoAssignments.sort((a, b) => calculateHoursRemaining(a.deadline) - calculateHoursRemaining(b.deadline));
+        inProgressAssignments.sort((a, b) => calculateHoursRemaining(a.deadline) - calculateHoursRemaining(b.deadline));
 
-        assignments.forEach((assignment, index) => {
-            const cube = document.createElement('div');
-            const hoursRemaining = calculateHoursRemaining(assignment.deadline);
-
-            // Calculate urgency score (0-100, where 100 is most urgent)
-            const urgencyScore = calculateUrgencyScore(hoursRemaining);
-
-            // Advanced dynamic sizing based on urgency score and time remaining
-            const { colorClass, spanClass } = getAdvancedSizeAndColor(hoursRemaining, urgencyScore);
-
-            // Animation delay for nice cascading effect
-            cube.style.animationDelay = `${index * 0.04}s`;
-
-            cube.className = `assignment-cube ${colorClass} ${spanClass}`;
-            cube.dataset.id = assignment.id;
-            cube.dataset.hours = hoursRemaining;
-
-            cube.innerHTML = `
-                <div class="assignment-actions">
-                    <button class="action-btn btn-complete" onclick="completeAssignment(${assignment.id}, this.closest('.assignment-cube'))" title="Complete">
-                        <i class="mdi mdi-check"></i>
-                    </button>
-                    <button class="action-btn btn-delete" onclick="deleteAssignment(${assignment.id}, this.closest('.assignment-cube'))" title="Delete">
-                        <i class="mdi mdi-trash-can-outline"></i>
-                    </button>
-                </div>
-
-                <div class="cube-content">
-                    <div class="assignment-info">
-                        <div class="assignment-title">${assignment.title}</div>
-                        <div class="assignment-subject">${formatDate(assignment.deadline)}</div>
-                    </div>
-                    
-                    <div class="time-container">
-                        <div class="time-remaining-large">${formatHoursRemainingShort(hoursRemaining)}</div>
-                        <div class="time-label">${hoursRemaining < 0 ? 'Overdue' : 'Left'}</div>
-                    </div>
+        // Render To Do
+        if (todoAssignments.length === 0) {
+            todoColumn.innerHTML = `
+                <div class="kanban-empty">
+                    <i class="mdi mdi-clipboard-check-outline"></i>
+                    <p>No tasks to do</p>
                 </div>
             `;
+        } else {
+            todoAssignments.forEach((assignment, index) => {
+                const cube = createAssignmentCube(assignment, index, 'todo');
+                todoColumn.appendChild(cube);
+            });
+        }
 
-            treemapContainer.appendChild(cube);
+        // Render In Progress
+        if (inProgressAssignments.length === 0) {
+            inProgressColumn.innerHTML = `
+                <div class="kanban-empty">
+                    <i class="mdi mdi-progress-clock"></i>
+                    <p>No tasks in progress</p>
+                </div>
+            `;
+        } else {
+            inProgressAssignments.forEach((assignment, index) => {
+                const cube = createAssignmentCube(assignment, index, 'in_progress');
+                inProgressColumn.appendChild(cube);
+            });
+        }
+
+        // Update counts
+        updateKanbanCounts();
+        
+        // Setup drag and drop
+        setupDragAndDrop();
+    }
+
+    // Create assignment cube element
+    function createAssignmentCube(assignment, index, status) {
+        const cube = document.createElement('div');
+        const hoursRemaining = calculateHoursRemaining(assignment.deadline);
+        const urgencyClass = getUrgencyClass(hoursRemaining);
+
+        cube.className = `assignment-cube ${urgencyClass}`;
+        cube.dataset.id = assignment.id;
+        cube.dataset.hours = hoursRemaining;
+        cube.dataset.status = status;
+        cube.draggable = true;
+        cube.style.animationDelay = `${index * 0.05}s`;
+
+        const nextStatus = status === 'todo' ? 'in_progress' : 'completed';
+        const nextIcon = status === 'todo' ? 'mdi-arrow-right' : 'mdi-check';
+        const nextTitle = status === 'todo' ? 'Move to In Progress' : 'Mark Complete';
+
+        // Priority badge
+        const priority = assignment.priority || 'normal';
+        const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+        
+        // Description indicator
+        const hasDescription = assignment.description && assignment.description.trim() !== '';
+
+        cube.innerHTML = `
+            <div class="urgency-strip"></div>
+            <span class="priority-badge priority-${priority}">${priorityLabel}</span>
+            <div class="assignment-actions">
+                <button class="action-btn btn-delete" onclick="event.stopPropagation(); deleteAssignment(${assignment.id}, this.closest('.assignment-cube'))" title="Delete">
+                    <i class="mdi mdi-trash-can-outline"></i>
+                </button>
+            </div>
+            ${hasDescription ? '<i class="mdi mdi-text has-description-indicator" title="Has description"></i>' : ''}
+
+            <div class="cube-content">
+                <div class="assignment-info">
+                    <div class="assignment-title">${assignment.title}</div>
+                    <div class="assignment-subject">${formatDate(assignment.deadline)}</div>
+                </div>
+                
+                <div class="time-container">
+                    <div class="time-info">
+                        <div class="time-remaining-large">${formatHoursRemainingShort(hoursRemaining)}</div>
+                        <div class="time-label">${hoursRemaining < 0 ? 'Overdue' : 'Remaining'}</div>
+                    </div>
+                    <button class="move-btn" onclick="event.stopPropagation(); moveAssignment(${assignment.id}, '${nextStatus}')" title="${nextTitle}">
+                        <i class="mdi ${nextIcon}"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Add click handler to view details
+        cube.addEventListener('click', () => viewAssignmentDetails(assignment));
+
+        return cube;
+    }
+
+    // Get urgency class based on hours remaining
+    function getUrgencyClass(hours) {
+        if (hours < 0 || hours < 6) return 'urgency-critical';
+        if (hours < 24) return 'urgency-urgent';
+        if (hours < 48) return 'urgency-soon';
+        if (hours < 120) return 'urgency-approaching';
+        if (hours < 168) return 'urgency-upcoming';
+        if (hours < 336) return 'urgency-future';
+        return 'urgency-far';
+    }
+
+    // Update Kanban column counts
+    function updateKanbanCounts() {
+        const todoCount = assignments.filter(a => a.status === 'todo' || !a.status).length;
+        const inProgressCount = assignments.filter(a => a.status === 'in_progress').length;
+        const completedCount = document.querySelectorAll('#completedColumn .completed-cube').length;
+
+        document.getElementById('todoCount').textContent = todoCount;
+        document.getElementById('inProgressCount').textContent = inProgressCount;
+        document.getElementById('completedCount').textContent = completedCount;
+        document.getElementById('pendingCount').textContent = todoCount + inProgressCount;
+    }
+
+    // Move assignment to different status
+    async function moveAssignment(assignmentId, newStatus) {
+        event.stopPropagation();
+
+        const assignment = assignments.find(a => a.id === assignmentId);
+        if (!assignment) return;
+
+        if (newStatus === 'completed') {
+            // Use existing complete function
+            const element = document.querySelector(`.assignment-cube[data-id="${assignmentId}"]`);
+            if (element) {
+                await completeAssignment(assignmentId, element);
+            }
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/assignment/${assignmentId}/status/`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrf 
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                assignment.status = newStatus;
+                renderKanban();
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            // Update locally anyway for better UX
+            assignment.status = newStatus;
+            renderKanban();
+        }
+    }
+
+    // Setup drag and drop functionality
+    function setupDragAndDrop() {
+        const cubes = document.querySelectorAll('.assignment-cube');
+        const columns = document.querySelectorAll('.kanban-column-body');
+
+        cubes.forEach(cube => {
+            cube.addEventListener('dragstart', handleDragStart);
+            cube.addEventListener('dragend', handleDragEnd);
         });
+
+        columns.forEach(column => {
+            column.addEventListener('dragover', handleDragOver);
+            column.addEventListener('dragleave', handleDragLeave);
+            column.addEventListener('drop', handleDrop);
+        });
+    }
+
+    let draggedElement = null;
+
+    function handleDragStart(e) {
+        draggedElement = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', this.dataset.id);
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        document.querySelectorAll('.kanban-column-body').forEach(col => {
+            col.classList.remove('drag-over');
+        });
+        draggedElement = null;
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        
+        // Don't allow dropping on completed column (use button instead)
+        if (this.dataset.status !== 'completed') {
+            this.classList.add('drag-over');
+        }
+    }
+
+    function handleDragLeave(e) {
+        this.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        this.classList.remove('drag-over');
+
+        const assignmentId = parseInt(e.dataTransfer.getData('text/plain'));
+        const newStatus = this.dataset.status;
+
+        if (newStatus === 'completed') return; // Don't allow drag to completed
+
+        moveAssignment(assignmentId, newStatus);
     }
 
     // Calculate urgency score (0-100) based on time remaining
@@ -1245,62 +1561,6 @@
         if (hours < 168) return 30 + ((168 - hours) / 168) * 15; // Upcoming: 30-45
         if (hours < 336) return 15 + ((336 - hours) / 336) * 15; // Future: 15-30
         return Math.max(0, 15 - (hours - 336) / 168); // Far: 0-15
-    }
-
-    // Advanced size and color determination based on time remaining
-    function getAdvancedSizeAndColor(hours, urgencyScore) {
-        let colorClass, spanClass;
-
-        // Dynamic sizing based on urgency score
-        // More urgent = bigger boxes
-
-        if (hours < 0 || hours < 6) {
-            // CRITICAL (<6h or overdue): Maximum size
-            colorClass = 'cube-critical';
-            spanClass = 'span-3x2'; // Largest
-        } else if (hours < 12) {
-            // Very urgent: Extra large
-            colorClass = 'cube-urgent';
-            spanClass = 'span-2x3';
-        } else if (hours < 24) {
-            // URGENT (<24h): Large
-            colorClass = 'cube-urgent';
-            spanClass = 'span-2x2';
-        } else if (hours < 36) {
-            // Urgent-soon transition: Medium-large
-            colorClass = 'cube-soon';
-            spanClass = 'span-2x2';
-        } else if (hours < 48) {
-            // SOON (<48h): Medium
-            colorClass = 'cube-soon';
-            spanClass = 'span-2x1';
-        } else if (hours < 72) {
-            // Soon-approaching: Medium
-            colorClass = 'cube-soon';
-            spanClass = 'span-1x2';
-        } else if (hours < 120) { // 5 days
-            // APPROACHING: Medium-small
-            colorClass = 'cube-approaching';
-            spanClass = 'span-2x1';
-        } else if (hours < 168) { // 1 week
-            // UPCOMING: Small-medium
-            colorClass = 'cube-upcoming';
-            spanClass = 'span-1x2';
-        } else if (hours < 240) { // 10 days
-            // Upcoming-future: Small
-            colorClass = 'cube-upcoming';
-            spanClass = 'span-1x1';
-        } else if (hours < 336) { // 2 weeks
-            // FUTURE: Small
-            colorClass = 'cube-future';
-            spanClass = 'span-1x1';
-        } else {
-            // FAR FUTURE (>2 weeks): Smallest
-            colorClass = 'cube-far';
-            spanClass = 'span-1x1';
-        }
-
-        return { colorClass, spanClass };
     }
 
     // Calc functions
@@ -1387,10 +1647,10 @@
                     const timeLabel = cube.querySelector('.time-label');
                     if (timeDisplay) {
                         timeDisplay.textContent = formatHoursRemainingShort(hoursRemaining);
-                        timeLabel.textContent = hoursRemaining < 0 ? 'Overdue' : 'Left';
+                        timeLabel.textContent = hoursRemaining < 0 ? 'Overdue' : 'Remaining';
                     }
 
-                    // Check if urgency category changed (requires re-render for size change)
+                    // Check if urgency category changed (requires re-render for color change)
                     if (crossedUrgencyThreshold(oldHours, hoursRemaining)) {
                         needsRerender = true;
                     }
@@ -1401,14 +1661,14 @@
 
             // Re-render if any assignment crossed an urgency threshold
             if (needsRerender) {
-                renderTreemap();
+                renderKanban();
             }
         }, 60000); // Update every minute
     }
 
-    // Check if assignment crossed an urgency threshold requiring resize
+    // Check if assignment crossed an urgency threshold requiring visual update
     function crossedUrgencyThreshold(oldHours, newHours) {
-        const thresholds = [6, 12, 24, 36, 48, 72, 120, 168, 240, 336];
+        const thresholds = [6, 24, 48, 120, 168, 336];
 
         for (let threshold of thresholds) {
             if ((oldHours >= threshold && newHours < threshold) ||
@@ -1419,19 +1679,9 @@
         return false;
     }
 
-    // Update stats badges
+    // Update stats badges (simplified for Kanban)
     function updateStatsCounts() {
-        const pendingCountEl = document.getElementById('pendingCount');
-        const completedCountEl = document.getElementById('completedCount');
-
-        if (pendingCountEl) {
-            pendingCountEl.textContent = assignments.length;
-        }
-
-        if (completedCountEl) {
-            const completedItems = document.querySelectorAll('#completedList .completed-item');
-            completedCountEl.textContent = completedItems.length;
-        }
+        updateKanbanCounts();
     }
 
     // Actions - NO CONFIRMATION
@@ -1456,16 +1706,17 @@
                 element.classList.add('completed');
                 setTimeout(() => {
                     assignments = assignments.filter(a => a.id !== assignmentId);
-                    renderTreemap();
-                    updateStatsCounts();
+                    renderKanban();
 
-                    // Show completed section and add the completed item dynamically
-                    if (completedSection && completedList && assignmentData) {
-                        completedSection.style.display = 'block';
+                    // Add to completed column dynamically
+                    if (completedColumn && assignmentData) {
+                        // Remove empty state if present
+                        const emptyState = document.getElementById('completedEmpty');
+                        if (emptyState) emptyState.remove();
 
                         // Create the completed item element
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = 'completed-item';
+                        itemDiv.className = 'completed-cube';
                         itemDiv.dataset.id = assignmentId;
 
                         // Format today's date
@@ -1473,29 +1724,26 @@
                         const formattedDate = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
                         itemDiv.innerHTML = `
-                            <div class="completed-item-info">
-                                <div class="completed-item-title">${assignmentData.title}</div>
-                                <div class="completed-item-subject">${assignmentData.subject || 'General'}</div>
-                            </div>
-                            <div class="completed-item-meta">
-                                <div class="completed-item-date">
-                                    <i class="mdi mdi-check-circle"></i>
-                                    <span>${formattedDate}</span>
-                                </div>
-                                <button class="completed-item-delete" onclick="deleteCompletedAssignment(${assignmentId}, this)" title="Delete">
-                                    <i class="mdi mdi-delete-outline"></i>
-                                </button>
+                            <button class="delete-btn" onclick="deleteCompletedAssignment(${assignmentId}, this)" title="Delete">
+                                <i class="mdi mdi-delete-outline"></i>
+                            </button>
+                            <div class="assignment-title">${assignmentData.title}</div>
+                            <div class="assignment-subject">${assignmentData.subject || 'General'}</div>
+                            <div class="completed-date">
+                                <i class="mdi mdi-check-circle"></i>
+                                <span>${formattedDate}</span>
                             </div>
                         `;
 
-                        // Prepend to show newest first
-                        completedList.insertBefore(itemDiv, completedList.firstChild);
-                        updateStatsCounts();
-                    }
-
-                    // Reload if no more pending assignments
-                    if (assignments.length === 0) {
-                        location.reload();
+                        // Insert at the beginning (after header, before see more btn)
+                        const seeMoreBtn = document.getElementById('seeMoreBtn');
+                        if (seeMoreBtn) {
+                            completedColumn.insertBefore(itemDiv, seeMoreBtn);
+                        } else {
+                            completedColumn.appendChild(itemDiv);
+                        }
+                        
+                        updateKanbanCounts();
                     }
                 }, 400);
             }
@@ -1524,9 +1772,7 @@
 
                 setTimeout(() => {
                     assignments = assignments.filter(a => a.id !== assignmentId);
-                    renderTreemap();
-                    updateStatsCounts();
-                    if (assignments.length === 0) location.reload();
+                    renderKanban();
                 }, 300);
             }
         } catch (error) {
@@ -1539,7 +1785,7 @@
     async function deleteCompletedAssignment(assignmentId, buttonElement) {
         event.stopPropagation();
 
-        const itemElement = buttonElement.closest('.completed-item');
+        const itemElement = buttonElement.closest('.completed-cube');
         if (!itemElement) return;
 
         try {
@@ -1558,14 +1804,24 @@
 
                 setTimeout(() => {
                     itemElement.remove();
-                    updateStatsCounts();
+                    updateKanbanCounts();
 
-                    // Check if completed list is now empty
-                    const remainingItems = document.querySelectorAll('#completedList .completed-item');
+                    // Check if completed column is now empty
+                    const remainingItems = document.querySelectorAll('#completedColumn .completed-cube');
                     if (remainingItems.length === 0) {
-                        const completedSectionEl = document.getElementById('completedSection');
-                        if (completedSectionEl) {
-                            completedSectionEl.style.display = 'none';
+                        // Show empty state
+                        const emptyDiv = document.createElement('div');
+                        emptyDiv.className = 'kanban-empty';
+                        emptyDiv.id = 'completedEmpty';
+                        emptyDiv.innerHTML = `
+                            <i class="mdi mdi-checkbox-marked-circle-outline"></i>
+                            <p>No completed tasks yet</p>
+                        `;
+                        const seeMoreBtn = document.getElementById('seeMoreBtn');
+                        if (seeMoreBtn) {
+                            completedColumn.insertBefore(emptyDiv, seeMoreBtn);
+                        } else {
+                            completedColumn.appendChild(emptyDiv);
                         }
                     }
                 }, 300);
@@ -1583,6 +1839,7 @@
 
         // Set defaults
         timeInput.value = '23:59'; // Default to end of day
+        document.getElementById('assignmentPriority').value = 'normal';
 
         // Set assigned date (today's date - readonly)
         const today = new Date();
@@ -1611,22 +1868,86 @@
     closeModalBtn.addEventListener('click', closeModal);
     cancelBtn.addEventListener('click', closeModal);
 
+    // View Modal Elements
+    const viewModal = document.getElementById('viewModal');
+    const closeViewModalBtn = document.getElementById('closeViewModalBtn');
+    const closeViewBtn = document.getElementById('closeViewBtn');
+
+    // View assignment details function
+    function viewAssignmentDetails(assignment) {
+        const hoursRemaining = calculateHoursRemaining(assignment.deadline);
+        
+        // Set title
+        document.getElementById('viewModalTitle').textContent = assignment.title;
+        document.getElementById('viewModalSubtitle').textContent = assignment.subject || 'General';
+        
+        // Set priority with color
+        const priorityEl = document.getElementById('viewPriority');
+        const priority = assignment.priority || 'normal';
+        priorityEl.textContent = priority.charAt(0).toUpperCase() + priority.slice(1);
+        priorityEl.className = `detail-value priority-badge priority-${priority}`;
+        
+        // Set deadline
+        document.getElementById('viewDeadline').textContent = formatDate(assignment.deadline);
+        
+        // Set time remaining
+        document.getElementById('viewTimeRemaining').textContent = formatHoursRemainingShort(hoursRemaining) + (hoursRemaining < 0 ? ' overdue' : ' remaining');
+        
+        // Set description
+        const descriptionRow = document.getElementById('descriptionRow');
+        const descriptionEl = document.getElementById('viewDescription');
+        if (assignment.description && assignment.description.trim() !== '') {
+            descriptionRow.style.display = 'flex';
+            descriptionEl.textContent = assignment.description;
+        } else {
+            descriptionRow.style.display = 'none';
+        }
+        
+        // Update modal icon color based on priority
+        const iconEl = document.getElementById('viewModalIcon');
+        if (priority === 'high') {
+            iconEl.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+        } else if (priority === 'low') {
+            iconEl.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+        } else {
+            iconEl.style.background = 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark, #4338ca))';
+        }
+        
+        viewModal.classList.add('active');
+    }
+
+    function closeViewModal() {
+        viewModal.classList.remove('active');
+    }
+
+    closeViewModalBtn.addEventListener('click', closeViewModal);
+    closeViewBtn.addEventListener('click', closeViewModal);
+    
+    // Close view modal when clicking overlay
+    viewModal.addEventListener('click', (e) => {
+        if (e.target === viewModal) {
+            closeViewModal();
+        }
+    });
+
     addAssignmentForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Final backend validation usually needed, but front-end constraint is here
+        // Get form values
         const dateVal = dateInput.value;
-        const timeVal = timeInput.value;
-        const deadline = `${dateVal}T${timeVal}`;
+        const timeVal = timeInput.value || '23:59'; // Default to end of day if not provided
+        const deadline = timeVal ? `${dateVal}T${timeVal}` : dateVal;
 
-        // Basic past check
-        if (new Date(deadline) < new Date()) {
+        // Basic past check (only if time is provided)
+        if (timeVal && new Date(`${dateVal}T${timeVal}`) < new Date()) {
             alert("Please select a future date and time.");
             return;
         }
 
         const formData = {
             title: document.getElementById('assignmentTitle').value,
+            description: document.getElementById('assignmentDescription').value || '',
+            priority: document.getElementById('assignmentPriority').value || 'normal',
             deadline: deadline
         };
 
@@ -1643,29 +1964,28 @@
             const data = await response.json();
 
             if (data.success) {
+                // New assignments start as 'todo' by default
+                data.assignment.status = 'todo';
                 assignments.push(data.assignment);
-                renderTreemap();
-                updateStatsCounts();
+                renderKanban();
                 closeModal();
-                if (assignments.length === 1) location.reload();
             }
         } catch (error) {
             console.error(error);
         }
     });
 
-    renderTreemap();
+    // Initial render
+    renderKanban();
     startRealtimeUpdates(); // Start real-time updates
 
     // See More functionality for completed assignments
     const seeMoreBtn = document.getElementById('seeMoreBtn');
-    const completedListDiv = document.getElementById('completedList');
-    const completedSectionDiv = document.getElementById('completedSection');
     let showingAll = false;
 
     // Check if there are more than 5 completed assignments on page load
     async function checkForMoreCompleted() {
-        if (!seeMoreBtn || !completedListDiv) return;
+        if (!seeMoreBtn || !completedColumn) return;
 
         try {
             const response = await fetch("{% url 'get_all_completed_assignments' %}");
@@ -1673,11 +1993,6 @@
 
             if (data.success && data.completed.length > 5) {
                 seeMoreBtn.style.display = 'block';
-            } else if (data.completed.length === 0) {
-                // Hide completed section if no completed assignments
-                if (completedSectionDiv) {
-                    completedSectionDiv.style.display = 'none';
-                }
             }
         } catch (error) {
             console.error('Error checking completed assignments:', error);
@@ -1694,34 +2009,36 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        // Clear current list
-                        completedListDiv.innerHTML = '';
+                        // Remove existing completed cubes
+                        const existingCubes = completedColumn.querySelectorAll('.completed-cube');
+                        existingCubes.forEach(cube => cube.remove());
+                        
+                        // Remove empty state if present
+                        const emptyState = document.getElementById('completedEmpty');
+                        if (emptyState) emptyState.remove();
 
                         // Add all completed assignments
                         data.completed.forEach(assignment => {
                             const itemDiv = document.createElement('div');
-                            itemDiv.className = 'completed-item';
+                            itemDiv.className = 'completed-cube';
                             itemDiv.dataset.id = assignment.id;
                             itemDiv.innerHTML = `
-                                <div class="completed-item-info">
-                                    <div class="completed-item-title">${assignment.title}</div>
-                                    <div class="completed-item-subject">${assignment.subject}</div>
-                                </div>
-                                <div class="completed-item-meta">
-                                    <div class="completed-item-date">
-                                        <i class="mdi mdi-check-circle"></i>
-                                        <span>${assignment.completed_at}</span>
-                                    </div>
-                                    <button class="completed-item-delete" onclick="deleteCompletedAssignment(${assignment.id}, this)" title="Delete">
-                                        <i class="mdi mdi-delete-outline"></i>
-                                    </button>
+                                <button class="delete-btn" onclick="deleteCompletedAssignment(${assignment.id}, this)" title="Delete">
+                                    <i class="mdi mdi-delete-outline"></i>
+                                </button>
+                                <div class="assignment-title">${assignment.title}</div>
+                                <div class="assignment-subject">${assignment.subject}</div>
+                                <div class="completed-date">
+                                    <i class="mdi mdi-check-circle"></i>
+                                    <span>${assignment.completed_at}</span>
                                 </div>
                             `;
-                            completedListDiv.appendChild(itemDiv);
+                            completedColumn.insertBefore(itemDiv, seeMoreBtn);
                         });
 
                         seeMoreBtn.innerHTML = '<i class="mdi mdi-chevron-up"></i> Show Less';
                         showingAll = true;
+                        updateKanbanCounts();
                     }
                 } catch (error) {
                     console.error('Error loading completed assignments:', error);
@@ -1734,11 +2051,9 @@
     }
 
     // Initialize on page load
-    if (completedListDiv && completedListDiv.children.length > 0) {
+    const completedCubes = document.querySelectorAll('#completedColumn .completed-cube');
+    if (completedCubes.length > 0) {
         checkForMoreCompleted();
-    } else if (completedSectionDiv) {
-        // Hide section if no completed items
-        completedSectionDiv.style.display = 'none';
     }
 </script>
 {% endblock %}

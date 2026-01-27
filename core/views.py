@@ -374,24 +374,33 @@ def get_today_study_time(request):
 # Assignments View
 @login_required
 def assignments_view(request):
-    """Assignments page with treemap view"""
-    pending_assignments = Assignment.objects.filter(user=request.user, status='pending')
+    """Assignments page with Kanban board view"""
+    # Get pending assignments (todo, in_progress, or legacy 'pending' status)
+    pending_assignments = Assignment.objects.filter(
+        user=request.user
+    ).exclude(status='completed')
+    
     completed_assignments = Assignment.objects.filter(user=request.user, status='completed').order_by('-completed_at')[:5]
     
-    # Prepare assignment data for treemap
+    # Prepare assignment data for Kanban board
     assignments_data = []
     for assignment in pending_assignments:
         # Convert to local timezone for consistent display
         local_deadline = timezone.localtime(assignment.deadline)
+        # Map legacy 'pending' status to 'todo'
+        status = assignment.status if assignment.status in ['todo', 'in_progress'] else 'todo'
         assignments_data.append({
             'id': assignment.id,
             'title': assignment.title,
+            'description': assignment.description,
             'subject': assignment.subject,
             'deadline': local_deadline.strftime('%Y-%m-%dT%H:%M:%S'),
             'estimated_hours': float(assignment.estimated_hours),
             'hours_remaining': assignment.hours_remaining(),
             'days_remaining': assignment.days_remaining(),
             'urgency': assignment.urgency,
+            'priority': assignment.priority,
+            'status': status,
         })
     
     context = {
@@ -412,8 +421,12 @@ def add_assignment(request):
         
         # Parse deadline string to datetime object
         deadline_str = data.get('deadline')
-        # Handle ISO format: 2024-12-25T23:59
-        deadline_datetime = datetime.strptime(deadline_str, '%Y-%m-%dT%H:%M')
+        # Handle ISO format: 2024-12-25T23:59 or just date 2024-12-25
+        if 'T' in deadline_str:
+            deadline_datetime = datetime.strptime(deadline_str, '%Y-%m-%dT%H:%M')
+        else:
+            # If no time provided, default to end of day (23:59)
+            deadline_datetime = datetime.strptime(deadline_str + 'T23:59', '%Y-%m-%dT%H:%M')
         # Make timezone aware using the current timezone
         # This ensures the time is stored as the user intended
         deadline_datetime = timezone.make_aware(deadline_datetime, timezone.get_current_timezone())
@@ -421,7 +434,10 @@ def add_assignment(request):
         assignment = Assignment.objects.create(
             user=request.user,
             title=data.get('title'),
+            description=data.get('description', ''),
+            priority=data.get('priority', 'normal'),
             deadline=deadline_datetime,
+            status='todo',  # New assignments start as 'todo'
         )
         
         # Return the deadline in a format that preserves local time display
@@ -433,12 +449,15 @@ def add_assignment(request):
             'assignment': {
                 'id': assignment.id,
                 'title': assignment.title,
+                'description': assignment.description,
                 'subject': assignment.subject,
                 'deadline': local_deadline.strftime('%Y-%m-%dT%H:%M:%S'),
                 'estimated_hours': float(assignment.estimated_hours),
                 'hours_remaining': assignment.hours_remaining(),
                 'days_remaining': assignment.days_remaining(),
                 'urgency': assignment.urgency,
+                'priority': assignment.priority,
+                'status': 'todo',
             }
         })
     
@@ -454,6 +473,28 @@ def complete_assignment(request, assignment_id):
         assignment = get_object_or_404(Assignment, id=assignment_id, user=request.user)
         assignment.status = 'completed'
         assignment.completed_at = timezone.now()
+        assignment.save()
+        
+        return JsonResponse({'success': True})
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def update_assignment_status(request, assignment_id):
+    """Update assignment status (todo, in_progress)"""
+    try:
+        import json
+        data = json.loads(request.body)
+        new_status = data.get('status')
+        
+        if new_status not in ['todo', 'in_progress']:
+            return JsonResponse({'error': 'Invalid status'}, status=400)
+        
+        assignment = get_object_or_404(Assignment, id=assignment_id, user=request.user)
+        assignment.status = new_status
         assignment.save()
         
         return JsonResponse({'success': True})

@@ -101,8 +101,10 @@ class StudySession(models.Model):
 # Assignment Model
 class Assignment(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
+        ('todo', 'To Do'),
+        ('in_progress', 'In Progress'),
         ('completed', 'Completed'),
+        ('pending', 'Pending'),  # Legacy status, maps to todo
     ]
     
     URGENCY_CHOICES = [
@@ -111,13 +113,21 @@ class Assignment(models.Model):
         ('high', 'High'),
     ]
     
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('normal', 'Normal'),
+        ('high', 'High'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assignments')
     title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, default='')
     subject = models.CharField(max_length=100, default='General')
     deadline = models.DateTimeField()
     estimated_hours = models.FloatField(default=0, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='todo')
     urgency = models.CharField(max_length=20, choices=URGENCY_CHOICES, default='low')
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='normal')
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     
