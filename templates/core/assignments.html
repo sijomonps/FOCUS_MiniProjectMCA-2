@@ -1457,24 +1457,38 @@
         color: var(--text-primary);
     }
 
-    /* Priority badge in cube - Hidden in new simplified design */
+    /* Priority badge in cube */
     .priority-badge {
-        display: none;
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        z-index: 2;
+        opacity: 0.9;
+        display: inline-block;
     }
 
     .priority-high {
-        background: rgba(239, 68, 68, 0.15);
-        color: #ef4444;
+        background: rgba(239, 68, 68, 0.2);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
     .priority-normal {
-        background: rgba(59, 130, 246, 0.15);
-        color: #3b82f6;
+        background: rgba(59, 130, 246, 0.2);
+        color: #2563eb;
+        border: 1px solid rgba(59, 130, 246, 0.3);
     }
 
     .priority-low {
-        background: rgba(107, 114, 128, 0.15);
-        color: #6b7280;
+        background: rgba(107, 114, 128, 0.2);
+        color: #4b5563;
+        border: 1px solid rgba(107, 114, 128, 0.3);
     }
 
     /* Has description indicator - Hidden for cleaner look */
