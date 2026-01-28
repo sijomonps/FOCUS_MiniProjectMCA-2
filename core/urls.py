@@ -42,6 +42,7 @@ urlpatterns = [
     path('api/assignment/add/', views.add_assignment, name='add_assignment'),
     path('api/assignment/<int:assignment_id>/complete/', views.complete_assignment, name='complete_assignment'),
     path('api/assignment/<int:assignment_id>/status/', views.update_assignment_status, name='update_assignment_status'),
+    path('api/assignment/<int:assignment_id>/update/', views.update_assignment, name='update_assignment'),
     path('api/assignment/delete/<int:assignment_id>/', views.delete_assignment, name='delete_assignment'),
     path('api/assignments/completed/all/', views.get_all_completed_assignments, name='get_all_completed_assignments'),
     path('api/note/save/', views.save_quick_note, name='save_quick_note'),

@@ -53,6 +53,28 @@
         border-color: var(--primary-color);
     }
 
+    /* Stopwatch button style */
+    .stopwatch-btn {
+        border-color: var(--color-green);
+        color: var(--color-green);
+    }
+
+    .stopwatch-btn:hover {
+        background: rgba(102, 153, 119, 0.15);
+        border-color: var(--color-green);
+        color: var(--color-green);
+    }
+
+    .stopwatch-btn.active {
+        background: var(--color-green);
+        color: white;
+        border-color: var(--color-green);
+    }
+
+    .stopwatch-btn i {
+        margin-right: 4px;
+    }
+
     /* Custom Duration Input */
     .custom-input-wrapper {
         display: none;
@@ -324,6 +346,9 @@
         <button class="preset-btn" data-duration="60" onclick="selectDuration(60, this)">60 min</button>
         <button class="preset-btn" data-duration="90" onclick="selectDuration(90, this)">90 min</button>
         <button class="preset-btn" data-duration="custom" onclick="toggleCustomInput(this)">Custom</button>
+        <button class="preset-btn stopwatch-btn" data-duration="stopwatch" onclick="selectStopwatch(this)">
+            <i class="mdi mdi-timer-outline"></i> Stopwatch
+        </button>
     </div>
 
     <!-- Custom Duration Input -->
@@ -387,6 +412,11 @@
     let sessionStartTime = null;
     let totalFocusedTime = 0;
     let timerEndTime = null; // Timestamp when timer should end
+    
+    // Stopwatch mode
+    let isStopwatchMode = false;
+    let stopwatchStartTime = null;
+    let elapsedTime = 0; // Elapsed seconds for stopwatch
 
     // DOM Elements
     const timerDisplay = document.getElementById('timerDisplay');
@@ -405,6 +435,26 @@
     // ========================================
     // Today's Study Time Helper Functions
     // ========================================
+    
+    // Sync with server to get today's actual total from database
+    async function syncTodayStudyTimeFromServer() {
+        try {
+            const response = await fetch('/api/study/today/');
+            const data = await response.json();
+            if (data.success) {
+                const serverMinutes = data.today_total_minutes || 0;
+                const key = getTodayDateKey();
+                localStorage.setItem(key, serverMinutes.toString());
+                updateTodayStudyDisplay();
+                console.log(`Synced with server. Today's total: ${serverMinutes} minutes`);
+                return serverMinutes;
+            }
+        } catch (error) {
+            console.error('Error syncing with server:', error);
+        }
+        return getTodayStudyMinutes(); // Return local value as fallback
+    }
+    
     function getTodayDateKey() {
         const now = new Date();
         return `studyTime_${now.getFullYear()}_${now.getMonth()}_${now.getDate()}`;
@@ -457,15 +507,27 @@
 
         // Calculate active session time if timer is running or paused with progress
         let activeSessionMinutes = 0;
-        if (isRunning && timerEndTime && selectedDuration) {
-            // Timer is running - calculate elapsed time
-            const now = Date.now();
-            const remaining = Math.max(0, Math.floor((timerEndTime - now) / 1000));
-            const elapsed = selectedDuration - remaining;
-            activeSessionMinutes = Math.floor(elapsed / 60);
-        } else if (!isRunning && totalFocusedTime > 0) {
-            // Timer is paused - use accumulated totalFocusedTime
-            activeSessionMinutes = Math.floor(totalFocusedTime / 60);
+        
+        if (isStopwatchMode) {
+            // Stopwatch mode - use elapsed time
+            if (isRunning && stopwatchStartTime) {
+                activeSessionMinutes = Math.floor(elapsedTime / 60);
+            } else if (!isRunning && elapsedTime > 0) {
+                // Paused stopwatch
+                activeSessionMinutes = Math.floor(elapsedTime / 60);
+            }
+        } else {
+            // Countdown mode
+            if (isRunning && timerEndTime && selectedDuration) {
+                // Timer is running - calculate elapsed time
+                const now = Date.now();
+                const remaining = Math.max(0, Math.floor((timerEndTime - now) / 1000));
+                const elapsed = selectedDuration - remaining;
+                activeSessionMinutes = Math.floor(elapsed / 60);
+            } else if (!isRunning && totalFocusedTime > 0) {
+                // Timer is paused - use accumulated totalFocusedTime
+                activeSessionMinutes = Math.floor(totalFocusedTime / 60);
+            }
         }
 
         const totalMinutes = savedMinutes + activeSessionMinutes;
@@ -484,7 +546,8 @@
             pageIndicator.textContent = formattedTime;
 
             // Add visual indicator when timer is active or paused with progress
-            if (todayIndicator && (isRunning || totalFocusedTime > 0)) {
+            const hasActiveSession = isStopwatchMode ? (isRunning || elapsedTime > 0) : (isRunning || totalFocusedTime > 0);
+            if (todayIndicator && hasActiveSession) {
                 todayIndicator.style.borderColor = isRunning ? 'var(--color-green)' : 'var(--color-yellow)';
                 todayIndicator.style.boxShadow = isRunning
                     ? '0 0 12px rgba(102, 153, 119, 0.3)'
@@ -505,7 +568,11 @@
             remainingTime: remainingTime,
             subject: subjectSelect.value,
             totalFocusedTime: totalFocusedTime,
-            sessionStartTime: sessionStartTime
+            sessionStartTime: sessionStartTime,
+            // Stopwatch specific
+            isStopwatchMode: isStopwatchMode,
+            stopwatchStartTime: stopwatchStartTime,
+            elapsedTime: elapsedTime
         };
         localStorage.setItem('focusTimerState', JSON.stringify(state));
     }
@@ -516,6 +583,57 @@
         if (savedState) {
             try {
                 const state = JSON.parse(savedState);
+                
+                // Check for stopwatch mode
+                if (state.isStopwatchMode) {
+                    isStopwatchMode = true;
+                    
+                    // Update button state
+                    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active', 'custom-active'));
+                    const stopwatchBtn = document.querySelector('.stopwatch-btn');
+                    if (stopwatchBtn) stopwatchBtn.classList.add('active');
+                    
+                    if (state.isRunning && state.stopwatchStartTime) {
+                        // Stopwatch is running
+                        stopwatchStartTime = state.stopwatchStartTime;
+                        elapsedTime = Math.floor((Date.now() - stopwatchStartTime) / 1000);
+                        isRunning = true;
+                        sessionStartTime = state.sessionStartTime;
+                        
+                        if (state.subject) {
+                            subjectSelect.value = state.subject;
+                            subjectSelect.disabled = true;
+                        }
+                        
+                        mainBtn.textContent = 'Stop';
+                        mainBtn.classList.add('running');
+                        timerModeLabel.textContent = 'Stopwatch Running...';
+                        
+                        updateDisplay();
+                        updateGlobalTimer();
+                        startStopwatchLoop();
+                        return true;
+                    } else if (!state.isRunning && state.elapsedTime > 0) {
+                        // Stopwatch was paused
+                        elapsedTime = state.elapsedTime;
+                        totalFocusedTime = state.totalFocusedTime || elapsedTime;
+                        
+                        if (state.subject) {
+                            subjectSelect.value = state.subject;
+                        }
+                        
+                        mainBtn.textContent = 'Resume';
+                        timerModeLabel.textContent = 'Stopwatch Paused';
+                        updateDisplay();
+                    } else {
+                        // Just stopwatch mode selected, not started
+                        timerDisplay.textContent = '0:00';
+                        timerModeLabel.textContent = 'Stopwatch Mode';
+                    }
+                    return false;
+                }
+                
+                // Original countdown timer logic
                 if (state.isRunning && state.timerEndTime) {
                     const now = Date.now();
                     const remaining = Math.floor((state.timerEndTime - now) / 1000);
@@ -589,25 +707,42 @@
         // This triggers the global timer in base.html to update by re-saving state
         // The base.html interval will pick up the changes
         if (globalTimerContainer && globalTimerDisplay) {
-            if (isRunning && remainingTime > 0) {
-                globalTimerContainer.classList.remove('hidden');
-                globalTimerDisplay.textContent = formatTime(remainingTime);
+            if (isStopwatchMode) {
+                // Stopwatch mode - always show when running or has elapsed time
+                if (isRunning || elapsedTime > 0) {
+                    globalTimerContainer.classList.remove('hidden');
+                    globalTimerDisplay.textContent = formatTime(elapsedTime);
+                } else {
+                    globalTimerContainer.classList.add('hidden');
+                }
             } else {
-                globalTimerContainer.classList.add('hidden');
+                // Countdown mode
+                if (isRunning && remainingTime > 0) {
+                    globalTimerContainer.classList.remove('hidden');
+                    globalTimerDisplay.textContent = formatTime(remainingTime);
+                } else {
+                    globalTimerContainer.classList.add('hidden');
+                }
             }
         }
     }
 
-    // Format time as MM:SS
+    // Format time as MM:SS (always showing total minutes, not hours)
+    // For focus timers, users prefer seeing "60:00" rather than "1:00:00"
     function formatTime(seconds) {
-        const m = Math.floor(seconds / 60);
+        const totalMinutes = Math.floor(seconds / 60);
         const s = seconds % 60;
-        return `${m}:${s < 10 ? '0' : ''}${s}`;
+        return `${totalMinutes}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // Select Duration Preset
+    // Select Duration Preset (countdown mode)
     function selectDuration(minutes, btn) {
         if (isRunning) return;
+
+        // Exit stopwatch mode
+        isStopwatchMode = false;
+        elapsedTime = 0;
+        stopwatchStartTime = null;
 
         // Update button states
         document.querySelectorAll('.preset-btn').forEach(b => {
@@ -621,12 +756,39 @@
         // Set duration
         selectedDuration = minutes * 60;
         remainingTime = selectedDuration;
+        timerModeLabel.textContent = 'Focus Session';
         updateDisplay();
+    }
+
+    // Select Stopwatch Mode (count up)
+    function selectStopwatch(btn) {
+        if (isRunning) return;
+
+        // Enter stopwatch mode
+        isStopwatchMode = true;
+        elapsedTime = 0;
+        stopwatchStartTime = null;
+
+        // Update button states
+        document.querySelectorAll('.preset-btn').forEach(b => {
+            b.classList.remove('active', 'custom-active');
+        });
+        btn.classList.add('active');
+
+        // Hide custom input
+        customInputWrapper.classList.remove('show');
+
+        // Update display for stopwatch
+        timerDisplay.textContent = '0:00';
+        timerModeLabel.textContent = 'Stopwatch Mode';
     }
 
     // Toggle Custom Input
     function toggleCustomInput(btn) {
         if (isRunning) return;
+
+        // Exit stopwatch mode
+        isStopwatchMode = false;
 
         document.querySelectorAll('.preset-btn').forEach(b => {
             b.classList.remove('active');
@@ -644,6 +806,7 @@
 
     // Apply Custom Duration
     function applyCustomDuration() {
+        isStopwatchMode = false;
         const minutes = parseInt(customMinutesInput.value);
         if (minutes && minutes > 0 && minutes <= 180) {
             selectedDuration = minutes * 60;
@@ -655,12 +818,20 @@
 
     // Update Timer Display
     function updateDisplay() {
-        timerDisplay.textContent = formatTime(remainingTime);
-
-        if (isRunning) {
-            document.title = `(${formatTime(remainingTime)}) Focus - FOCUS`;
+        if (isStopwatchMode) {
+            timerDisplay.textContent = formatTime(elapsedTime);
+            if (isRunning) {
+                document.title = `(${formatTime(elapsedTime)}) Stopwatch - FOCUS`;
+            } else {
+                document.title = 'Focus Timer - FOCUS';
+            }
         } else {
-            document.title = 'Focus Timer - FOCUS';
+            timerDisplay.textContent = formatTime(remainingTime);
+            if (isRunning) {
+                document.title = `(${formatTime(remainingTime)}) Focus - FOCUS`;
+            } else {
+                document.title = 'Focus Timer - FOCUS';
+            }
         }
     }
 
@@ -669,6 +840,7 @@
         console.log('toggleTimer called');
         console.log('Subject selected:', subjectSelect.value);
         console.log('Is running:', isRunning);
+        console.log('Is stopwatch mode:', isStopwatchMode);
 
         if (!subjectSelect.value) {
             alert('Please select a subject before starting.');
@@ -686,20 +858,42 @@
 
     // Start Timer
     function startTimer() {
-        if (remainingTime <= 0) {
-            remainingTime = selectedDuration;
+        if (isStopwatchMode) {
+            // Stopwatch mode - count up
+            isRunning = true;
+            sessionStartTime = Date.now();
+            
+            // If resuming, calculate start time to account for already elapsed time
+            if (elapsedTime > 0) {
+                stopwatchStartTime = Date.now() - (elapsedTime * 1000);
+            } else {
+                stopwatchStartTime = Date.now();
+            }
+            
+            mainBtn.textContent = 'Stop';
+            mainBtn.classList.add('running');
+            timerModeLabel.textContent = 'Stopwatch Running...';
+            subjectSelect.disabled = true;
+            
+            saveTimerState();
+            startStopwatchLoop();
+        } else {
+            // Countdown mode
+            if (remainingTime <= 0) {
+                remainingTime = selectedDuration;
+            }
+
+            isRunning = true;
+            sessionStartTime = Date.now();
+            timerEndTime = Date.now() + (remainingTime * 1000); // Calculate end time
+            mainBtn.textContent = 'Pause';
+            mainBtn.classList.add('running');
+            timerModeLabel.textContent = 'Focusing...';
+            subjectSelect.disabled = true;
+
+            saveTimerState();
+            startTimerLoop();
         }
-
-        isRunning = true;
-        sessionStartTime = Date.now();
-        timerEndTime = Date.now() + (remainingTime * 1000); // Calculate end time
-        mainBtn.textContent = 'Pause';
-        mainBtn.classList.add('running');
-        timerModeLabel.textContent = 'Focusing...';
-        subjectSelect.disabled = true;
-
-        saveTimerState();
-        startTimerLoop();
     }
 
     // Timer loop using timestamp-based calculation (works even when tab is inactive)
@@ -720,19 +914,47 @@
         }, 100); // Update more frequently for accuracy
     }
 
+    // Stopwatch loop - counts up
+    function startStopwatchLoop() {
+        clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+            const now = Date.now();
+            elapsedTime = Math.floor((now - stopwatchStartTime) / 1000);
+            updateDisplay();
+            updateGlobalTimer();
+            updateTodayStudyDisplay(); // Live update today's study time
+            saveTimerState();
+        }, 100); // Update frequently for smooth display
+    }
+
     // Pause Timer
     function pauseTimer() {
         clearInterval(timerInterval);
         isRunning = false;
-        timerEndTime = null;
-        mainBtn.textContent = 'Resume';
-        mainBtn.classList.remove('running');
-        timerModeLabel.textContent = 'Paused';
+        
+        if (isStopwatchMode) {
+            // For stopwatch, we just pause - elapsedTime already holds current value
+            mainBtn.textContent = 'Resume';
+            mainBtn.classList.remove('running');
+            timerModeLabel.textContent = 'Stopwatch Paused';
+            
+            // Calculate focused time so far
+            if (sessionStartTime) {
+                totalFocusedTime = elapsedTime;
+                sessionStartTime = null;
+            }
+        } else {
+            timerEndTime = null;
+            mainBtn.textContent = 'Resume';
+            mainBtn.classList.remove('running');
+            timerModeLabel.textContent = 'Paused';
 
-        // Calculate focused time so far
-        if (sessionStartTime) {
-            totalFocusedTime += Math.floor((Date.now() - sessionStartTime) / 1000);
-            sessionStartTime = null;
+            // Calculate focused time so far
+            if (sessionStartTime) {
+                totalFocusedTime += Math.floor((Date.now() - sessionStartTime) / 1000);
+                sessionStartTime = null;
+            }
         }
 
         saveTimerState();
@@ -747,18 +969,32 @@
         timerEndTime = null;
 
         // Save session if any time was focused
-        const focusedMinutes = Math.floor(totalFocusedTime / 60);
+        let focusedMinutes;
+        if (isStopwatchMode) {
+            focusedMinutes = Math.floor(elapsedTime / 60);
+        } else {
+            focusedMinutes = Math.floor(totalFocusedTime / 60);
+        }
+        
         if (focusedMinutes >= 1 && subjectSelect.value) {
             saveSession(focusedMinutes);
         }
 
         // Reset everything
-        remainingTime = selectedDuration;
+        if (isStopwatchMode) {
+            elapsedTime = 0;
+            stopwatchStartTime = null;
+            timerDisplay.textContent = '0:00';
+            timerModeLabel.textContent = 'Stopwatch Mode';
+        } else {
+            remainingTime = selectedDuration;
+            timerModeLabel.textContent = 'Focus Session';
+        }
+        
         totalFocusedTime = 0;
         sessionStartTime = null;
         mainBtn.textContent = 'Start';
         mainBtn.classList.remove('running');
-        timerModeLabel.textContent = 'Focus Session';
         subjectSelect.disabled = false;
         updateDisplay();
         clearTimerState();
@@ -874,14 +1110,32 @@
                 })
             });
 
-            if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
                 showRecordedIndicator();
-                // Add to today's study time tracker
-                const totalToday = addTodayStudyMinutes(minutes);
-                console.log(`Session saved: ${minutes} min. Total today: ${totalToday} min`);
+                
+                // Update server-synced today's total from response
+                if (data.today_total_minutes !== undefined) {
+                    const key = getTodayDateKey();
+                    localStorage.setItem(key, data.today_total_minutes.toString());
+                    
+                    // Update displays
+                    updateTodayStudyDisplay();
+                    
+                    console.log(`Session saved: ${minutes} min. Server total today: ${data.today_total_minutes} min`);
+                } else {
+                    // Fallback to local addition if server doesn't return total
+                    const totalToday = addTodayStudyMinutes(minutes);
+                    console.log(`Session saved: ${minutes} min. Local total today: ${totalToday} min`);
+                }
+            } else {
+                console.error('Server error saving session:', data.error);
             }
         } catch (e) {
             console.error('Failed to save session:', e);
+            // Fallback to local tracking if server fails
+            const totalToday = addTodayStudyMinutes(minutes);
+            console.log(`Session saved locally: ${minutes} min. Total today: ${totalToday} min`);
         }
     }
 
@@ -935,6 +1189,9 @@
 
     // Initialize
     requestNotificationPermission();
+
+    // Sync today's study time with server on page load
+    syncTodayStudyTimeFromServer();
 
     // Initialize today's study time display
     updateTodayStudyDisplay();

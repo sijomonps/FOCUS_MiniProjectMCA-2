@@ -522,9 +522,11 @@
         }
 
         function formatGlobalTime(seconds) {
-            const m = Math.floor(seconds / 60);
+            // Format time as MM:SS (always showing total minutes, not hours)
+            // For focus timers, users prefer seeing "60:00" rather than "1:00:00"
+            const totalMinutes = Math.floor(seconds / 60);
             const s = seconds % 60;
-            return `${m}:${s < 10 ? '0' : ''}${s}`;
+            return `${totalMinutes}:${s < 10 ? '0' : ''}${s}`;
         }
 
         function startGlobalTimerUpdates() {

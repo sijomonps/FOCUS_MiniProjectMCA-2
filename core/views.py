@@ -385,8 +385,12 @@ def assignments_view(request):
     # Prepare assignment data for Kanban board
     assignments_data = []
     for assignment in pending_assignments:
-        # Convert to local timezone for consistent display
-        local_deadline = timezone.localtime(assignment.deadline)
+        # Handle deadline properly (could be None)
+        deadline_str = ''
+        if assignment.deadline:
+            local_deadline = timezone.localtime(assignment.deadline)
+            deadline_str = local_deadline.strftime('%Y-%m-%dT%H:%M:%S')
+        
         # Map legacy 'pending' status to 'todo'
         status = assignment.status if assignment.status in ['todo', 'in_progress'] else 'todo'
         assignments_data.append({
@@ -394,7 +398,7 @@ def assignments_view(request):
             'title': assignment.title,
             'description': assignment.description,
             'subject': assignment.subject,
-            'deadline': local_deadline.strftime('%Y-%m-%dT%H:%M:%S'),
+            'deadline': deadline_str,
             'estimated_hours': float(assignment.estimated_hours),
             'hours_remaining': assignment.hours_remaining(),
             'days_remaining': assignment.days_remaining(),
@@ -421,15 +425,23 @@ def add_assignment(request):
         
         # Parse deadline string to datetime object
         deadline_str = data.get('deadline')
-        # Handle ISO format: 2024-12-25T23:59 or just date 2024-12-25
-        if 'T' in deadline_str:
-            deadline_datetime = datetime.strptime(deadline_str, '%Y-%m-%dT%H:%M')
-        else:
-            # If no time provided, default to end of day (23:59)
-            deadline_datetime = datetime.strptime(deadline_str + 'T23:59', '%Y-%m-%dT%H:%M')
-        # Make timezone aware using the current timezone
-        # This ensures the time is stored as the user intended
-        deadline_datetime = timezone.make_aware(deadline_datetime, timezone.get_current_timezone())
+        deadline_datetime = None
+        
+        # Only process deadline if provided and not null/empty
+        if deadline_str and str(deadline_str).strip() and deadline_str != 'null':
+            try:
+                # Handle ISO format: 2024-12-25T23:59 or just date 2024-12-25
+                if 'T' in str(deadline_str):
+                    deadline_datetime = datetime.strptime(deadline_str, '%Y-%m-%dT%H:%M')
+                else:
+                    # If no time provided, default to end of day (23:59)
+                    deadline_datetime = datetime.strptime(str(deadline_str) + 'T23:59', '%Y-%m-%dT%H:%M')
+                # Make timezone aware using the current timezone
+                deadline_datetime = timezone.make_aware(deadline_datetime, timezone.get_current_timezone())
+            except ValueError as e:
+                # If parsing fails, set deadline to None
+                print(f"Deadline parsing error: {e}")
+                deadline_datetime = None
         
         assignment = Assignment.objects.create(
             user=request.user,
@@ -437,12 +449,14 @@ def add_assignment(request):
             description=data.get('description', ''),
             priority=data.get('priority', 'normal'),
             deadline=deadline_datetime,
-            status='todo',  # New assignments start as 'todo'
+            status=data.get('status', 'todo'),  # Use status from form
         )
         
-        # Return the deadline in a format that preserves local time display
-        # Convert back to local timezone for consistent display
-        local_deadline = timezone.localtime(assignment.deadline)
+        # Handle deadline format properly (could be None)
+        deadline_str = ''
+        if assignment.deadline:
+            local_deadline = timezone.localtime(assignment.deadline)
+            deadline_str = local_deadline.strftime('%Y-%m-%dT%H:%M:%S')
         
         return JsonResponse({
             'success': True,
@@ -451,13 +465,13 @@ def add_assignment(request):
                 'title': assignment.title,
                 'description': assignment.description,
                 'subject': assignment.subject,
-                'deadline': local_deadline.strftime('%Y-%m-%dT%H:%M:%S'),
+                'deadline': deadline_str,
                 'estimated_hours': float(assignment.estimated_hours),
                 'hours_remaining': assignment.hours_remaining(),
                 'days_remaining': assignment.days_remaining(),
                 'urgency': assignment.urgency,
                 'priority': assignment.priority,
-                'status': 'todo',
+                'status': assignment.status,
             }
         })
     
@@ -498,6 +512,58 @@ def update_assignment_status(request, assignment_id):
         assignment.save()
         
         return JsonResponse({'success': True})
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def update_assignment(request, assignment_id):
+    """Update assignment details (title, description, priority, deadline, status)"""
+    try:
+        import json
+        data = json.loads(request.body)
+        
+        assignment = get_object_or_404(Assignment, id=assignment_id, user=request.user)
+        
+        # Update fields if provided
+        if 'title' in data:
+            assignment.title = data['title']
+        if 'description' in data:
+            assignment.description = data['description']
+        if 'priority' in data:
+            assignment.priority = data['priority']
+        if 'status' in data and data['status'] in ['todo', 'in_progress']:
+            assignment.status = data['status']
+        
+        # Handle deadline - can be empty string to clear
+        if 'deadline' in data:
+            deadline_str = data['deadline']
+            if deadline_str:
+                try:
+                    from datetime import datetime
+                    deadline = datetime.fromisoformat(deadline_str.replace('Z', '+00:00'))
+                    assignment.deadline = deadline
+                except:
+                    pass
+            else:
+                assignment.deadline = None
+        
+        assignment.save()
+        
+        # Return updated assignment data
+        assignment_data = {
+            'id': assignment.id,
+            'title': assignment.title,
+            'subject': assignment.subject,
+            'description': assignment.description,
+            'priority': assignment.priority,
+            'deadline': assignment.deadline.isoformat() if assignment.deadline else None,
+            'status': assignment.status,
+        }
+        
+        return JsonResponse({'success': True, 'assignment': assignment_data})
     
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

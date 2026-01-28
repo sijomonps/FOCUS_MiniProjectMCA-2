@@ -123,7 +123,7 @@ class Assignment(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, default='')
     subject = models.CharField(max_length=100, default='General')
-    deadline = models.DateTimeField()
+    deadline = models.DateTimeField(null=True, blank=True)
     estimated_hours = models.FloatField(default=0, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='todo')
     urgency = models.CharField(max_length=20, choices=URGENCY_CHOICES, default='low')
@@ -133,12 +133,18 @@ class Assignment(models.Model):
     
     class Meta:
         ordering = ['deadline', '-created_at']
+        
+    def save(self, *args, **kwargs):
+        """Override save to handle null deadlines"""
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.title} - {self.subject}"
     
     def days_remaining(self):
         """Calculate days remaining until deadline"""
+        if not self.deadline:
+            return None
         today = timezone.now().date()
         deadline_date = self.deadline.date() if hasattr(self.deadline, 'date') else self.deadline
         delta = deadline_date - today
@@ -146,6 +152,8 @@ class Assignment(models.Model):
     
     def hours_remaining(self):
         """Calculate hours remaining until deadline"""
+        if not self.deadline:
+            return None
         now = timezone.now()
         delta = self.deadline - now
         hours = delta.total_seconds() / 3600
@@ -154,6 +162,9 @@ class Assignment(models.Model):
     def calculate_urgency(self):
         """Auto-calculate urgency based on days remaining"""
         days = self.days_remaining()
+        # Handle case where no deadline is set (returns None)
+        if days is None:
+            return 'low'  # No deadline = low urgency
         if days < 0:
             return 'high'
         elif days <= 3:
@@ -166,9 +177,14 @@ class Assignment(models.Model):
     def save(self, *args, **kwargs):
         """Auto-update urgency and estimated hours before saving"""
         self.urgency = self.calculate_urgency()
-        # Auto-calculate estimated hours if not provided
+        # Auto-calculate estimated hours if not provided and deadline exists
         if not self.estimated_hours or self.estimated_hours == 0:
-            self.estimated_hours = self.hours_remaining()
+            hours_remaining = self.hours_remaining()
+            if hours_remaining is not None:
+                self.estimated_hours = hours_remaining
+            else:
+                # No deadline - set default estimated hours
+                self.estimated_hours = 2.0  # Default to 2 hours for assignments without deadline
         super().save(*args, **kwargs)
 
 

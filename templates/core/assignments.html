@@ -10,10 +10,12 @@
 
 {% block extra_css %}
 <style>
-    /* Full screen layout for assignments page - no margins */
+    /* Full screen layout for assignments page - Theme Compatible */
     .main-content {
         padding: var(--spacing-lg) 0 !important;
         align-items: stretch !important;
+        background: var(--bg-primary);
+        min-height: 100vh;
     }
 
     .content-container {
@@ -22,9 +24,23 @@
         padding: 0 var(--spacing-md) !important;
     }
 
+    /* Modern Icon Styling */
+    .mdi {
+        transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .page-title .mdi {
+        font-size: 1.5rem;
+        margin-right: 8px;
+        background: linear-gradient(135deg, var(--color-blue) 0%, #a855f7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
     .page-header {
         padding: 0 var(--spacing-lg);
-        margin-bottom: var(--spacing-lg);
+        margin-bottom: 24px;
         display: flex;
         flex-wrap: wrap;
         gap: var(--spacing-md);
@@ -32,32 +48,50 @@
         justify-content: space-between;
     }
 
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+    }
+
     .header-actions {
         display: flex;
         align-items: center;
-        gap: var(--spacing-lg);
+        gap: 16px;
     }
 
     .stats-badges {
         display: flex;
-        gap: var(--spacing-sm);
+        gap: 10px;
     }
 
     .stat-badge {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 8px 14px;
-        border-radius: var(--border-radius-lg);
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 12px;
         font-size: 0.85rem;
         font-weight: 600;
-        background: var(--bg-tertiary);
+        background: var(--bg-secondary);
         border: 1px solid var(--border-color);
         color: var(--text-secondary);
+        transition: all 0.3s ease;
+    }
+
+    .stat-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .stat-badge i {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-badge:hover i {
+        transform: scale(1.15);
     }
 
     .stat-pending {
@@ -76,11 +110,43 @@
         color: var(--color-green);
     }
 
-    /* Kanban Board Layout */
+    /* Modern Add Button */
+    .btn-add-assignment {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 22px;
+        border-radius: 14px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+
+    .btn-add-assignment:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    }
+
+    .btn-add-assignment i {
+        font-size: 1.2rem;
+        transition: transform 0.3s ease;
+    }
+
+    .btn-add-assignment:hover i {
+        transform: rotate(90deg);
+    }
+
+    /* Kanban Board Layout - Dark Theme Compatible */
     .kanban-board {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
-        gap: var(--spacing-md);
+        gap: 20px;
         padding: 0 var(--spacing-lg);
         margin-bottom: var(--spacing-xl);
         width: 100%;
@@ -89,17 +155,23 @@
 
     .kanban-column {
         background: var(--bg-secondary);
-        border-radius: var(--border-radius-lg);
+        border-radius: 16px;
         border: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
         min-height: 400px;
         overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .kanban-column:hover {
+        border-color: var(--border-color-light);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     }
 
     .kanban-column-header {
-        padding: var(--spacing-md) var(--spacing-lg);
-        border-bottom: 1px solid var(--border-color);
+        padding: 16px 20px;
+        border-bottom: 2px solid var(--border-color);
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -110,14 +182,19 @@
     .kanban-column-title {
         display: flex;
         align-items: center;
-        gap: var(--spacing-sm);
+        gap: 10px;
         font-weight: 700;
         font-size: 0.95rem;
         color: var(--text-primary);
     }
 
     .kanban-column-title i {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
+        transition: transform 0.3s ease;
+    }
+
+    .kanban-column:hover .kanban-column-title i {
+        transform: scale(1.1);
     }
 
     .kanban-column-count {
@@ -206,12 +283,19 @@
     .kanban-empty i {
         font-size: 2.5rem;
         margin-bottom: var(--spacing-sm);
-        opacity: 0.5;
+        opacity: 0.4;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
     }
 
     .kanban-empty p {
         font-size: 0.85rem;
         margin: 0;
+        opacity: 0.6;
     }
 
     /* Drag and drop styles */
@@ -231,21 +315,21 @@
         margin-right: var(--spacing-lg);
     }
 
-    /* Assignment Cube - Enhanced for Kanban */
+    /* Assignment Cube - Modern Card Design */
     .assignment-cube {
-        background-color: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: var(--spacing-md);
+        border-radius: 16px;
+        padding: 16px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         flex-direction: column;
         position: relative;
         overflow: hidden;
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         animation: fadeIn 0.4s ease-out backwards;
         cursor: grab;
-        min-height: 0;
+        min-height: 110px;
+        height: auto;
+        border: none;
     }
 
     .assignment-cube:active {
@@ -261,12 +345,13 @@
         flex: 1;
         position: relative;
         z-index: 2;
-        gap: 8px;
+        gap: 10px;
     }
 
     /* Assignment info section */
     .assignment-info {
-        flex: 0 0 auto;
+        flex: 1;
+        min-height: 0;
     }
 
     /* Remove old grid spans for kanban layout */
@@ -333,6 +418,7 @@
         /* Smaller assignment cube padding on mobile */
         .assignment-cube {
             padding: 10px;
+            min-height: 100px;
         }
         
         /* Smaller text on mobile */
@@ -341,6 +427,7 @@
             -webkit-line-clamp: 2;
             margin-bottom: 2px;
             line-height: 1.15;
+            margin-right: 25px;
         }
         
         .assignment-subject {
@@ -432,11 +519,24 @@
         }
     }
 
+    /* Assignment cube content layout */
+    .cube-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        min-height: 0;
+        gap: 8px;
+    }
+    
+    .assignment-info {
+        flex: 1;
+        min-height: 0;
+    }
+
     .assignment-cube:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transform: translateY(-4px);
         z-index: 5;
-        border-color: var(--color-primary);
     }
 
     .assignment-cube.completed {
@@ -445,37 +545,37 @@
         pointer-events: none;
     }
 
-    /* Typography */
+    /* Typography - Clean & Modern */
     .assignment-title {
-        font-weight: 700;
-        color: var(--text-primary);
+        font-weight: 600;
         margin-bottom: 4px;
-        line-height: 1.3;
+        line-height: 1.35;
         z-index: 1;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         word-break: break-word;
+        letter-spacing: -0.01em;
     }
 
     .assignment-subject {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
+        font-size: 0.8rem;
         font-weight: 500;
         z-index: 1;
-        line-height: 1.2;
+        line-height: 1.3;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        opacity: 0.85;
     }
 
-    /* Time Display */
+    /* Time Display - Simplified */
     .time-container {
         margin-top: auto;
-        padding-top: var(--spacing-xs);
+        padding-top: 10px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -486,183 +586,314 @@
     .time-info {
         display: flex;
         flex-direction: column;
+        gap: 2px;
     }
 
     .time-remaining-large {
-        font-weight: 800;
+        font-weight: 700;
         line-height: 1;
-        font-size: 1.1rem;
+        font-size: 1.15rem;
+        letter-spacing: -0.02em;
     }
 
     .time-label {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
         font-weight: 600;
-        opacity: 0.7;
         text-transform: uppercase;
-        letter-spacing: 0.4px;
+        letter-spacing: 0.5px;
         line-height: 1.2;
-        margin-top: 2px;
+        opacity: 0.8;
     }
 
-    /* Move to column button */
+    /* Move to column button - Modern */
     .move-btn {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 1px solid var(--border-color);
-        background: var(--bg-tertiary);
-        color: var(--text-secondary);
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        border: none;
+        background: rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(8px);
+        color: rgba(255, 255, 255, 0.9);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: all 0.2s;
-        font-size: 0.85rem;
+        font-size: 1rem;
     }
 
     .move-btn:hover {
-        background: var(--color-primary);
-        color: white;
-        border-color: var(--color-primary);
+        background: rgba(0, 0, 0, 0.4);
         transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    /* Action Buttons */
+    /* Action Buttons - Minimal & Clean */
     .assignment-actions {
         position: absolute;
-        top: 8px;
-        right: 8px;
+        top: 10px;
+        right: 10px;
         display: flex;
-        gap: 4px;
+        gap: 6px;
         z-index: 10;
         opacity: 0;
-        transition: opacity 0.2s ease;
+        transition: all 0.2s ease;
+        transform: translateY(-4px);
     }
 
     .assignment-cube:hover .assignment-actions {
         opacity: 1;
+        transform: translateY(0);
     }
 
     .action-btn {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
         border: none;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        background: var(--bg-tertiary);
-        color: var(--text-secondary);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        transition: all 0.2s;
-        font-size: 0.8rem;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(8px);
+        color: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1rem;
     }
 
     .action-btn:hover {
-        transform: scale(1.15);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        transform: scale(1.1);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
 
     .btn-complete {
-        color: var(--color-green);
+        color: #86efac;
     }
 
     .btn-complete:hover {
         background: var(--color-green);
         color: white;
+        transform: scale(1.15);
+    }
+
+    .btn-complete:hover i {
+        animation: checkPop 0.3s ease;
+    }
+
+    @keyframes checkPop {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.3); }
     }
 
     .btn-delete {
-        color: var(--color-red);
+        color: #fca5a5;
     }
 
     .btn-delete:hover {
         background: var(--color-red);
         color: white;
+        transform: scale(1.15);
     }
 
-    /* Urgency indicator strip */
+    /* Urgency indicator strip - Hidden now using full color */
     .urgency-strip {
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        border-radius: var(--border-radius) 0 0 var(--border-radius);
+        display: none;
     }
 
-    /* Color System - Based on urgency */
-    .urgency-critical .urgency-strip { background: linear-gradient(180deg, #B71C1C, #D32F2F); }
-    .urgency-critical .time-remaining-large { color: #D32F2F; }
+    /* ===== FULL COLOR ASSIGNMENT CONTAINERS ===== */
+    
+    /* Critical - Red (Overdue or < 6 hours) */
+    .urgency-critical {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.35) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+    .urgency-critical .assignment-title { color: #fecaca; }
+    .urgency-critical .assignment-subject { color: #fca5a5; }
+    .urgency-critical .time-remaining-large { color: #ef4444; }
+    .urgency-critical .time-label { color: #fca5a5; }
+    .urgency-critical .time-container { border-top-color: rgba(239, 68, 68, 0.3); }
+    .urgency-critical:hover { 
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.35) 0%, rgba(220, 38, 38, 0.45) 100%);
+        border-color: #ef4444;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(239, 68, 68, 0.3);
+    }
 
-    .urgency-urgent .urgency-strip { background: linear-gradient(180deg, #D32F2F, #E64A19); }
-    .urgency-urgent .time-remaining-large { color: #E64A19; }
+    /* Urgent - Orange (< 24 hours) */
+    .urgency-urgent {
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(234, 88, 12, 0.3) 100%);
+        border: 1px solid rgba(249, 115, 22, 0.5);
+    }
+    .urgency-urgent .assignment-title { color: #fed7aa; }
+    .urgency-urgent .assignment-subject { color: #fdba74; }
+    .urgency-urgent .time-remaining-large { color: #f97316; }
+    .urgency-urgent .time-label { color: #fdba74; }
+    .urgency-urgent .time-container { border-top-color: rgba(249, 115, 22, 0.3); }
+    .urgency-urgent:hover { 
+        background: linear-gradient(135deg, rgba(249, 115, 22, 0.3) 0%, rgba(234, 88, 12, 0.4) 100%);
+        border-color: #f97316;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(249, 115, 22, 0.3);
+    }
 
-    .urgency-soon .urgency-strip { background: linear-gradient(180deg, #E64A19, #F57C00); }
-    .urgency-soon .time-remaining-large { color: #F57C00; }
+    /* Soon - Amber (< 48 hours) */
+    .urgency-soon {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.28) 100%);
+        border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+    .urgency-soon .assignment-title { color: #fde68a; }
+    .urgency-soon .assignment-subject { color: #fcd34d; }
+    .urgency-soon .time-remaining-large { color: #f59e0b; }
+    .urgency-soon .time-label { color: #fcd34d; }
+    .urgency-soon .time-container { border-top-color: rgba(245, 158, 11, 0.3); }
+    .urgency-soon:hover { 
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.28) 0%, rgba(217, 119, 6, 0.38) 100%);
+        border-color: #f59e0b;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(245, 158, 11, 0.3);
+    }
 
-    .urgency-approaching .urgency-strip { background: linear-gradient(180deg, #F57C00, #FFA726); }
-    .urgency-approaching .time-remaining-large { color: #F57C00; }
+    /* Approaching - Yellow (< 5 days) */
+    .urgency-approaching {
+        background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(202, 138, 4, 0.25) 100%);
+        border: 1px solid rgba(234, 179, 8, 0.5);
+    }
+    .urgency-approaching .assignment-title { color: #fef08a; }
+    .urgency-approaching .assignment-subject { color: #fde047; }
+    .urgency-approaching .time-remaining-large { color: #eab308; }
+    .urgency-approaching .time-label { color: #fde047; }
+    .urgency-approaching .time-container { border-top-color: rgba(234, 179, 8, 0.3); }
+    .urgency-approaching:hover { 
+        background: linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(202, 138, 4, 0.35) 100%);
+        border-color: #eab308;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(234, 179, 8, 0.3);
+    }
 
-    .urgency-upcoming .urgency-strip { background: linear-gradient(180deg, #FFA726, #FFCA28); }
-    .urgency-upcoming .time-remaining-large { color: #F9A825; }
+    /* Upcoming - Lime (< 7 days) */
+    .urgency-upcoming {
+        background: linear-gradient(135deg, rgba(132, 204, 22, 0.15) 0%, rgba(101, 163, 13, 0.25) 100%);
+        border: 1px solid rgba(132, 204, 22, 0.5);
+    }
+    .urgency-upcoming .assignment-title { color: #d9f99d; }
+    .urgency-upcoming .assignment-subject { color: #bef264; }
+    .urgency-upcoming .time-remaining-large { color: #84cc16; }
+    .urgency-upcoming .time-label { color: #bef264; }
+    .urgency-upcoming .time-container { border-top-color: rgba(132, 204, 22, 0.3); }
+    .urgency-upcoming:hover { 
+        background: linear-gradient(135deg, rgba(132, 204, 22, 0.25) 0%, rgba(101, 163, 13, 0.35) 100%);
+        border-color: #84cc16;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(132, 204, 22, 0.3);
+    }
 
-    .urgency-future .urgency-strip { background: linear-gradient(180deg, #AED581, #C5E1A5); }
-    .urgency-future .time-remaining-large { color: #558B2F; }
+    /* Future - Green (< 14 days) */
+    .urgency-future {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(22, 163, 74, 0.25) 100%);
+        border: 1px solid rgba(34, 197, 94, 0.5);
+    }
+    .urgency-future .assignment-title { color: #bbf7d0; }
+    .urgency-future .assignment-subject { color: #86efac; }
+    .urgency-future .time-remaining-large { color: #22c55e; }
+    .urgency-future .time-label { color: #86efac; }
+    .urgency-future .time-container { border-top-color: rgba(34, 197, 94, 0.3); }
+    .urgency-future:hover { 
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(22, 163, 74, 0.35) 100%);
+        border-color: #22c55e;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(34, 197, 94, 0.3);
+    }
 
-    .urgency-far .urgency-strip { background: linear-gradient(180deg, #81D4FA, #B3E5FC); }
-    .urgency-far .time-remaining-large { color: #0288D1; }
+    /* Far - Blue (> 14 days) */
+    .urgency-far {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.25) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.5);
+    }
+    .urgency-far .assignment-title { color: #bfdbfe; }
+    .urgency-far .assignment-subject { color: #93c5fd; }
+    .urgency-far .time-remaining-large { color: #3b82f6; }
+    .urgency-far .time-label { color: #93c5fd; }
+    .urgency-far .time-container { border-top-color: rgba(59, 130, 246, 0.3); }
+    .urgency-far:hover { 
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.35) 100%);
+        border-color: #3b82f6;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.3);
+    }
 
-    /* Pulse animation for critical items */
-    @keyframes pulse {
-        0%, 100% { box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3); }
-        50% { box-shadow: 0 2px 16px rgba(211, 47, 47, 0.5); }
+    /* No Deadline - Neutral Gray */
+    .urgency-no-deadline {
+        background: linear-gradient(135deg, rgba(100, 116, 139, 0.15) 0%, rgba(71, 85, 105, 0.25) 100%);
+        border: 1px solid rgba(100, 116, 139, 0.5);
+    }
+    .urgency-no-deadline .assignment-title { color: #e2e8f0; }
+    .urgency-no-deadline .assignment-subject { color: #cbd5e1; }
+    .urgency-no-deadline .time-remaining-large { color: #94a3b8; }
+    .urgency-no-deadline .time-label { color: #94a3b8; }
+    .urgency-no-deadline .time-container { border-top-color: rgba(100, 116, 139, 0.3); }
+    .urgency-no-deadline:hover { 
+        background: linear-gradient(135deg, rgba(100, 116, 139, 0.25) 0%, rgba(71, 85, 105, 0.35) 100%);
+        border-color: #64748b;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(100, 116, 139, 0.3);
+    }
+
+    /* Subtle pulse for critical */
+    @keyframes subtlePulse {
+        0%, 100% { box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1); }
+        50% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.25); }
     }
 
     .urgency-critical {
-        animation: pulse 2s ease-in-out infinite;
-        border-color: rgba(211, 47, 47, 0.3);
+        animation: subtlePulse 3s ease-in-out infinite;
     }
 
     .urgency-critical:hover {
         animation: none;
     }
 
-    /* Completed Items in Kanban */
+    /* Completed Items - Dark Theme Compatible */
     .completed-cube {
         background: var(--bg-primary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: var(--spacing-md);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        border-left: 4px solid #22c55e;
+        border-radius: 14px;
+        padding: 14px 16px;
         display: flex;
         flex-direction: column;
-        gap: var(--spacing-xs);
+        gap: 6px;
         position: relative;
-        transition: all 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .completed-cube:hover {
-        border-color: var(--text-tertiary);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(34, 197, 94, 0.15);
+        border-color: #22c55e;
     }
 
     .completed-cube .assignment-title {
-        color: var(--text-secondary);
-        font-size: 0.85rem;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-weight: 600;
     }
 
     .completed-cube .assignment-subject {
-        font-size: 0.7rem;
-        color: var(--text-tertiary);
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        opacity: 0.8;
     }
 
     .completed-cube .completed-date {
         display: flex;
         align-items: center;
         gap: 4px;
-        font-size: 0.7rem;
-        color: var(--color-green);
-        margin-top: var(--spacing-xs);
+        font-size: 0.72rem;
+        color: #22c55e;
+        margin-top: 4px;
+        font-weight: 500;
     }
 
     .completed-cube .completed-date i {
@@ -671,13 +902,13 @@
 
     .completed-cube .delete-btn {
         position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
+        top: 10px;
+        right: 10px;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
         border: none;
-        background: transparent;
+        background: var(--bg-tertiary);
         color: var(--text-tertiary);
         cursor: pointer;
         display: flex;
@@ -685,7 +916,7 @@
         justify-content: center;
         opacity: 0;
         transition: all 0.2s;
-        font-size: 0.75rem;
+        font-size: 0.8rem;
     }
 
     .completed-cube:hover .delete-btn {
@@ -730,47 +961,395 @@
         }
     }
 
-    /* Enhanced Modal Styles */
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: var(--spacing-lg);
-    }
-
-    .modal-header-content {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-    }
-
-    .modal-icon {
-        width: 48px;
-        height: 48px;
+    /* ===== NOTION-STYLE MODAL ===== */
+    .notion-modal {
+        max-width: 480px;
+        padding: 0;
         border-radius: 12px;
-        background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark, #4338ca));
+        overflow: hidden;
+    }
+
+    .notion-modal .modal-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: var(--text-tertiary);
+        font-size: 1.5rem;
+        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        font-size: 1.5rem;
+        transition: all 0.2s;
+        z-index: 10;
     }
 
-    .modal-subtitle {
-        font-size: 0.85rem;
+    .notion-modal .modal-close:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    /* Notion Title Input */
+    .notion-title-input {
+        width: 100%;
+        padding: 24px 24px 12px;
+        font-size: 1.75rem;
+        font-weight: 700;
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        outline: none;
+    }
+
+    .notion-title-input::placeholder {
         color: var(--text-tertiary);
-        margin-top: 2px;
     }
 
-    .form-label {
+    /* Notion Properties */
+    .notion-properties {
+        padding: 0 24px 16px;
+    }
+
+    .notion-property-row {
+        display: flex;
+        align-items: flex-start;
+        padding: 10px 0;
+        min-height: 40px;
+        border-radius: 4px;
+        transition: background 0.15s;
+    }
+
+    .notion-property-row:hover {
+        background: var(--bg-hover);
+        margin: 0 -8px;
+        padding: 10px 8px;
+    }
+
+    .notion-property-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 120px;
+        flex-shrink: 0;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .notion-property-label i {
+        font-size: 1.1rem;
+        opacity: 0.7;
+    }
+
+    .notion-property-value {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
+    }
+
+    /* Notion Select */
+    .notion-select {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: none;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        outline: none;
+        transition: all 0.2s;
+        appearance: none;
+        min-width: 100px;
+    }
+
+    .notion-select:hover {
+        background: var(--bg-hover);
+    }
+
+    .notion-select:focus {
+        box-shadow: 0 0 0 2px var(--color-primary);
+    }
+
+    .notion-select option {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    /* Priority colors in select */
+    .notion-select[id="assignmentPriority"] option[value="high"] { color: #ef4444; }
+    .notion-select[id="assignmentPriority"] option[value="normal"] { color: #eab308; }
+    .notion-select[id="assignmentPriority"] option[value="low"] { color: #64748b; }
+
+    /* Status select styling */
+    .notion-status-select {
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--color-primary);
+        border-radius: 20px;
+        padding: 4px 14px;
+    }
+
+    /* Notion Date Wrapper */
+    .notion-date-wrapper {
         display: flex;
         align-items: center;
         gap: 6px;
     }
 
+    .notion-date-input,
+    .notion-time-input {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: none;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        outline: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .notion-date-input:hover,
+    .notion-time-input:hover {
+        background: var(--bg-hover);
+    }
+
+    .notion-date-input:focus,
+    .notion-time-input:focus {
+        box-shadow: 0 0 0 2px var(--color-primary);
+    }
+
+    .notion-date-input::-webkit-calendar-picker-indicator,
+    .notion-time-input::-webkit-calendar-picker-indicator {
+        filter: invert(0.7);
+        cursor: pointer;
+    }
+
+    .notion-clear-date {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        border: none;
+        background: transparent;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .notion-clear-date:hover {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--color-red);
+    }
+
+    .notion-empty-value {
+        color: var(--text-tertiary);
+        font-size: 0.9rem;
+        display: none;
+    }
+
+    .notion-empty-value.visible {
+        display: inline;
+    }
+
+    /* Notion Textarea */
+    .notion-textarea {
+        width: 100%;
+        min-height: 60px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: none;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-family: inherit;
+        outline: none;
+        resize: vertical;
+        transition: all 0.2s;
+    }
+
+    .notion-textarea:hover {
+        background: var(--bg-hover);
+    }
+
+    .notion-textarea:focus {
+        box-shadow: 0 0 0 2px var(--color-primary);
+    }
+
+    .notion-textarea::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    .notion-notes-row {
+        align-items: flex-start;
+    }
+
+    .notion-notes-row .notion-property-label {
+        padding-top: 8px;
+    }
+
+    .notion-notes-row .notion-property-value {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Notion Quick Options */
+    .notion-quick-options {
+        display: flex;
+        gap: 8px;
+        padding: 12px 24px;
+        border-top: 1px solid var(--border-color);
+        flex-wrap: wrap;
+    }
+
+    .notion-quick-btn {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .notion-quick-btn:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .notion-quick-btn.active {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        color: white;
+    }
+
+    .notion-no-deadline {
+        border-color: var(--text-tertiary);
+    }
+
+    .notion-no-deadline:hover,
+    .notion-no-deadline.active {
+        border-color: #64748b;
+        background: rgba(100, 116, 139, 0.2);
+        color: var(--text-primary);
+    }
+
+    /* Notion Modal Actions */
+    .notion-modal-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        border-top: 1px solid var(--border-color);
+        background: var(--bg-tertiary);
+    }
+
+    .notion-save-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-left: auto;
+    }
+
+    .notion-save-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .notion-delete-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: none;
+        background: transparent;
+        color: var(--color-red);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .notion-delete-btn:hover {
+        background: rgba(239, 68, 68, 0.15);
+    }
+
+    /* Priority badge styles for display */
+    .priority-badge-display {
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .priority-high-badge {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+    }
+
+    .priority-normal-badge {
+        background: rgba(234, 179, 8, 0.15);
+        color: #eab308;
+    }
+
+    .priority-low-badge {
+        background: rgba(100, 116, 139, 0.15);
+        color: #64748b;
+    }
+
+    .form-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+
     .form-label i {
         color: var(--text-tertiary);
         font-size: 1rem;
+    }
+
+    .form-input, .form-textarea, .form-select {
+        border-radius: 10px;
+        border: 1.5px solid var(--border-color);
+        padding: 12px 14px;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        outline: none;
+        background: var(--bg-secondary);
+    }
+
+    .form-input::placeholder, .form-textarea::placeholder {
+        color: var(--text-tertiary);
     }
 
     .form-row {
@@ -795,8 +1374,8 @@
     .quick-time-options {
         display: flex;
         align-items: center;
-        gap: var(--spacing-sm);
-        margin-top: var(--spacing-md);
+        gap: 8px;
+        margin-top: 16px;
         flex-wrap: wrap;
     }
 
@@ -804,37 +1383,56 @@
         font-size: 0.8rem;
         color: var(--text-tertiary);
         font-weight: 500;
+        width: 100%;
+        margin-bottom: 4px;
     }
 
     .quick-time-btn {
-        padding: 6px 12px;
-        border-radius: var(--border-radius);
-        border: 1px solid var(--border-color);
-        background: var(--bg-tertiary);
+        padding: 8px 14px;
+        border-radius: 10px;
+        border: 1.5px solid var(--border-color);
+        background: var(--bg-primary);
         color: var(--text-secondary);
         font-size: 0.8rem;
         font-weight: 500;
         cursor: pointer;
-        transition: all var(--transition-fast);
+        transition: all 0.2s;
     }
 
     .quick-time-btn:hover {
         border-color: var(--color-primary);
         color: var(--color-primary);
-        background: rgba(79, 70, 229, 0.1);
+        background: rgba(99, 102, 241, 0.1);
     }
 
     .quick-time-btn.active {
         border-color: var(--color-primary);
-        background: var(--color-primary);
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
         color: white;
+    }
+
+    .quick-time-btn.no-deadline-btn {
+        background: var(--bg-tertiary);
+        border-color: var(--border-color);
+        color: var(--text-secondary);
+    }
+
+    .quick-time-btn.no-deadline-btn:hover,
+    .quick-time-btn.no-deadline-btn.active {
+        background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+        color: white;
+        border-color: #a855f7;
     }
 
     /* Optional label styling */
     .optional-label {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         color: var(--text-tertiary);
-        font-weight: 400;
+        font-weight: 500;
+        background: var(--bg-tertiary);
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-left: 6px;
     }
 
     /* Textarea styling */
@@ -848,24 +1446,20 @@
     .form-select {
         cursor: pointer;
         appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: right 12px center;
         padding-right: 36px;
     }
 
-    /* Priority badge in cube */
+    .form-select option {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    /* Priority badge in cube - Hidden in new simplified design */
     .priority-badge {
-        position: absolute;
-        top: 8px;
-        left: 8px;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.65rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        z-index: 3;
+        display: none;
     }
 
     .priority-high {
@@ -883,18 +1477,23 @@
         color: #6b7280;
     }
 
+    /* Has description indicator - Hidden for cleaner look */
+    .has-description-indicator {
+        display: none;
+    }
+
     /* View modal styles */
     .view-modal-content {
         background: var(--bg-tertiary);
-        border-radius: var(--border-radius);
-        padding: var(--spacing-lg);
+        border-radius: 14px;
+        padding: 20px;
     }
 
     .detail-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: var(--spacing-sm) 0;
+        padding: 12px 0;
         border-bottom: 1px solid var(--border-color);
     }
 
@@ -939,10 +1538,11 @@
     .has-description-indicator {
         position: absolute;
         bottom: 8px;
-        left: 8px;
+        right: 8px;
         color: var(--text-tertiary);
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         opacity: 0.7;
+        z-index: 2;
     }
 
     /* Improved Form Group Styling */
@@ -1007,9 +1607,9 @@
                     <span>Pending</span>
                 </div>
             </div>
-            <button id="addAssignmentBtn" class="btn btn-primary btn-lg">
+            <button id="addAssignmentBtn" class="btn-add-assignment">
                 <i class="mdi mdi-plus"></i>
-                <span>Add Assignment</span>
+                <span>New Task</span>
             </button>
         </div>
     </div>
@@ -1080,128 +1680,93 @@
     </div>
 </div>
 
-<!-- Add Assignment Modal -->
+<!-- Notion-Style Assignment Modal (Add/Edit) -->
 <div class="modal-overlay" id="addModal">
-    <div class="modal">
-        <div class="modal-header">
-            <div class="modal-header-content">
-                <div class="modal-icon">
-                    <i class="mdi mdi-clipboard-plus-outline"></i>
+    <div class="modal notion-modal">
+        <button class="modal-close" id="closeModalBtn">&times;</button>
+        
+        <!-- Editable Title -->
+        <input type="text" id="assignmentTitle" class="notion-title-input" placeholder="Untitled Assignment" required>
+        
+        <!-- Property Rows -->
+        <div class="notion-properties">
+            <!-- Priority -->
+            <div class="notion-property-row">
+                <div class="notion-property-label">
+                    <i class="mdi mdi-flag-outline"></i>
+                    <span>Priority</span>
                 </div>
-                <div>
-                    <h2 class="modal-title">Add New Assignment</h2>
-                    <p class="modal-subtitle">Set a deadline and stay on track</p>
-                </div>
-            </div>
-            <button class="modal-close" id="closeModalBtn">&times;</button>
-        </div>
-        <form id="addAssignmentForm">
-            <div class="form-group">
-                <label for="assignmentTitle" class="form-label">
-                    <i class="mdi mdi-format-title"></i> Assignment Name
-                </label>
-                <input type="text" id="assignmentTitle" class="form-input"
-                    placeholder="e.g., Math Homework, Essay Draft" required>
-            </div>
-
-            <div class="form-group">
-                <label for="assignmentDescription" class="form-label">
-                    <i class="mdi mdi-text"></i> Description <span class="optional-label">(optional)</span>
-                </label>
-                <textarea id="assignmentDescription" class="form-input form-textarea"
-                    placeholder="Add notes or details about this assignment..." rows="3"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="assignmentPriority" class="form-label">
-                    <i class="mdi mdi-flag"></i> Priority
-                </label>
-                <select id="assignmentPriority" class="form-input form-select">
-                    <option value="low">Low</option>
-                    <option value="normal" selected>Normal</option>
-                    <option value="high">High</option>
-                </select>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="assignmentAssignedDate" class="form-label">
-                        <i class="mdi mdi-calendar-check"></i> Assigned Date
-                    </label>
-                    <input type="date" id="assignmentAssignedDate" class="form-input" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label for="assignmentDeadline" class="form-label">
-                        <i class="mdi mdi-calendar"></i> Deadline Date
-                    </label>
-                    <input type="date" id="assignmentDeadline" class="form-input" required>
+                <div class="notion-property-value">
+                    <select id="assignmentPriority" class="notion-select">
+                        <option value="low">Low</option>
+                        <option value="normal" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="assignmentTime" class="form-label">
-                    <i class="mdi mdi-clock-outline"></i> Deadline Time <span class="optional-label">(optional - defaults to 11:59 PM)</span>
-                </label>
-                <input type="time" id="assignmentTime" class="form-input" value="23:59">
-                <div class="time-hint" id="timeHint"></div>
-            </div>
-
-            <div class="quick-time-options">
-                <span class="quick-label">Quick set deadline:</span>
-                <button type="button" class="quick-time-btn" data-days="0">Today</button>
-                <button type="button" class="quick-time-btn" data-days="1">Tomorrow</button>
-                <button type="button" class="quick-time-btn" data-days="7">Next Week</button>
-            </div>
-
-            <div class="flex gap-2" style="margin-top: var(--spacing-xl);">
-                <button type="button" id="cancelBtn" class="btn btn-secondary" style="flex: 1;">
-                    <i class="mdi mdi-close"></i> Cancel
-                </button>
-                <button type="submit" class="btn btn-primary" style="flex: 1;">
-                    <i class="mdi mdi-check"></i> Add Assignment
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- View Assignment Details Modal -->
-<div class="modal-overlay" id="viewModal">
-    <div class="modal">
-        <div class="modal-header">
-            <div class="modal-header-content">
-                <div class="modal-icon" id="viewModalIcon">
-                    <i class="mdi mdi-clipboard-text-outline"></i>
+            <!-- Status -->
+            <div class="notion-property-row">
+                <div class="notion-property-label">
+                    <i class="mdi mdi-checkbox-marked-circle-outline"></i>
+                    <span>Status</span>
                 </div>
-                <div>
-                    <h2 class="modal-title" id="viewModalTitle">Assignment Details</h2>
-                    <p class="modal-subtitle" id="viewModalSubtitle">View assignment information</p>
+                <div class="notion-property-value">
+                    <select id="assignmentStatus" class="notion-select notion-status-select">
+                        <option value="todo">To-Do</option>
+                        <option value="in_progress">In Progress</option>
+                    </select>
                 </div>
             </div>
-            <button class="modal-close" id="closeViewModalBtn">&times;</button>
-        </div>
-        <div class="view-modal-content">
-            <div class="detail-row">
-                <span class="detail-label"><i class="mdi mdi-flag"></i> Priority</span>
-                <span class="detail-value" id="viewPriority">Normal</span>
+
+            <!-- Notes/Description -->
+            <div class="notion-property-row notion-notes-row">
+                <div class="notion-property-label">
+                    <i class="mdi mdi-text"></i>
+                    <span>Notes</span>
+                </div>
+                <div class="notion-property-value">
+                    <textarea id="assignmentDescription" class="notion-textarea" placeholder="Add notes..."></textarea>
+                </div>
             </div>
-            <div class="detail-row">
-                <span class="detail-label"><i class="mdi mdi-calendar"></i> Deadline</span>
-                <span class="detail-value" id="viewDeadline">-</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label"><i class="mdi mdi-clock-outline"></i> Time Remaining</span>
-                <span class="detail-value" id="viewTimeRemaining">-</span>
-            </div>
-            <div class="detail-row description-row" id="descriptionRow" style="display: none;">
-                <span class="detail-label"><i class="mdi mdi-text"></i> Description</span>
-                <p class="detail-description" id="viewDescription"></p>
+
+            <!-- Deadline (moved to bottom) -->
+            <div class="notion-property-row">
+                <div class="notion-property-label">
+                    <i class="mdi mdi-calendar-outline"></i>
+                    <span>Deadline</span>
+                </div>
+                <div class="notion-property-value">
+                    <div class="notion-date-wrapper">
+                        <input type="date" id="assignmentDeadline" class="notion-date-input">
+                        <input type="time" id="assignmentTime" class="notion-time-input" value="23:59">
+                        <button type="button" class="notion-clear-date" id="clearDeadlineBtn" title="Clear deadline">
+                            <i class="mdi mdi-close"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="flex gap-2" style="margin-top: var(--spacing-xl);">
-            <button type="button" id="closeViewBtn" class="btn btn-secondary" style="flex: 1;">
-                <i class="mdi mdi-close"></i> Close
+
+        <!-- Quick Deadline Options -->
+        <div class="notion-quick-options">
+            <button type="button" class="notion-quick-btn" data-days="0">Today</button>
+            <button type="button" class="notion-quick-btn" data-days="1">Tomorrow</button>
+            <button type="button" class="notion-quick-btn" data-days="7">Next Week</button>
+            <button type="button" class="notion-quick-btn notion-no-deadline" data-no-deadline="true">No Deadline</button>
+        </div>
+
+        <!-- Hidden fields -->
+        <input type="hidden" id="editAssignmentId" value="">
+        <input type="hidden" id="assignmentAssignedDate">
+
+        <!-- Action Button -->
+        <div class="notion-modal-actions">
+            <button type="button" id="deleteAssignmentBtn" class="notion-delete-btn" style="display: none;">
+                <i class="mdi mdi-trash-can-outline"></i> Delete
+            </button>
+            <button type="button" id="saveAssignmentBtn" class="notion-save-btn">
+                <i class="mdi mdi-check"></i> <span id="saveButtonText">Add Assignment</span>
             </button>
         </div>
     </div>
@@ -1220,10 +1785,14 @@
     const addModal = document.getElementById('addModal');
     const addAssignmentBtn = document.getElementById('addAssignmentBtn');
     const closeModalBtn = document.getElementById('closeModalBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const addAssignmentForm = document.getElementById('addAssignmentForm');
     const dateInput = document.getElementById('assignmentDeadline');
     const timeInput = document.getElementById('assignmentTime');
+    const saveBtn = document.getElementById('saveAssignmentBtn');
+    const deleteBtn = document.getElementById('deleteAssignmentBtn');
+
+    // Track if we're in edit mode
+    let isEditMode = false;
+    let currentEditId = null;
 
     // Setup Date Input Min Value (Prevent Past Dates)
     function setupDateValidation() {
@@ -1233,90 +1802,266 @@
         const dd = String(today.getDate()).padStart(2, '0');
 
         dateInput.min = `${yyyy}-${mm}-${dd}`;
-
-        // Set default date to today
-        if (!dateInput.value) {
-            dateInput.value = `${yyyy}-${mm}-${dd}`;
-        }
-
-        // Update time validation when date changes
-        updateTimeValidation();
+        // Don't set default date - allow users to have no deadline
     }
 
-    // Time validation for same-day assignments
-    function updateTimeValidation() {
-        const timeHint = document.getElementById('timeHint');
+    // Open modal for adding new assignment
+    function openAddModal() {
+        isEditMode = false;
+        currentEditId = null;
+        
+        // Reset form
+        document.getElementById('assignmentTitle').value = '';
+        document.getElementById('assignmentDescription').value = '';
+        document.getElementById('assignmentPriority').value = 'normal';
+        document.getElementById('assignmentStatus').value = 'todo';
+        dateInput.value = '';
+        timeInput.value = '23:59';
+        document.getElementById('editAssignmentId').value = '';
+        
+        // Update UI
+        document.getElementById('saveButtonText').textContent = 'Add Assignment';
+        deleteBtn.style.display = 'none';
+        
+        // Set up minimum date validation (without setting default date)
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${yyyy}-${mm}-${dd}`;
+        dateInput.min = `${yyyy}-${mm}-${dd}`;
+        
+        // Reset quick buttons - activate "No Deadline" by default
+        document.querySelectorAll('.notion-quick-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.notion-no-deadline').classList.add('active');
+        
+        // Hide date and time inputs by default (since "No Deadline" is selected)
+        dateInput.style.display = 'none';
+        timeInput.style.display = 'none';
+        
+        addModal.classList.add('active');
+        document.getElementById('assignmentTitle').focus();
+    }
 
-        if (dateInput.value === todayStr) {
-            // For today, get current time + 1 minute as minimum
-            const hours = String(today.getHours()).padStart(2, '0');
-            const minutes = String(Math.min(59, today.getMinutes() + 1)).padStart(2, '0');
-            const minTime = `${hours}:${minutes}`;
-
-            timeInput.min = minTime;
-
-            // Only show warning if the current time value is less than minimum
-            if (timeInput.value && timeInput.value < minTime) {
-                timeHint.textContent = `⚠️ Time must be after ${formatTimeDisplay(minTime)}`;
-                timeHint.style.color = 'var(--color-red)';
-            } else {
-                timeHint.textContent = '';
-            }
+    // Open modal for editing existing assignment
+    function openEditModal(assignment) {
+        isEditMode = true;
+        currentEditId = assignment.id;
+        
+        // Populate form with assignment data
+        document.getElementById('assignmentTitle').value = assignment.title || '';
+        document.getElementById('assignmentDescription').value = assignment.description || '';
+        document.getElementById('assignmentPriority').value = assignment.priority || 'normal';
+        document.getElementById('assignmentStatus').value = assignment.status || 'todo';
+        document.getElementById('editAssignmentId').value = assignment.id;
+        
+        // Parse deadline
+        if (assignment.deadline) {
+            const deadline = new Date(assignment.deadline);
+            const yyyy = deadline.getFullYear();
+            const mm = String(deadline.getMonth() + 1).padStart(2, '0');
+            const dd = String(deadline.getDate()).padStart(2, '0');
+            const hh = String(deadline.getHours()).padStart(2, '0');
+            const min = String(deadline.getMinutes()).padStart(2, '0');
+            
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+            timeInput.value = `${hh}:${min}`;
+            
+            // Show date and time inputs since assignment has a deadline
+            dateInput.style.display = 'block';
+            timeInput.style.display = 'block';
         } else {
-            // For future dates, any time is valid
-            timeInput.min = '';
-            timeHint.textContent = '';
+            dateInput.value = '';
+            timeInput.value = '23:59';
+            
+            // Hide date and time inputs since assignment has no deadline
+            dateInput.style.display = 'none';
+            timeInput.style.display = 'none';
         }
+        
+        // Update UI
+        document.getElementById('saveButtonText').textContent = 'Save Changes';
+        deleteBtn.style.display = 'flex';
+        
+        // Reset quick buttons - activate appropriate button based on deadline
+        document.querySelectorAll('.notion-quick-btn').forEach(b => b.classList.remove('active'));
+        if (!assignment.deadline) {
+            document.querySelector('.notion-no-deadline').classList.add('active');
+        }
+        
+        addModal.classList.add('active');
     }
 
-    // Format time for display (12-hour format)
-    function formatTimeDisplay(time24) {
-        const [hours, minutes] = time24.split(':');
-        const h = parseInt(hours);
-        const ampm = h >= 12 ? 'PM' : 'AM';
-        const h12 = h % 12 || 12;
-        return `${h12}:${minutes} ${ampm}`;
+    // Close modal
+    function closeModal() {
+        addModal.classList.remove('active');
+        isEditMode = false;
+        currentEditId = null;
     }
 
-    // Date input change handler
-    dateInput.addEventListener('change', updateTimeValidation);
+    // Event Listeners
+    addAssignmentBtn.addEventListener('click', openAddModal);
+    closeModalBtn.addEventListener('click', closeModal);
 
-    // Time input change handler for validation
-    timeInput.addEventListener('change', function () {
-        updateTimeValidation();
+    // Close on overlay click
+    addModal.addEventListener('click', (e) => {
+        if (e.target === addModal) {
+            closeModal();
+        }
     });
 
-    // Quick time buttons
-    document.querySelectorAll('.quick-time-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const days = parseInt(this.dataset.days);
-            const targetDate = new Date();
-            targetDate.setDate(targetDate.getDate() + days);
+    // Clear deadline button
+    document.getElementById('clearDeadlineBtn').addEventListener('click', () => {
+        dateInput.value = '';
+        timeInput.value = '23:59';
+        document.querySelectorAll('.notion-quick-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.notion-no-deadline').classList.add('active');
+        // Hide date and time inputs when no deadline is selected
+        dateInput.style.display = 'none';
+        timeInput.style.display = 'none';
+    });
 
-            const yyyy = targetDate.getFullYear();
-            const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(targetDate.getDate()).padStart(2, '0');
-
-            dateInput.value = `${yyyy}-${mm}-${dd}`;
-
-            // Remove active state from all buttons
-            document.querySelectorAll('.quick-time-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-
-            // If today, set time to end of day by default
-            if (days === 0) {
-                timeInput.value = '23:59';
+    // Quick date buttons
+    document.querySelectorAll('.notion-quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.notion-quick-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if (btn.dataset.noDeadline) {
+                dateInput.value = '';
+                // Hide date and time inputs when no deadline is selected
+                dateInput.style.display = 'none';
+                timeInput.style.display = 'none';
             } else {
-                timeInput.value = '23:59';
+                // Show date and time inputs when a deadline option is selected
+                dateInput.style.display = 'block';
+                timeInput.style.display = 'block';
+                
+                const days = parseInt(btn.dataset.days);
+                const date = new Date();
+                date.setDate(date.getDate() + days);
+                
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+        });
+    });
+
+    // Priority select color update
+    const prioritySelect = document.getElementById('assignmentPriority');
+    function updatePriorityColor() {
+        const value = prioritySelect.value;
+        if (value === 'high') {
+            prioritySelect.style.background = 'rgba(239, 68, 68, 0.15)';
+            prioritySelect.style.color = '#ef4444';
+        } else if (value === 'normal') {
+            prioritySelect.style.background = 'rgba(234, 179, 8, 0.15)';
+            prioritySelect.style.color = '#eab308';
+        } else {
+            prioritySelect.style.background = 'rgba(100, 116, 139, 0.15)';
+            prioritySelect.style.color = '#94a3b8';
+        }
+    }
+    prioritySelect.addEventListener('change', updatePriorityColor);
+    updatePriorityColor();
+
+    // Save button click
+    saveBtn.addEventListener('click', async () => {
+        const title = document.getElementById('assignmentTitle').value.trim();
+        if (!title) {
+            alert('Please enter a title for the assignment');
+            document.getElementById('assignmentTitle').focus();
+            return;
+        }
+
+        const dateVal = dateInput.value;
+        const timeVal = timeInput.value || '23:59';
+        
+        // Deadline is optional - only set if date is provided
+        let deadline = null;
+        if (dateVal && dateVal.trim() !== '') {
+            deadline = `${dateVal}T${timeVal}`;
+        }
+
+        const formData = {
+            title: title,
+            description: document.getElementById('assignmentDescription').value || '',
+            priority: document.getElementById('assignmentPriority').value || 'normal',
+            deadline: deadline,
+            status: document.getElementById('assignmentStatus').value || 'todo'
+        };
+
+        // Debug logging for assignment creation
+        console.log('Creating assignment with data:', formData);
+        console.log('Deadline value:', deadline);
+
+        try {
+            let url, method;
+            if (isEditMode && currentEditId) {
+                url = `/api/assignment/${currentEditId}/update/`;
+                method = 'POST';
+            } else {
+                url = "{% url 'add_assignment' %}";
+                method = 'POST';
             }
 
-            updateTimeValidation();
-        });
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrf
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            console.log('Server response:', data);
+
+            if (data.success) {
+                if (isEditMode) {
+                    // Update existing assignment in array
+                    const index = assignments.findIndex(a => a.id === currentEditId);
+                    if (index !== -1) {
+                        assignments[index] = { ...assignments[index], ...data.assignment };
+                    }
+                } else {
+                    // Add new assignment
+                    data.assignment.status = formData.status;
+                    assignments.push(data.assignment);
+                }
+                renderKanban();
+                closeModal();
+            } else {
+                console.error('Server error:', data.error);
+                alert('Error saving assignment: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            alert('Error saving assignment. Please try again.');
+        }
+    });
+
+    // Delete button click (in edit mode)
+    deleteBtn.addEventListener('click', async () => {
+        if (!isEditMode || !currentEditId) return;
+
+        try {
+            const response = await fetch(`/api/assignment/delete/${currentEditId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrf }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                assignments = assignments.filter(a => a.id !== currentEditId);
+                renderKanban();
+                closeModal();
+            }
+        } catch (error) {
+            console.error(error);
+        }
     });
 
     // Render Kanban Board
@@ -1329,9 +2074,29 @@
         const todoAssignments = assignments.filter(a => a.status === 'todo' || !a.status);
         const inProgressAssignments = assignments.filter(a => a.status === 'in_progress');
 
-        // Sort by urgency (most urgent first)
-        todoAssignments.sort((a, b) => calculateHoursRemaining(a.deadline) - calculateHoursRemaining(b.deadline));
-        inProgressAssignments.sort((a, b) => calculateHoursRemaining(a.deadline) - calculateHoursRemaining(b.deadline));
+        // Sort by urgency (most urgent first), null deadlines go last
+        todoAssignments.sort((a, b) => {
+            const hoursA = calculateHoursRemaining(a.deadline);
+            const hoursB = calculateHoursRemaining(b.deadline);
+            
+            // Handle null deadlines - put them last
+            if (hoursA === null && hoursB === null) return 0;
+            if (hoursA === null) return 1;
+            if (hoursB === null) return -1;
+            
+            return hoursA - hoursB;
+        });
+        inProgressAssignments.sort((a, b) => {
+            const hoursA = calculateHoursRemaining(a.deadline);
+            const hoursB = calculateHoursRemaining(b.deadline);
+            
+            // Handle null deadlines - put them last
+            if (hoursA === null && hoursB === null) return 0;
+            if (hoursA === null) return 1;
+            if (hoursB === null) return -1;
+            
+            return hoursA - hoursB;
+        });
 
         // Render To Do
         if (todoAssignments.length === 0) {
@@ -1413,7 +2178,7 @@
                 <div class="time-container">
                     <div class="time-info">
                         <div class="time-remaining-large">${formatHoursRemainingShort(hoursRemaining)}</div>
-                        <div class="time-label">${hoursRemaining < 0 ? 'Overdue' : 'Remaining'}</div>
+                        <div class="time-label">${hoursRemaining === null ? '' : (hoursRemaining < 0 ? 'Overdue' : 'Remaining')}</div>
                     </div>
                     <button class="move-btn" onclick="event.stopPropagation(); moveAssignment(${assignment.id}, '${nextStatus}')" title="${nextTitle}">
                         <i class="mdi ${nextIcon}"></i>
@@ -1422,14 +2187,15 @@
             </div>
         `;
 
-        // Add click handler to view details
-        cube.addEventListener('click', () => viewAssignmentDetails(assignment));
+        // Add click handler to open edit modal
+        cube.addEventListener('click', () => openEditModal(assignment));
 
         return cube;
     }
 
     // Get urgency class based on hours remaining
     function getUrgencyClass(hours) {
+        if (hours === null) return 'urgency-no-deadline';
         if (hours < 0 || hours < 6) return 'urgency-critical';
         if (hours < 24) return 'urgency-urgent';
         if (hours < 48) return 'urgency-soon';
@@ -1565,6 +2331,7 @@
 
     // Calc functions
     function calculateHoursRemaining(deadlineStr) {
+        if (!deadlineStr) return null; // Return null for no deadline
         const deadline = new Date(deadlineStr);
         const now = new Date();
         const diff = deadline - now;
@@ -1572,6 +2339,7 @@
     }
 
     function formatHoursRemainingShort(hours) {
+        if (hours === null) return "No deadline";
         if (hours < 0) return "Late";
         if (hours < 1) {
             const minutes = Math.round(hours * 60);
@@ -1594,6 +2362,8 @@
     }
 
     function formatDate(dateStr) {
+        if (!dateStr) return 'No deadline set';
+        
         // Parse the ISO string and handle timezone
         let date;
         if (dateStr.includes('+') || dateStr.endsWith('Z')) {
@@ -1833,148 +2603,6 @@
     }
 
     // Modal Events
-    addAssignmentBtn.addEventListener('click', () => {
-        // Reset form first
-        addAssignmentForm.reset();
-
-        // Set defaults
-        timeInput.value = '23:59'; // Default to end of day
-        document.getElementById('assignmentPriority').value = 'normal';
-
-        // Set assigned date (today's date - readonly)
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        const assignedDateInput = document.getElementById('assignmentAssignedDate');
-        if (assignedDateInput) {
-            assignedDateInput.value = `${yyyy}-${mm}-${dd}`;
-        }
-
-        setupDateValidation();
-
-        // Reset quick buttons
-        document.querySelectorAll('.quick-time-btn').forEach(b => b.classList.remove('active'));
-        addModal.classList.add('active');
-    });
-
-    function closeModal() {
-        addModal.classList.remove('active');
-        addAssignmentForm.reset();
-        document.querySelectorAll('.quick-time-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('timeHint').textContent = '';
-    }
-
-    closeModalBtn.addEventListener('click', closeModal);
-    cancelBtn.addEventListener('click', closeModal);
-
-    // View Modal Elements
-    const viewModal = document.getElementById('viewModal');
-    const closeViewModalBtn = document.getElementById('closeViewModalBtn');
-    const closeViewBtn = document.getElementById('closeViewBtn');
-
-    // View assignment details function
-    function viewAssignmentDetails(assignment) {
-        const hoursRemaining = calculateHoursRemaining(assignment.deadline);
-        
-        // Set title
-        document.getElementById('viewModalTitle').textContent = assignment.title;
-        document.getElementById('viewModalSubtitle').textContent = assignment.subject || 'General';
-        
-        // Set priority with color
-        const priorityEl = document.getElementById('viewPriority');
-        const priority = assignment.priority || 'normal';
-        priorityEl.textContent = priority.charAt(0).toUpperCase() + priority.slice(1);
-        priorityEl.className = `detail-value priority-badge priority-${priority}`;
-        
-        // Set deadline
-        document.getElementById('viewDeadline').textContent = formatDate(assignment.deadline);
-        
-        // Set time remaining
-        document.getElementById('viewTimeRemaining').textContent = formatHoursRemainingShort(hoursRemaining) + (hoursRemaining < 0 ? ' overdue' : ' remaining');
-        
-        // Set description
-        const descriptionRow = document.getElementById('descriptionRow');
-        const descriptionEl = document.getElementById('viewDescription');
-        if (assignment.description && assignment.description.trim() !== '') {
-            descriptionRow.style.display = 'flex';
-            descriptionEl.textContent = assignment.description;
-        } else {
-            descriptionRow.style.display = 'none';
-        }
-        
-        // Update modal icon color based on priority
-        const iconEl = document.getElementById('viewModalIcon');
-        if (priority === 'high') {
-            iconEl.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-        } else if (priority === 'low') {
-            iconEl.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
-        } else {
-            iconEl.style.background = 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark, #4338ca))';
-        }
-        
-        viewModal.classList.add('active');
-    }
-
-    function closeViewModal() {
-        viewModal.classList.remove('active');
-    }
-
-    closeViewModalBtn.addEventListener('click', closeViewModal);
-    closeViewBtn.addEventListener('click', closeViewModal);
-    
-    // Close view modal when clicking overlay
-    viewModal.addEventListener('click', (e) => {
-        if (e.target === viewModal) {
-            closeViewModal();
-        }
-    });
-
-    addAssignmentForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // Get form values
-        const dateVal = dateInput.value;
-        const timeVal = timeInput.value || '23:59'; // Default to end of day if not provided
-        const deadline = timeVal ? `${dateVal}T${timeVal}` : dateVal;
-
-        // Basic past check (only if time is provided)
-        if (timeVal && new Date(`${dateVal}T${timeVal}`) < new Date()) {
-            alert("Please select a future date and time.");
-            return;
-        }
-
-        const formData = {
-            title: document.getElementById('assignmentTitle').value,
-            description: document.getElementById('assignmentDescription').value || '',
-            priority: document.getElementById('assignmentPriority').value || 'normal',
-            deadline: deadline
-        };
-
-        try {
-            const response = await fetch("{% url 'add_assignment' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrf
-                },
-                body: JSON.stringify(formData)
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                // New assignments start as 'todo' by default
-                data.assignment.status = 'todo';
-                assignments.push(data.assignment);
-                renderKanban();
-                closeModal();
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    });
-
     // Initial render
     renderKanban();
     startRealtimeUpdates(); // Start real-time updates
