@@ -403,7 +403,157 @@ function initDashboard(config) {
     renderSchedule();
 
     console.log('Dashboard initialization complete');
+
+    // --- Dashboard Stats Refresh Function ---
+    // Store chart instances globally for updates
+    window.dashboardActivityChart = activityChart;
+    window.dashboardWeeklyLabels = weeklyLabels;
+    window.dashboardWeeklyData = weeklyData;
+    window.dashboardMonthlyLabels = monthlyLabels;
+    window.dashboardMonthlyData = monthlyData;
+    
+    // Function to update activity chart with new data
+    window.updateActivityChart = function(newWeeklyLabels, newWeeklyData, newMonthlyLabels, newMonthlyData) {
+        window.dashboardWeeklyLabels = newWeeklyLabels;
+        window.dashboardWeeklyData = newWeeklyData;
+        window.dashboardMonthlyLabels = newMonthlyLabels;
+        window.dashboardMonthlyData = newMonthlyData;
+        
+        // Reinitialize chart with current mode
+        const btnWeekly = document.getElementById('btnWeekly');
+        const currentMode = btnWeekly && btnWeekly.classList.contains('active') ? 'weekly' : 'monthly';
+        
+        const chartElement = document.getElementById('activityChart');
+        if (!chartElement || typeof Chart === 'undefined') return;
+        
+        const ctx = chartElement.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(79, 70, 229, 0.4)');
+        gradient.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
+        
+        if (window.dashboardActivityChart) window.dashboardActivityChart.destroy();
+        
+        const labels = currentMode === 'weekly' ? newWeeklyLabels : newMonthlyLabels;
+        const data = currentMode === 'weekly' ? newWeeklyData : newMonthlyData;
+        
+        window.dashboardActivityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Minutes',
+                    data: data,
+                    backgroundColor: gradient,
+                    borderColor: '#4f46e5',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#4f46e5',
+                    pointRadius: currentMode === 'weekly' ? 4 : 2,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const mins = context.raw;
+                                if (mins >= 60) {
+                                    const hours = Math.floor(mins / 60);
+                                    const remainingMins = mins % 60;
+                                    if (remainingMins > 0) return `${hours}h ${remainingMins}m`;
+                                    return `${hours}h`;
+                                }
+                                return `${mins}m`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            maxTicksLimit: currentMode === 'weekly' ? 7 : 10,
+                            autoSkip: true,
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }
+                    }
+                }
+            }
+        });
+    };
 }
 
 // Make initDashboard available globally
 window.initDashboard = initDashboard;
+
+// --- Global Dashboard Refresh Function ---
+window.refreshDashboardStats = async function() {
+    console.log('Refreshing dashboard stats...');
+    try {
+        const response = await fetch('/api/dashboard/stats/');
+        const data = await response.json();
+        
+        if (data.success) {
+            // Update stat cards
+            const todayStatValue = document.getElementById('todayStatValue');
+            const monthlyStatValue = document.getElementById('monthlyStatValue');
+            const streakStatValue = document.getElementById('streakStatValue');
+            const pendingStatValue = document.getElementById('pendingStatValue');
+            
+            if (todayStatValue) todayStatValue.textContent = data.today_total;
+            if (monthlyStatValue) monthlyStatValue.textContent = data.monthly_total_hours;
+            if (streakStatValue) streakStatValue.textContent = data.streak;
+            if (pendingStatValue) pendingStatValue.textContent = data.pending_count;
+            
+            // Update activity chart
+            if (typeof window.updateActivityChart === 'function') {
+                window.updateActivityChart(
+                    data.chart_labels,
+                    data.chart_data,
+                    data.chart_labels_monthly,
+                    data.chart_data_monthly
+                );
+            }
+            
+            // Flash animation for updated stats
+            const statsGrid = document.getElementById('statsGrid');
+            if (statsGrid) {
+                statsGrid.style.transition = 'opacity 0.3s';
+                statsGrid.style.opacity = '0.7';
+                setTimeout(() => { statsGrid.style.opacity = '1'; }, 300);
+            }
+            
+            console.log('Dashboard stats refreshed successfully');
+            return true;
+        }
+    } catch (error) {
+        console.error('Error refreshing dashboard stats:', error);
+    }
+    return false;
+};
+
+// Auto-refresh on page visibility change (when user returns to tab)
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+        // Check if we're on dashboard page
+        if (document.getElementById('statsGrid')) {
+            window.refreshDashboardStats();
+        }
+    }
+});
+
+// Also refresh when page gains focus
+window.addEventListener('focus', function() {
+    if (document.getElementById('statsGrid')) {
+        window.refreshDashboardStats();
+    }
+});

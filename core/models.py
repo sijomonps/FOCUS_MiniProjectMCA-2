@@ -83,17 +83,23 @@ class StudySession(models.Model):
         streak = 0
         current_date = today
         
+        # Start from today and go backwards
         while True:
             has_studied = cls.objects.filter(user=user, date=current_date).exists()
             if has_studied:
                 streak += 1
-                current_date -= timedelta(days=1)
             else:
-                # If today has no study, don't count as broken yet
+                # If this is today and no study yet, continue to yesterday
+                # This gives a "grace period" for the current day
                 if current_date == today:
                     current_date -= timedelta(days=1)
                     continue
-                break
+                # If it's any past day without study, streak is broken
+                else:
+                    break
+            
+            # Move to previous day
+            current_date -= timedelta(days=1)
         
         return streak
 

@@ -39,6 +39,7 @@ urlpatterns = [
     # AJAX Endpoints
     path('api/study/save/', views.save_study_session, name='save_study_session'),
     path('api/study/today/', views.get_today_study_time, name='get_today_study_time'),
+    path('api/dashboard/stats/', views.get_dashboard_stats, name='get_dashboard_stats'),
     path('api/assignment/add/', views.add_assignment, name='add_assignment'),
     path('api/assignment/<int:assignment_id>/complete/', views.complete_assignment, name='complete_assignment'),
     path('api/assignment/<int:assignment_id>/status/', views.update_assignment_status, name='update_assignment_status'),

@@ -339,6 +339,11 @@
 {% block content %}
 <div class="timer-page fade-in">
 
+    <!-- Study Greeting -->
+    <div style="text-align: center; margin-bottom: 2rem; color: var(--text-secondary); font-size: 1.1rem; font-weight: 500;" data-dynamic-greeting="study">
+        {{ greeting }}
+    </div>
+
     <!-- Duration Presets -->
     <div class="duration-presets">
         <button class="preset-btn" data-duration="25" onclick="selectDuration(25, this)">25 min</button>
@@ -384,7 +389,12 @@
 <div class="session-complete" id="sessionComplete">
     <h2>🎉 Session Complete!</h2>
     <p id="sessionSummary">You focused for 25 minutes</p>
+    <div id="streakInfo" style="margin: 10px 0; color: #22c55e; font-weight: 500;">
+        <i class="mdi mdi-fire" style="margin-right: 4px;"></i>
+        <span id="streakText">Streak: Loading...</span>
+    </div>
     <button onclick="closeComplete()">Continue</button>
+    <button onclick="goToDashboard()" style="margin-left: 12px; background: transparent; border: 1px solid #4f46e5; color: #4f46e5;">View Dashboard</button>
 </div>
 
 <!-- Recorded Sessions Indicator -->
@@ -1128,6 +1138,11 @@
                     const totalToday = addTodayStudyMinutes(minutes);
                     console.log(`Session saved: ${minutes} min. Local total today: ${totalToday} min`);
                 }
+                
+                // Update streak info in completion overlay
+                if (data.current_streak !== undefined) {
+                    updateStreakDisplay(data.current_streak);
+                }
             } else {
                 console.error('Server error saving session:', data.error);
             }
@@ -1137,6 +1152,23 @@
             const totalToday = addTodayStudyMinutes(minutes);
             console.log(`Session saved locally: ${minutes} min. Total today: ${totalToday} min`);
         }
+    }
+
+    // Update streak display
+    function updateStreakDisplay(streak) {
+        const streakText = document.getElementById('streakText');
+        if (streakText) {
+            if (streak > 0) {
+                streakText.textContent = `Streak: ${streak} day${streak !== 1 ? 's' : ''}!`;
+            } else {
+                streakText.textContent = 'Start your streak today!';
+            }
+        }
+    }
+
+    // Go to dashboard
+    function goToDashboard() {
+        window.location.href = "{% url 'dashboard' %}";
     }
 
     // Show Recorded Indicator

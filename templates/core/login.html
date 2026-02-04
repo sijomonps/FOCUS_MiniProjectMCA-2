@@ -4,10 +4,18 @@
 {% block title %}Login - FOCUS{% endblock %}
 
 {% block auth_content %}
+<!-- Login Loading Screen -->
+<div id="loginLoadingScreen" class="login-loading-screen">
+    <img src="{% static 'images/stay_focused.webp' %}" alt="STAY FOCUSED" class="login-loading-image" onerror="this.src='{% static 'images/focus_splash.webp' %}'">
+    <div class="login-progress-container">
+        <div class="login-progress-bar"></div>
+    </div>
+</div>
+
 <div class="auth-page-wrapper">
     <!-- Left Side: Image Showcase -->
     <div class="auth-image-side">
-        <img src="{% static 'images/login-image.png' %}" alt="Focus App Showcase" class="auth-showcase-img">
+        <img src="{% static 'images/login-image.webp' %}" alt="Focus App Showcase" class="auth-showcase-img">
     </div>
 
     <!-- Right Side: Login Form -->
@@ -97,6 +105,8 @@
 </div>
 
 <style>
+    /* ===== Enhanced Auth Page Styles ===== */
+    
     /* Reset & Layout */
     .auth-page-wrapper {
         display: flex;
@@ -108,39 +118,61 @@
         position: relative;
     }
     
+    /* Subtle animated background gradient */
+    .auth-page-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(ellipse at 20% 50%, rgba(30, 30, 40, 0.4) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 20%, rgba(20, 20, 30, 0.3) 0%, transparent 40%),
+            radial-gradient(ellipse at 60% 80%, rgba(25, 25, 35, 0.3) 0%, transparent 45%);
+        pointer-events: none;
+        animation: subtleShift 20s ease-in-out infinite;
+    }
+    
+    @keyframes subtleShift {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 0.8; }
+    }
+    
     /* Feedback Section Styles */
     .feedback-section {
-        margin-top: 20px;
+        margin-top: 24px;
         width: 100%;
-        max-width: 350px;
+        max-width: 380px;
     }
     
     .feedback-title {
         text-align: center;
-        font-size: 0.75rem;
-        color: rgba(255, 255, 255, 0.5);
-        margin-bottom: 10px;
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.4);
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 2px;
     }
     
     .feedback-title i {
-        font-size: 0.9rem;
-        color: rgba(102, 153, 187, 0.7);
+        font-size: 0.85rem;
+        color: rgba(120, 120, 140, 0.6);
     }
     
     /* Feedback Marquee Styles */
     .feedback-marquee-container {
         width: 100%;
         overflow: hidden;
-        background: rgba(255, 255, 255, 0.03);
-        padding: 10px 0;
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255, 255, 255, 0.02);
+        padding: 14px 0;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
     }
     
     .feedback-marquee {
@@ -152,83 +184,79 @@
         display: flex;
         align-items: center;
         white-space: nowrap;
-        animation: marquee 15s linear infinite;
+        animation: marquee 20s linear infinite;
     }
     
     .feedback-item {
-        color: rgba(255, 255, 255, 0.85);
-        font-size: 0.85rem;
-        padding: 0 15px;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.8rem;
+        padding: 0 20px;
         font-style: italic;
     }
     
     .feedback-item i {
-        color: rgba(102, 153, 187, 0.8);
-        margin-right: 4px;
+        color: rgba(100, 100, 120, 0.7);
+        margin-right: 6px;
     }
     
     .feedback-author {
-        color: rgba(102, 153, 187, 1);
+        color: rgba(150, 150, 170, 0.9);
         font-weight: 600;
         font-style: normal;
-        margin-left: 8px;
+        margin-left: 10px;
     }
     
     .feedback-separator {
-        color: rgba(255, 255, 255, 0.3);
-        padding: 0 10px;
+        color: rgba(255, 255, 255, 0.2);
+        padding: 0 12px;
     }
     
     @keyframes marquee {
-        0% {
-            transform: translateX(0);
-        }
-        100% {
-            transform: translateX(-50%);
-        }
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
     }
     
     .feedback-marquee-container:hover .feedback-marquee-content {
         animation-play-state: paused;
     }
 
+    /* Footer */
     .auth-footer {
-        margin-bottom: 1%;
         position: absolute;
-        bottom: 20px;
+        bottom: 24px;
         left: 0;
         width: 100%;
         text-align: center;
         font-size: 0.65rem;
-        color: #d8d7d7;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        opacity: 0.6;
+        color: rgba(255, 255, 255, 0.35);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        letter-spacing: 0.3px;
+        line-height: 1.6;
         pointer-events: none;
-        /* Prevents interference with clicks */
     }
 
     /* Left Side: Image */
     .auth-image-side {
-        flex: 1.3;
+        flex: 1.2;
         display: flex;
         align-items: center;
-        justify-content: flex-end;
-        padding-right: 15px;
+        justify-content: center;
         background-color: #000000;
         position: relative;
+        padding: 40px;
     }
 
     .auth-showcase-img {
-        max-height: 60vh;
-        max-width: 80%;
+        max-height: 65vh;
+        max-width: 85%;
         object-fit: contain;
+        filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5));
     }
 
-    @media (max-width: 850px) {
+    @media (max-width: 900px) {
         .auth-image-side {
             display: none;
         }
-
         .auth-page-wrapper {
             justify-content: center;
         }
@@ -241,60 +269,90 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding-left: 15px;
+        padding: 40px;
+        position: relative;
+        z-index: 1;
     }
 
     .auth-form-container {
-        width: 300px;
-        max-width: 100%;
+        width: 100%;
+        max-width: 360px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 16px;
     }
 
-    @media (max-width: 850px) {
+    @media (max-width: 900px) {
         .auth-form-side {
-            align-items: center;
-            padding-left: 0;
-            margin-top: -50px;
+            padding: 30px 24px;
+        }
+        .auth-form-container {
+            max-width: 340px;
         }
     }
 
     /* Cards */
     .auth-card {
-        background-color: transparent;
-        border: none;
-        padding: 20px 0;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 20px;
+        padding: 40px 36px;
         display: flex;
         flex-direction: column;
         align-items: center;
+        backdrop-filter: blur(20px);
+        transition: all 0.3s ease;
+    }
+    
+    .auth-card:hover {
+        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.03);
     }
 
     .auth-secondary-card {
-        padding: 10px 0;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 18px 24px;
         flex-direction: row;
         justify-content: center;
         font-size: 0.9rem;
+        border-radius: 16px;
+    }
+    
+    .auth-secondary-card p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.6);
     }
 
     /* Logo */
     .auth-logo {
-        margin-bottom: 30px;
+        margin-bottom: 36px;
         text-align: center;
     }
 
     .auth-logo h1 {
-        font-family: 'Playfair Display', serif;
-        font-size: 2.5rem;
-        font-weight: 500;
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 3rem;
+        font-weight: 600;
         margin: 0;
-        letter-spacing: -1px;
+        letter-spacing: -2px;
+        background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .logo-icon {
-        font-size: 2rem;
-        margin-bottom: 8px;
+        font-size: 2.5rem;
+        margin-bottom: 12px;
         display: block;
+        color: rgba(255, 255, 255, 0.9);
+        animation: iconPulse 3s ease-in-out infinite;
+    }
+    
+    @keyframes iconPulse {
+        0%, 100% { transform: scale(1); opacity: 0.9; }
+        50% { transform: scale(1.05); opacity: 1; }
     }
 
     /* Form Elements */
@@ -302,36 +360,41 @@
         width: 100%;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 14px;
     }
 
     .form-group {
         width: 100%;
     }
 
-    /* Inputs - Targeting Django Widgets */
+    /* Enhanced Input Styling */
     .auth-form input {
         width: 100%;
-        background-color: #000000;
-        /* CHANGED to Black */
-        border: 1px solid #363636;
-        color: white;
-        padding: 5px 8px;
-        /* Decreased padding */
-        font-size: 0.7rem;
-        /* Decreased font size */
-        border-radius: 6px;
-        /* CHANGED: Increased Radius */
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        padding: 14px 18px;
+        font-size: 0.95rem;
+        border-radius: 12px;
         outline: none;
         box-sizing: border-box;
+        transition: all 0.3s ease;
+        letter-spacing: 0.3px;
     }
 
     .auth-form input:focus {
-        border-color: #737373;
+        border-color: rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
+    }
+    
+    .auth-form input:hover:not(:focus) {
+        border-color: rgba(255, 255, 255, 0.15);
     }
 
     .auth-form input::placeholder {
-        color: white;
+        color: rgba(255, 255, 255, 0.4);
+        font-weight: 400;
     }
 
     /* Fix for browser autofill background */
@@ -339,61 +402,112 @@
     .auth-form input:-webkit-autofill:hover,
     .auth-form input:-webkit-autofill:focus,
     .auth-form input:-webkit-autofill:active {
-        -webkit-box-shadow: 0 0 0 30px #000000 inset !important;
+        -webkit-box-shadow: 0 0 0 30px #0a0a0a inset !important;
         -webkit-text-fill-color: white !important;
         transition: background-color 5000s ease-in-out 0s;
+        border-color: rgba(255, 255, 255, 0.15) !important;
     }
 
-    /* Button */
+    /* Enhanced Button */
     .btn-auth-primary {
         width: 100%;
-        background-color: #0095f6;
-        color: white;
+        background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+        color: #000000;
         border: none;
-        padding: 6px;
-        border-radius: 6px;
+        padding: 14px 24px;
+        border-radius: 12px;
         font-weight: 600;
-        font-size: 0.8rem;
+        font-size: 0.95rem;
         cursor: pointer;
         margin-top: 8px;
-        transition: background-color 0.2s;
+        transition: all 0.3s ease;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-auth-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transition: left 0.5s ease;
     }
 
     .btn-auth-primary:hover {
-        background-color: #1877f2;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
+    }
+    
+    .btn-auth-primary:hover::before {
+        left: 100%;
+    }
+    
+    .btn-auth-primary:active {
+        transform: translateY(0);
     }
 
     /* Forgot Password */
     .auth-forgot-password {
-        color: #a8a8a8;
-        /* Muted text */
-        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.45);
+        font-size: 0.8rem;
         text-decoration: none;
-        margin-top: 12px;
+        margin-top: 16px;
         text-align: center;
         width: 100%;
+        transition: color 0.2s ease;
+        letter-spacing: 0.3px;
+    }
+    
+    .auth-forgot-password:hover {
+        color: rgba(255, 255, 255, 0.7);
     }
 
     /* Links */
     .auth-link {
-        color: #0095f6;
+        color: #ffffff;
         text-decoration: none;
         font-weight: 600;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    
+    .auth-link::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: #ffffff;
+        transition: width 0.3s ease;
+    }
+    
+    .auth-link:hover::after {
+        width: 100%;
     }
 
     /* Errors */
     .error-banner {
-        color: #ed4956;
+        color: #ff6b6b;
         text-align: center;
-        font-size: 0.9rem;
-        margin-bottom: 10px;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: rgba(255, 107, 107, 0.1);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 107, 107, 0.2);
     }
 
     .field-error {
-        color: #ed4956;
+        color: #ff6b6b;
         font-size: 0.75rem;
-        margin-top: 4px;
+        margin-top: 6px;
         text-align: left;
+        padding-left: 4px;
     }
 
     /* Screen Reader Only class */
@@ -409,88 +523,227 @@
         border: 0;
     }
 
-    /* Override widget defaults from Django/Base CSS if needed */
+    /* Override widget defaults */
     #id_username,
     #id_password {
-        /* Ensure ID-based selectors work */
-        background-color: #000000 !important;
-        /* CHANGED */
-        border: 1px solid #363636 !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
         color: white !important;
-        border-radius: 8px !important;
-        /* CHANGED */
+        border-radius: 12px !important;
+        padding: 14px 18px !important;
+        font-size: 0.95rem !important;
     }
 
-    /* --- Animations --- */
+    /* ===== Animations ===== */
     @keyframes appearFromRight {
         0% {
             opacity: 0;
-            transform: translateX(100px) scale(0.95);
+            transform: translateX(80px) scale(0.95);
         }
-
         100% {
             opacity: 1;
             transform: translateX(0) scale(1);
         }
     }
 
-    @keyframes fadeInUpStagger {
+    @keyframes fadeInUp {
         0% {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(30px);
         }
-
         100% {
             opacity: 1;
             transform: translateY(0);
         }
     }
+    
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
 
     .auth-showcase-img {
         opacity: 0;
-        animation: appearFromRight 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        animation: appearFromRight 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    .auth-card {
+        opacity: 0;
+        animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
     }
 
     .auth-logo {
         opacity: 0;
-        animation: fadeInUpStagger 0.6s ease-out 0.4s forwards;
+        animation: fadeInUp 0.6s ease-out 0.4s forwards;
     }
 
     .form-group:nth-of-type(1) {
         opacity: 0;
-        animation: fadeInUpStagger 0.6s ease-out 0.5s forwards;
+        animation: fadeInUp 0.5s ease-out 0.5s forwards;
     }
 
     .form-group:nth-of-type(2) {
         opacity: 0;
-        animation: fadeInUpStagger 0.6s ease-out 0.6s forwards;
+        animation: fadeInUp 0.5s ease-out 0.6s forwards;
     }
 
     .btn-auth-primary {
         opacity: 0;
-        animation: fadeInUpStagger 0.6s ease-out 0.7s forwards;
+        animation: fadeInUp 0.5s ease-out 0.7s forwards;
     }
 
-    .auth-forgot-password,
+    .auth-forgot-password {
+        opacity: 0;
+        animation: fadeIn 0.5s ease-out 0.8s forwards;
+    }
+    
     .auth-secondary-card {
         opacity: 0;
-        animation: fadeInUpStagger 0.6s ease-out 0.8s forwards;
+        animation: fadeInUp 0.5s ease-out 0.9s forwards;
     }
-
-    .form-group:nth-of-type(2) {
+    
+    .feedback-section {
         opacity: 0;
-        animation: fadeInUpStagger 0.6s ease-out 1.4s forwards;
+        animation: fadeIn 0.6s ease-out 1s forwards;
     }
-
-    .btn-auth-primary {
+    
+    /* Login Loading Screen */
+    .login-loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000000;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 99999;
         opacity: 0;
-        animation: fadeInUpStagger 0.6s ease-out 1.5s forwards;
+        transition: opacity 0.8s ease-out;
     }
-
-    .auth-forgot-password,
-    .auth-secondary-card {
-        opacity: 0;
-        animation: fadeInUpStagger 0.6s ease-out 1.6s forwards;
+    
+    .login-loading-screen.active {
+        display: flex;
+        opacity: 1;
+    }
+    
+    .login-loading-image {
+        max-width: 80%;
+        max-height: 70%;
+        object-fit: contain;
+        animation: loginImageFade 2s ease-in-out infinite alternate, loginImageZoom 3s ease-in-out infinite;
+    }
+    
+    .login-progress-container {
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 300px;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .login-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
+        background-size: 200% 100%;
+        border-radius: 2px;
+        width: 0%;
+        animation: loginProgressFill 2.5s ease-out forwards, loginProgressShine 1.2s ease-in-out infinite;
+    }
+    
+    @keyframes loginImageFade {
+        0% { opacity: 0.85; transform: scale(1); }
+        100% { opacity: 1; transform: scale(1.02); }
+    }
+    
+    @keyframes loginImageZoom {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.03); }
+    }
+    
+    @keyframes loginProgressFill {
+        0% { width: 0%; }
+        100% { width: 100%; }
+    }
+    
+    @keyframes loginProgressShine {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        .auth-card {
+            padding: 32px 28px;
+            border-radius: 16px;
+        }
+        
+        .auth-logo h1 {
+            font-size: 2.5rem;
+        }
+        
+        .logo-icon {
+            font-size: 2rem;
+        }
+        
+        .auth-form input {
+            padding: 12px 16px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-auth-primary {
+            padding: 12px 20px;
+        }
+        
+        .login-loading-image {
+            max-width: 90%;
+            max-height: 60%;
+        }
+        
+        .login-progress-container {
+            width: 250px;
+            bottom: 40px;
+        }
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.querySelector('.auth-form');
+    const loadingScreen = document.getElementById('loginLoadingScreen');
+    
+    if (loginForm && loadingScreen) {
+        loginForm.addEventListener('submit', function(e) {
+            // Show loading screen immediately
+            loadingScreen.classList.add('active');
+            
+            // If there are form errors, hide the loading screen after a short delay
+            setTimeout(function() {
+                // Check if there are any error elements on the page
+                const errors = document.querySelectorAll('.error-banner, .field-error');
+                if (errors.length > 0) {
+                    // Hide loading screen if there are validation errors
+                    setTimeout(function() {
+                        loadingScreen.classList.remove('active');
+                    }, 1000);
+                }
+            }, 500);
+        });
+    }
+    
+    // Hide loading screen if user navigates back
+    window.addEventListener('pageshow', function(e) {
+        if (e.persisted && loadingScreen) {
+            loadingScreen.classList.remove('active');
+        }
+    });
+});
+</script>
+
 {% endblock %}

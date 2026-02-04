@@ -176,14 +176,18 @@ def dashboard_view(request):
     # Get pending assignments (up to 6 for preview)
     assignments = Assignment.objects.filter(user=user, status='pending')[:6]
     
-    # Greeting message
-    hour = datetime.now().hour
-    if hour < 12:
-        greeting = "Good morning"
-    elif hour < 18:
-        greeting = "Good afternoon"
+    # Enhanced greeting message with precise timing
+    now = timezone.now()
+    hour = now.hour
+    
+    if 5 <= hour < 12:
+        greeting = "Good morning!"
+    elif 12 <= hour < 17:
+        greeting = "Good afternoon!"
+    elif 17 <= hour < 21:
+        greeting = "Good evening!"
     else:
-        greeting = "Good evening"
+        greeting = "Hello there!"  # Late night or very early morning
     
     # Calculate subject breakdown for Pie Chart
     subject_sessions = StudySession.objects.filter(user=user)
@@ -219,13 +223,14 @@ def dashboard_view(request):
     all_assignments = Assignment.objects.filter(user=user).exclude(status='completed')
     calendar_assignments = []
     for assign in all_assignments:
-        # Convert to local timezone for consistent display
-        local_deadline = timezone.localtime(assign.deadline)
-        calendar_assignments.append({
-            'title': assign.title,
-            'deadline': local_deadline.strftime('%Y-%m-%dT%H:%M:%S'),
-            'subject': assign.subject
-        })
+        # Only include assignments with deadlines
+        if assign.deadline:
+            local_deadline = timezone.localtime(assign.deadline)
+            calendar_assignments.append({
+                'title': assign.title,
+                'deadline': local_deadline.strftime('%Y-%m-%dT%H:%M:%S'),
+                'subject': assign.subject
+            })
 
     # Prepare Subjects List
     subjects = SubjectFolder.objects.filter(user=user)
@@ -317,8 +322,22 @@ def study_view(request):
     # Combine and sort unique subjects
     all_subjects = sorted(list(set(list(folder_subjects) + list(session_subjects))))
     
+    # Add greeting message
+    now = timezone.now()
+    hour = now.hour
+    
+    if 5 <= hour < 12:
+        greeting = "Ready to focus?"
+    elif 12 <= hour < 17:
+        greeting = "Afternoon focus time!"
+    elif 17 <= hour < 21:
+        greeting = "Evening study session?"
+    else:
+        greeting = "Late night productivity?"
+    
     context = {
         'subjects': all_subjects,
+        'greeting': greeting,
     }
     
     return render(request, 'core/study.html', context)
@@ -344,14 +363,16 @@ def save_study_session(request):
             date=timezone.now().date()
         )
         
-        # Get updated today's total
+        # Get updated today's total and streak
         today_total = StudySession.get_today_total(request.user)
+        current_streak = StudySession.get_study_streak(request.user)
         
         return JsonResponse({
             'success': True,
             'session_id': session.id,
             'message': 'Study session saved successfully!',
-            'today_total_minutes': today_total
+            'today_total_minutes': today_total,
+            'current_streak': current_streak
         })
     
     except Exception as e:
@@ -366,6 +387,102 @@ def get_today_study_time(request):
         return JsonResponse({
             'success': True,
             'today_total_minutes': today_total
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def get_dashboard_stats(request):
+    """Get updated dashboard statistics via AJAX"""
+    try:
+        user = request.user
+        
+        # Get today's study time (in minutes)
+        today_total_minutes = StudySession.get_today_total(user)
+        
+        # Format today's total
+        if today_total_minutes >= 60:
+            hours = today_total_minutes // 60
+            remaining_mins = today_total_minutes % 60
+            if remaining_mins > 0:
+                today_total = f"{hours}h {remaining_mins}m"
+            else:
+                today_total = f"{hours}h"
+        else:
+            today_total = f"{today_total_minutes}m"
+        
+        # Get study streak
+        streak = StudySession.get_study_streak(user)
+        
+        # Get weekly data for chart
+        weekly_data = StudySession.get_weekly_data(user)
+        chart_labels = []
+        chart_data = []
+        for date, minutes in sorted(weekly_data.items()):
+            chart_labels.append(date.strftime('%a'))
+            chart_data.append(minutes)
+        
+        # Get monthly data for chart
+        now = timezone.now()
+        chart_labels_monthly = []
+        chart_data_monthly = []
+        for i in range(5, -1, -1):
+            target_date = now - timedelta(days=i * 30)
+            target_month = target_date.month
+            target_year = target_date.year
+            month_sessions = StudySession.objects.filter(
+                user=user,
+                date__year=target_year,
+                date__month=target_month
+            )
+            total_minutes = sum(s.duration for s in month_sessions)
+            chart_labels_monthly.append(target_date.strftime('%b'))
+            chart_data_monthly.append(total_minutes)
+        
+        # Get monthly total hours
+        current_month_sessions = StudySession.objects.filter(
+            user=user, 
+            date__month=datetime.now().month, 
+            date__year=datetime.now().year
+        )
+        monthly_total_minutes = sum(s.duration for s in current_month_sessions)
+        monthly_total_hours = round(monthly_total_minutes / 60, 1)
+        
+        # Calculate subject breakdown for Pie Chart
+        subject_sessions = StudySession.objects.filter(user=user)
+        subject_totals = {}
+        total_minutes_all = 0
+        for session in subject_sessions:
+            subject = session.subject
+            minutes = session.duration
+            subject_totals[subject] = subject_totals.get(subject, 0) + minutes
+            total_minutes_all += minutes
+        
+        subject_labels = []
+        subject_data = []
+        if total_minutes_all > 0:
+            sorted_subjects = sorted(subject_totals.items(), key=lambda x: x[1], reverse=True)
+            for subject, minutes in sorted_subjects:
+                subject_labels.append(subject)
+                subject_data.append(minutes)
+        
+        # Get pending assignments count
+        pending_count = Assignment.objects.filter(user=user).exclude(status='completed').count()
+        
+        return JsonResponse({
+            'success': True,
+            'today_total': today_total,
+            'today_total_minutes': today_total_minutes,
+            'streak': streak,
+            'monthly_total_hours': monthly_total_hours,
+            'pending_count': pending_count,
+            'chart_labels': chart_labels,
+            'chart_data': chart_data,
+            'chart_labels_monthly': chart_labels_monthly,
+            'chart_data_monthly': chart_data_monthly,
+            'subject_labels': subject_labels,
+            'subject_data': subject_data
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -407,10 +524,24 @@ def assignments_view(request):
             'status': status,
         })
     
+    # Add greeting message
+    now = timezone.now()
+    hour = now.hour
+    
+    if 5 <= hour < 12:
+        greeting = "Time to tackle your tasks!"
+    elif 12 <= hour < 17:
+        greeting = "Afternoon productivity!"
+    elif 17 <= hour < 21:
+        greeting = "Evening assignments!"
+    else:
+        greeting = "Working late?"
+    
     context = {
         'pending_assignments': pending_assignments,
         'completed_assignments': completed_assignments,
         'assignments_json': json.dumps(assignments_data),
+        'greeting': greeting,
     }
     
     return render(request, 'core/assignments.html', context)
@@ -654,12 +785,26 @@ def notes_view(request):
             is_pinned=False
         ).order_by('-updated_at')
     
+    # Add greeting message
+    now = timezone.now()
+    hour = now.hour
+    
+    if 5 <= hour < 12:
+        greeting = "Ready to take notes?"
+    elif 12 <= hour < 17:
+        greeting = "Afternoon note-taking!"
+    elif 17 <= hour < 21:
+        greeting = "Evening study notes?"
+    else:
+        greeting = "Late night thoughts?"
+    
     context = {
         'folders': folders,
         'selected_folder': selected_folder,
         'notes': notes,
         'pinned_notes': pinned_notes,
         'total_notes': total_notes,
+        'greeting': greeting,
     }
     
     return render(request, 'core/notes.html', context)

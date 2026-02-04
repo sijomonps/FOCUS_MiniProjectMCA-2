@@ -186,9 +186,9 @@ python scripts/set_password.py
 ```
 project_resources/
 ├── diagrams/              # ER diagrams, flowcharts
-│   └── ER diagram.png
+│   └── ER diagram.webp
 ├── screenshots/           # Application screenshots
-│   └── login image.png
+│   └── login image.webp
 ├── submissions/           # Project submissions
 │   ├── StudyFlow_Project_Submission.docx
 │   └── sijomonps_25pmc154.docx

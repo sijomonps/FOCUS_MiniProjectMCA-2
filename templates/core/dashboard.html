@@ -24,6 +24,7 @@
         color: var(--text-primary);
         letter-spacing: -0.02em;
         line-height: 1.2;
+        text-transform: none; /* Override the uppercase from main styles */
     }
 
     .greeting-quote {
@@ -34,6 +35,7 @@
         opacity: 0.75;
         max-width: 500px;
         line-height: 1.6;
+        text-transform: none; /* Override the uppercase from main styles */
     }
 
 
@@ -624,7 +626,7 @@
         <div class="dashboard-main">
             <!-- Greeting & Quote -->
             <div class="greeting-section">
-                <h1 class="greeting-title">{{ greeting }}</h1>
+                <h1 class="greeting-title" data-dynamic-greeting="dashboard">{{ greeting }}</h1>
                 <p class="greeting-quote">"{{ quote }}"</p>
             </div>
 
@@ -635,16 +637,16 @@
                     <div class="stat-value" id="todayStatValue">{{ today_total }}</div>
                     <div class="stat-label" id="todayStatLabel">Study Today</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value">{{ monthly_total_hours }}</div>
+                <div class="stat-card" id="monthlyStatCard">
+                    <div class="stat-value" id="monthlyStatValue">{{ monthly_total_hours }}</div>
                     <div class="stat-label">Hours Month</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" style="color: var(--color-green);">{{ streak }}</div>
+                <div class="stat-card" id="streakStatCard">
+                    <div class="stat-value" id="streakStatValue" style="color: var(--color-green);">{{ streak }}</div>
                     <div class="stat-label">Day Streak</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value">{{ assignments|length }}</div>
+                <div class="stat-card" id="pendingStatCard">
+                    <div class="stat-value" id="pendingStatValue">{{ assignments|length }}</div>
                     <div class="stat-label">Pending</div>
                 </div>
             </div>
@@ -933,15 +935,38 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof initDashboard === 'function') initDashboard(dashboardConfig);
+            // Auto-refresh on page load to ensure latest data
+            setTimeout(function() {
+                if (typeof window.refreshDashboardStats === 'function') {
+                    window.refreshDashboardStats();
+                }
+            }, 500);
         });
     } else {
         if (typeof initDashboard === 'function') initDashboard(dashboardConfig);
+        // Auto-refresh on page load to ensure latest data
+        setTimeout(function() {
+            if (typeof window.refreshDashboardStats === 'function') {
+                window.refreshDashboardStats();
+            }
+        }, 500);
     }
 
     window.addEventListener('load', function () {
         var calGrid = document.getElementById('calendarGrid');
         if (calGrid && calGrid.children.length === 0 && typeof initDashboard === 'function') {
             initDashboard(dashboardConfig);
+        }
+    });
+    
+    // Handle back/forward navigation (popstate)
+    window.addEventListener('pageshow', function(event) {
+        // Check if page is loaded from cache (back/forward navigation)
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            console.log('Page loaded from cache, refreshing stats...');
+            if (typeof window.refreshDashboardStats === 'function') {
+                window.refreshDashboardStats();
+            }
         }
     });
 </script>

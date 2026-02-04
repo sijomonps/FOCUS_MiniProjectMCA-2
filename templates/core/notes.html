@@ -1482,6 +1482,11 @@
             </button>
             {% endif %}
         </div>
+        
+        <!-- Greeting Message -->
+        <div style="text-align: center; color: var(--text-secondary); margin-bottom: 1.5rem; font-style: italic;" data-dynamic-greeting="notes">
+            {{ greeting }}
+        </div>
 
         {% if pinned_notes %}
         <!-- Pinned Notes Section -->
