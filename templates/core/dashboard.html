@@ -646,7 +646,7 @@
                     <div class="stat-label">Day Streak</div>
                 </div>
                 <div class="stat-card" id="pendingStatCard">
-                    <div class="stat-value" id="pendingStatValue">{{ assignments|length }}</div>
+                    <div class="stat-value" id="pendingStatValue">{{ pending_assignments_count }}</div>
                     <div class="stat-label">Pending</div>
                 </div>
             </div>
@@ -702,91 +702,44 @@
 
             <!-- Subjects Management -->
             <div class="card mb-4" id="subjectsCard">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="mdi mdi-notebook-multiple" style="margin-right: 8px;"></i> My
-                        Subjects
-                    </h3>
+                <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
+                    <h3 class="card-title" style="margin: 0;"><i class="mdi mdi-notebook-multiple" style="margin-right: 8px;"></i>My Subjects</h3>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="text" id="newSubjectName" class="form-input"
+                            placeholder="Add subject..." maxlength="100"
+                            style="padding: 6px 12px; font-size: 0.85rem; border: 1px solid var(--border-color);
+                                   border-radius: 20px; background: var(--bg-primary); width: 160px;"
+                            onkeypress="if(event.key === 'Enter') addSubject()">
+                        <button onclick="addSubject()" style="background: var(--primary-color); border: none; color: white;
+                                       width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+                                       display: flex; align-items: center; justify-content: center;
+                                       font-size: 1.1rem; transition: opacity 0.2s;"
+                            onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'" title="Add subject">
+                            <i class="mdi mdi-plus"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <!-- Subject List -->
-                    <div id="subjectsList"
-                        style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; min-height: 40px;">
+                    <div id="subjectsList" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 32px;">
                         {% for subject in subjects %}
-                        <div class="subject-tag" data-subject-id="{{ subject.id }}" style="background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%); 
-                                   padding: 8px 14px; 
-                                   border-radius: 20px; 
-                                   border: 1px solid var(--border-color); 
-                                   font-size: 0.9rem;
-                                   display: flex;
-                                   align-items: center;
-                                   gap: 8px;
-                                   transition: all 0.2s ease;
-                                   position: relative;
-                                   box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                            <i class="mdi mdi-book-outline" style="font-size: 1.1rem; color: var(--primary-color);"></i>
-                            <span style="font-weight: 500;">{{ subject.name }}</span>
+                        <div class="subject-tag" data-subject-id="{{ subject.id }}" 
+                             style="background: var(--bg-tertiary); padding: 6px 12px; border-radius: 20px;
+                                    border: 1px solid var(--border-color); font-size: 0.85rem;
+                                    display: inline-flex; align-items: center; gap: 6px;">
+                            <span>{{ subject.name }}</span>
                             <button onclick="deleteSubject({{ subject.id }}, '{{ subject.name|escapejs }}')"
-                                class="subject-delete-btn" style="background: transparent; 
-                                           border: none; 
-                                           color: var(--text-tertiary); 
-                                           cursor: pointer; 
-                                           padding: 2px 4px;
-                                           border-radius: 50%;
-                                           transition: all 0.2s ease;
-                                           display: flex;
-                                           align-items: center;
-                                           justify-content: center;"
-                                onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#ef4444';"
-                                onmouseout="this.style.background='transparent'; this.style.color='var(--text-tertiary)';"
-                                title="Delete subject">
-                                <i class="mdi mdi-close" style="font-size: 1rem;"></i>
+                                style="background: none; border: none; color: var(--text-tertiary); cursor: pointer;
+                                       padding: 0; line-height: 1; font-size: 0.9rem; display: flex;"
+                                onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--text-tertiary)'"
+                                title="Remove">
+                                <i class="mdi mdi-close-circle-outline"></i>
                             </button>
                         </div>
                         {% empty %}
-                        <div class="text-tertiary" style="padding: 20px; text-align: center; width: 100%;">
-                            <i class="mdi mdi-book-plus-outline"
-                                style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 8px;"></i>
-                            <span style="font-size: 0.9rem;">No subjects yet. Add your first subject below!</span>
+                        <div class="text-tertiary" style="font-size: 0.85rem; width: 100%; text-align: center; padding: 12px 0;">
+                            No subjects yet — type above to add one
                         </div>
                         {% endfor %}
-                    </div>
-
-                    <!-- Add Subject Form -->
-                    <div style="background: var(--bg-secondary); 
-                                padding: 16px; 
-                                border-radius: 12px; 
-                                border: 2px dashed var(--border-color);">
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <div style="flex: 1; position: relative;">
-                                <i class="mdi mdi-plus-circle-outline" style="position: absolute; 
-                                          left: 12px; 
-                                          top: 50%; 
-                                          transform: translateY(-50%); 
-                                          color: var(--text-tertiary); 
-                                          font-size: 1.2rem;"></i>
-                                <input type="text" id="newSubjectName" class="form-input"
-                                    placeholder="Enter subject name (e.g., Mathematics, Physics...)" maxlength="100"
-                                    style="padding: 10px 12px 10px 42px; 
-                                              font-size: 0.95rem;
-                                              border: 1px solid var(--border-color);
-                                              border-radius: 8px;
-                                              background: var(--bg-primary);
-                                              width: 100%;" onkeypress="if(event.key === 'Enter') addSubject()">
-                            </div>
-                            <button onclick="addSubject()" class="btn btn-primary" style="padding: 10px 24px; 
-                                           font-weight: 500; 
-                                           border-radius: 8px;
-                                           display: flex;
-                                           align-items: center;
-                                           gap: 6px;
-                                           white-space: nowrap;">
-                                <i class="mdi mdi-plus" style="font-size: 1.1rem;"></i>
-                                <span>Add Subject</span>
-                            </button>
-                        </div>
-                        <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-tertiary);">
-                            <i class="mdi mdi-information-outline"></i> Press Enter or click "Add Subject" to save
-                        </div>
                     </div>
                 </div>
             </div>
@@ -810,7 +763,7 @@
                     <div class="leaderboard-item">
                         <div style="display: flex; align-items: center;">
                             <div class="rank-badge rank-{{ forloop.counter }}">{{ forloop.counter }}</div>
-                            <div class="user-info">{{ u.username }}</div>
+                            <div class="user-info">{{ u.username }} {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% endif %}</div>
                         </div>
                         <div class="user-stat">{{ u.streak }} <i class="mdi mdi-fire" style="font-size: 0.8rem;"></i>
                         </div>
@@ -828,7 +781,7 @@
                     <div class="leaderboard-item">
                         <div style="display: flex; align-items: center;">
                             <div class="rank-badge rank-{{ forloop.counter }}">{{ forloop.counter }}</div>
-                            <div class="user-info">{{ u.username }}</div>
+                            <div class="user-info">{{ u.username }} {% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% endif %}</div>
                         </div>
                         <div class="user-stat">{{ u.value }}</div>
                     </div>
@@ -883,6 +836,42 @@
                 </div>
                 <div class="schedule-list" id="upcomingList"></div>
             </div>
+
+            <!-- No Deadline (Backlog) -->
+            <div class="schedule-card" style="margin-top: 0;" id="noDeadlineCard">
+                <div class="schedule-header">
+                    <span><i class="mdi mdi-inbox" style="margin-right: 6px;"></i>No Deadline</span>
+                    <span style="font-size: 0.75rem; color: var(--text-tertiary); font-weight: normal;">{{ no_deadline_assignments|length }}</span>
+                </div>
+                <div class="schedule-list">
+                    {% if no_deadline_assignments %}
+                        {% for assignment in no_deadline_assignments %}
+                        <div class="schedule-item" style="cursor: pointer;" onclick="window.location.href='{% url 'assignments' %}'">
+                            <div class="ring-container">
+                                <svg class="ring-svg">
+                                    <circle class="ring-circle-bg" cx="18" cy="18" r="16"></circle>
+                                    <circle class="ring-circle-progress" cx="18" cy="18" r="16" 
+                                            stroke="#64748b" 
+                                            stroke-dashoffset="100" 
+                                            style="stroke-dasharray: 100;"></circle>
+                                </svg>
+                                <div class="ring-dot" style="background: #64748b;"></div>
+                            </div>
+                            <div class="schedule-info">
+                                <div class="schedule-title">{% if assignment.subject != 'General' %}{{ assignment.subject }}: {% endif %}{{ assignment.title }}</div>
+                                <div class="schedule-meta" style="color: #94a3b8;">
+                                    <i class="mdi mdi-minus"></i> No deadline set
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-tertiary" style="text-align: center; padding: 20px; font-size: 0.85rem;">
+                            <i class="mdi mdi-check-circle-outline" style="opacity: 0.5;"></i> All tasks have deadlines
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -914,56 +903,34 @@
 
 <!-- Pass data from Django template to dashboard.js and initialize -->
 <script type="text/javascript">
-    console.log('Dashboard init script starting...');
-
-    function safeParse(jsonStr) {
-        try { return jsonStr ? JSON.parse(jsonStr) : []; }
-        catch (e) { console.error('Parse error:', e); return []; }
-    }
-
+    // Data is already JSON from Django's json.dumps - output directly as JS
     var dashboardConfig = {
-        weeklyLabels: safeParse('{{ chart_labels|escapejs }}'),
-        weeklyData: safeParse('{{ chart_data|escapejs }}'),
-        monthlyLabels: safeParse('{{ chart_labels_monthly|escapejs }}'),
-        monthlyData: safeParse('{{ chart_data_monthly|escapejs }}'),
-        subjectLabels: safeParse('{{ chart_subject_labels|escapejs }}'),
-        subjectData: safeParse('{{ chart_subject_data|escapejs }}'),
-        calendarAssignments: safeParse('{{ calendar_assignments_json|escapejs }}'),
-        hasSubjectBreakdown: {% if subject_breakdown %}true{% else %} false{% endif %}
+        weeklyLabels: {{ chart_labels|safe }},
+        weeklyData: {{ chart_data|safe }},
+        monthlyLabels: {{ chart_labels_monthly|safe }},
+        monthlyData: {{ chart_data_monthly|safe }},
+        subjectLabels: {{ chart_subject_labels|safe }},
+        subjectData: {{ chart_subject_data|safe }},
+        calendarAssignments: {{ calendar_assignments_json|safe }},
+        hasSubjectBreakdown: {% if subject_breakdown %}true{% else %}false{% endif %}
     };
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-            if (typeof initDashboard === 'function') initDashboard(dashboardConfig);
-            // Auto-refresh on page load to ensure latest data
-            setTimeout(function() {
-                if (typeof window.refreshDashboardStats === 'function') {
-                    window.refreshDashboardStats();
-                }
-            }, 500);
-        });
+    // By this point Chart.js and dashboard.js have loaded synchronously above.
+    // Initialize immediately since scripts are loaded in order.
+    if (typeof initDashboard === 'function') {
+        initDashboard(dashboardConfig);
     } else {
-        if (typeof initDashboard === 'function') initDashboard(dashboardConfig);
-        // Auto-refresh on page load to ensure latest data
-        setTimeout(function() {
-            if (typeof window.refreshDashboardStats === 'function') {
-                window.refreshDashboardStats();
+        // Fallback: wait for load
+        window.addEventListener('load', function() {
+            if (typeof initDashboard === 'function') {
+                initDashboard(dashboardConfig);
             }
-        }, 500);
+        });
     }
 
-    window.addEventListener('load', function () {
-        var calGrid = document.getElementById('calendarGrid');
-        if (calGrid && calGrid.children.length === 0 && typeof initDashboard === 'function') {
-            initDashboard(dashboardConfig);
-        }
-    });
-    
-    // Handle back/forward navigation (popstate)
+    // Handle back/forward navigation
     window.addEventListener('pageshow', function(event) {
-        // Check if page is loaded from cache (back/forward navigation)
-        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-            console.log('Page loaded from cache, refreshing stats...');
+        if (event.persisted) {
             if (typeof window.refreshDashboardStats === 'function') {
                 window.refreshDashboardStats();
             }
@@ -1033,8 +1000,8 @@
     }
 
     // Leaderboard Modal Functions
-    const allStreaksData = {{ all_streaks_json| safe }};
-    const allStudyTimeData = {{ all_study_time_json| safe }};
+    window.allStreaksData = {{ all_streaks_json| safe }};
+    window.allStudyTimeData = {{ all_study_time_json| safe }};
 
     function showAllLeaderboard(type) {
         const modal = document.getElementById('leaderboardModal');
@@ -1043,12 +1010,12 @@
 
         let data, label, icon;
         if (type === 'streaks') {
-            data = allStreaksData;
+            data = window.allStreaksData;
             title.innerHTML = '<i class="mdi mdi-fire" style="color: #f59e0b;"></i> All Streaks';
             label = 'days';
             icon = '<i class="mdi mdi-fire" style="color: #f59e0b;"></i>';
         } else {
-            data = allStudyTimeData;
+            data = window.allStudyTimeData;
             title.innerHTML = '<i class="mdi mdi-clock-outline" style="color: var(--primary-color);"></i> Study Hours This Month';
             label = '';
             icon = '';
@@ -1056,17 +1023,19 @@
 
         body.innerHTML = data.length === 0
             ? '<div style="text-align: center; padding: 40px; color: var(--text-tertiary);">No data available</div>'
-            : data.map((item, idx) => `
+            : data.map((item, idx) => {
+                const medal = idx === 0 ? ' \ud83e\udd47' : idx === 1 ? ' \ud83e\udd48' : idx === 2 ? ' \ud83e\udd49' : '';
+                return `
                 <div class="leaderboard-modal-item">
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div class="rank-badge rank-${idx < 3 ? idx + 1 : ''}">${idx + 1}</div>
-                        <span style="font-weight: 500;">${item.username}</span>
+                        <span style="font-weight: 500;">${item.username}${medal}</span>
                     </div>
                     <span style="font-weight: 600; color: var(--primary-color);">
                         ${item.value} ${label} ${icon}
                     </span>
                 </div>
-            `).join('');
+            `}).join('');
 
         modal.classList.add('active');
     }

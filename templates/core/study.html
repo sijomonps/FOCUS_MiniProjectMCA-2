@@ -1143,6 +1143,9 @@
                 if (data.current_streak !== undefined) {
                     updateStreakDisplay(data.current_streak);
                 }
+                
+                // Signal dashboard to refresh when user navigates there
+                localStorage.setItem('dashboardNeedsRefresh', Date.now().toString());
             } else {
                 console.error('Server error saving session:', data.error);
             }
