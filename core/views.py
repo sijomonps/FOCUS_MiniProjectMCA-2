@@ -173,8 +173,18 @@ def dashboard_view(request):
         chart_labels_monthly.append(target_date.strftime('%b'))  # Only month name (Jan, Feb, etc.)
         chart_data_monthly.append(total_minutes)
     
-    # Get pending assignments (up to 6 for preview)
-    assignments = Assignment.objects.filter(user=user, status='pending')[:6]
+    # Get pending assignments with deadlines (up to 6 for preview)
+    # Filter out assignments without deadlines since they can't be scheduled
+    assignments = Assignment.objects.filter(
+        user=user, 
+        deadline__isnull=False
+    ).exclude(status='completed').order_by('deadline')[:6]
+    
+    # Get assignments without deadlines (backlog)
+    no_deadline_assignments = Assignment.objects.filter(
+        user=user,
+        deadline__isnull=True
+    ).exclude(status='completed').order_by('-created_at')[:10]
     
     # Enhanced greeting message with precise timing
     now = timezone.now()
@@ -284,6 +294,9 @@ def dashboard_view(request):
     # All streaks for modal
     all_streaks_list = [{'username': u['username'], 'value': u['streak']} for u in user_streaks_list]
 
+    # Get total pending count (all non-completed assignments, including those without deadlines)
+    pending_assignments_count = Assignment.objects.filter(user=user).exclude(status='completed').count()
+
     context = {
         'greeting': greeting,
         'quote': random.choice(MOTIVATIONAL_QUOTES),
@@ -297,6 +310,8 @@ def dashboard_view(request):
         'chart_subject_labels': json.dumps([item['subject'] for item in subject_breakdown]),
         'chart_subject_data': json.dumps([item['minutes'] for item in subject_breakdown]),
         'assignments': assignments,
+        'no_deadline_assignments': no_deadline_assignments,
+        'pending_assignments_count': pending_assignments_count,
         'subject_breakdown': subject_breakdown,
         'subjects': subjects,
         'calendar_assignments_json': json.dumps(calendar_assignments),
@@ -470,6 +485,41 @@ def get_dashboard_stats(request):
         # Get pending assignments count
         pending_count = Assignment.objects.filter(user=user).exclude(status='completed').count()
         
+        # Leaderboard data
+        now = timezone.now()
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Top study time this month
+        top_study_users = User.objects.filter(study_sessions__date__gte=month_start) \
+            .annotate(total_duration=models.Sum('study_sessions__duration')) \
+            .order_by('-total_duration')[:5]
+        top_study_time_list = []
+        for u in top_study_users:
+            duration = u.total_duration or 0
+            hours = round(duration / 60, 1)
+            top_study_time_list.append({'username': u.username, 'value': f"{hours}h"})
+        
+        # Top streaks
+        all_users = User.objects.all()
+        user_streaks = []
+        for u in all_users:
+            s = StudySession.get_study_streak(u)
+            if s > 0:
+                user_streaks.append({'username': u.username, 'streak': s, 'value': s})
+        user_streaks.sort(key=lambda x: x['streak'], reverse=True)
+        top_streaks_list = user_streaks[:5]
+        
+        # All data for modal
+        all_study_users = User.objects.filter(study_sessions__date__gte=month_start) \
+            .annotate(total_duration=models.Sum('study_sessions__duration')) \
+            .order_by('-total_duration')
+        all_study_time_list = []
+        for u in all_study_users:
+            duration = u.total_duration or 0
+            hours = round(duration / 60, 1)
+            all_study_time_list.append({'username': u.username, 'value': f"{hours}h"})
+        all_streaks_list = [{'username': u['username'], 'value': u['streak']} for u in user_streaks]
+        
         return JsonResponse({
             'success': True,
             'today_total': today_total,
@@ -482,7 +532,11 @@ def get_dashboard_stats(request):
             'chart_labels_monthly': chart_labels_monthly,
             'chart_data_monthly': chart_data_monthly,
             'subject_labels': subject_labels,
-            'subject_data': subject_data
+            'subject_data': subject_data,
+            'top_streaks': top_streaks_list,
+            'top_study_time': top_study_time_list,
+            'all_streaks': all_streaks_list,
+            'all_study_time': all_study_time_list,
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

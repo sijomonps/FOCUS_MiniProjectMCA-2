@@ -2432,7 +2432,7 @@
                     const timeLabel = cube.querySelector('.time-label');
                     if (timeDisplay) {
                         timeDisplay.textContent = formatHoursRemainingShort(hoursRemaining);
-                        timeLabel.textContent = hoursRemaining < 0 ? 'Overdue' : 'Remaining';
+                        timeLabel.textContent = hoursRemaining === null ? '' : (hoursRemaining < 0 ? 'Overdue' : 'Remaining');
                     }
 
                     // Check if urgency category changed (requires re-render for color change)
