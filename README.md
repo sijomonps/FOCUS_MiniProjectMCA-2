@@ -77,31 +77,8 @@ If you want more details about how everything works:
 - Full project tour: [docs/PROJECT_WALKTHROUGH.md](docs/PROJECT_WALKTHROUGH.md)
 
 This README stays short on purpose so even a beginner can read it in one go and understand **what the project is, why it exists, and how to run it**.
-│       ├── BEGINNER_GUIDE.md          # Beginner-friendly tutorial
-│       ├── HOW_IT_WORKS.md            # Feature explanations
-│       ├── PROJECT_WALKTHROUGH.md     # Complete project tour
-│       └── DEPLOYMENT.md              # Deployment instructions
-│
-├── 🛠️ UTILITIES
-│   └── scripts/                       # Utility scripts
-│       ├── add_sample_data.py         # Add test data
-│       └── set_password.py            # Password management
-│
-├── 📦 PROJECT RESOURCES
-│   └── project_resources/             # Project assets & submissions
-│       ├── diagrams/                  # ER diagrams, flowcharts
-│       ├── screenshots/               # Application screenshots
-│       ├── submissions/               # Project submission files
-│       └── references/                # Reference documents (PDFs)
-│
-└── 📖 ROOT FILES
-    ├── README.md                      # Main project README (this file!)
-    ├── PROJECT_ORGANIZATION.md        # Detailed structure guide
-    ├── requirements.txt               # Python dependencies
-    └── db.sqlite3                     # SQLite database
-```
 
-**📘 For detailed structure explanation, see [PROJECT_ORGANIZATION.md](PROJECT_ORGANIZATION.md)**
+If you want a full project tree and detailed structure, open [PROJECT_ORGANIZATION.md](PROJECT_ORGANIZATION.md).
 
 ---
 
