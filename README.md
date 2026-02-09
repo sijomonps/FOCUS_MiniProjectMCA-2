@@ -1,403 +1,82 @@
-# 🎯 FOCUS - Your Personal Study Companion
+# 🎯 FOCUS – Simple Study Dashboard
 
-<div align="center">
+FOCUS is a small web app that helps students see their study life in one clean place: time spent, subjects, assignments, and streaks.
 
-![FOCUS Logo](https://img.shields.io/badge/FOCUS-Study%20Smarter-6699BB?style=for-the-badge&logo=target&logoColor=white)
-
-**A Smart Study Management Application**
-
-*MCA Semester 2 Mini Project*  
-*Marian College Kuttikanam*
+It is built as an MCA Semester 2 mini project using **Python + Django**.
 
 ---
 
-[![Python](https://img.shields.io/badge/Python-3.x-blue?style=flat-square&logo=python)](https://python.org)
-[![Django](https://img.shields.io/badge/Django-Web%20Framework-green?style=flat-square&logo=django)](https://djangoproject.com)
-[![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)]()
+## 🧠 Problem It Solves
 
-</div>
+Many students:
 
----
+- Study for hours but **don’t know how much they really did**
+- **Forget assignments** until the last minute
+- Have notes **spread across books, photos, and random apps**
+- Find it hard to **stay consistent** day after day
 
-## 📖 What is FOCUS?
-
-**FOCUS** is a web-based study management application designed to help students organize their academic life. Think of it as your digital study buddy that helps you:
-
-- ⏱️ **Track your study time** - Know exactly how much you're studying
-- 📋 **Manage assignments** - Never miss a deadline again
-- 📝 **Organize notes** - Keep all your quick notes in one place
-- 📊 **Visualize progress** - See your study patterns and improve
+FOCUS was made to handle these simple but real problems.
 
 ---
 
-## 🤔 The Problem
+## ✅ What FOCUS Gives You
 
-> *"I studied for hours but don't know where my time went..."*
-> 
-> *"I forgot about that assignment due tomorrow!"*
-> 
-> *"My notes are scattered everywhere - in books, phones, and random papers..."*
+- **Dashboard** – see today’s study time, streak, weekly/monthly graph, and subject breakdown
+- **Study Timer** – start a focused session with a subject; time is saved automatically
+- **Assignments** – add tasks with deadlines and see urgency visually
+- **Quick Notes** – keep short notes grouped by subject
+- **Leaderboard & Streaks** – small motivation boost by seeing top learners and your own streak
 
-**Sound familiar?** 
-
-As students, we often struggle with:
-
-| Problem | Impact |
-|---------|--------|
-| 😵 **No time awareness** | Study for hours without knowing if it's effective |
-| 📅 **Missed deadlines** | Forget assignments until the last minute |
-| 📑 **Disorganized notes** | Waste time searching for information |
-| 📉 **No progress tracking** | Can't identify weak areas or improvements |
-| 🎯 **Lack of focus** | Get distracted easily without structure |
+Everything is designed to be minimal, calm, and easy to understand even on first use.
 
 ---
 
-## 💡 The Solution
+## 🎓 Who Is This For?
 
-**FOCUS** provides a simple, beautiful, and effective solution:
+- School / college students who want a **simple study tracker**
+- Beginners who are **new to productivity tools**
+- Anyone who wants to **see their progress instead of guessing**
 
-### 🎯 One App, Everything You Need
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                                                         │
-│   📊 DASHBOARD          ⏱️ STUDY TIMER                 │
-│   See your progress     Track focus sessions           │
-│   at a glance           with subjects                  │
-│                                                         │
-│   📋 ASSIGNMENTS        📝 QUICK NOTES                 │
-│   Visual deadline       Organized by                   │
-│   management            subject folders                │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+You don’t need any technical knowledge to use the website.
 
 ---
 
-## ✨ Key Features
+## 🚀 Run the Project (Local Setup)
 
-### 1. 📊 Smart Dashboard
-Your personal command center showing:
-- Today's study time (live updating!)
-- Weekly/Monthly progress charts
-- Subject-wise breakdown (pie chart)
-- Upcoming assignment deadlines with calendar
-- Study streak counter 🔥
+1. Open a terminal in the project folder.
+2. Create and activate a virtual environment:
 
-### 2. ⏱️ Focus Timer
-A beautiful Pomodoro-style timer:
-- Pre-set durations (15, 25, 45, 60 minutes)
-- Custom time option (up to 180 minutes)
-- Subject selection for tracking
-- Session completion notifications with sound 🔔
-- **Live timer in sidebar** (visible on all pages!)
-- Paused sessions are preserved
+        ```bash
+        python -m venv venv
+        venv\Scripts\activate   # on Windows
+        ```
 
-### 3. 📋 Assignment Tracker
-Never miss a deadline with:
-- Visual treemap showing all assignments
-- Color-coded urgency:
-  - 🟢 Green = Plenty of time
-  - 🟡 Yellow = Getting close
-  - 🔴 Red = Due soon! (with pulse animation)
-- Time remaining display (hours/days)
-- Mark as complete ✅
-- View completed assignments history
+3. Install dependencies and set up the database:
 
-### 4. 📝 Quick Notes
-Organize your thoughts:
-- Create subject folders 📁
-- Pin important notes (up to 4 per subject) 📌
-- Quick capture of ideas
-- Edit and delete notes easily
-- Responsive grid layout
+        ```bash
+        pip install -r requirements.txt
+        python manage.py migrate
+        ```
 
-### 5. 👨‍💼 Admin Panel (For Administrators)
-Complete user management:
-- View all registered users
-- Monitor platform statistics
-- Enable/disable user accounts
-- View individual user details
-- Delete users when needed
+4. Start the server and open the site:
+
+        ```bash
+        python manage.py runserver
+        ```
+
+        Then visit: http://127.0.0.1:8000
 
 ---
 
-## 🎨 Beautiful Dark Theme
+## 🔍 Learn More (Optional)
 
-FOCUS features a modern, eye-friendly dark theme perfect for late-night study sessions:
+If you want more details about how everything works:
 
-- 🌙 **Easy on the eyes** - Reduced eye strain
-- 🎯 **Minimal distractions** - Clean interface
-- ✨ **Modern design** - Notion-inspired aesthetics
-- 📱 **Fully responsive** - Works on mobile, tablet, and desktop!
+- Beginner overview: [docs/BEGINNER_GUIDE.md](docs/BEGINNER_GUIDE.md)
+- Quick setup guide: [docs/QUICK_START.md](docs/QUICK_START.md)
+- Full project tour: [docs/PROJECT_WALKTHROUGH.md](docs/PROJECT_WALKTHROUGH.md)
 
----
-
-## 🚀 How It Works
-
-### For Students:
-
-```
-1️⃣ Sign Up / Login
-        ↓
-2️⃣ Start a focus timer session with your subject
-        ↓
-3️⃣ Add your assignments with deadlines
-        ↓
-4️⃣ Create quick notes as you study
-        ↓
-5️⃣ Check dashboard to see your progress!
-        ↓
-6️⃣ Build your study streak 🔥
-```
-
-### Simple Example:
-
-| Action | What Happens |
-|--------|--------------|
-| Start 25-min timer for "Mathematics" | Timer counts down, shows in sidebar on all pages |
-| Timer completes | 25 minutes added to your Math study time + sound notification |
-| Check Dashboard | See Math progress in pie chart, weekly graph updates |
-| Add assignment "Math Homework - Due Friday" | Appears in treemap with countdown timer |
-| Write a quick note about formulas | Saved in your Math folder, can pin it for quick access |
-
----
-
-## 🖥️ Screen Overview
-
-### Dashboard
-```
-┌──────────────────────────────────────────────────┐
-│  Good evening, Student! 👋                       │
-│                                                  │
-│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐           │
-│  │ 2h   │ │ 5🔥  │ │ 3    │ │ 12h  │           │
-│  │Today │ │Streak│ │Tasks │ │Month │           │
-│  └──────┘ └──────┘ └──────┘ └──────┘           │
-│                                                  │
-│  📊 Weekly Progress        🥧 Subject Breakdown  │
-│  Mon ████████              Math: 40%            │
-│  Tue ████░░░░              Science: 35%         │
-│  Wed ██████████            English: 25%         │
-│                                                  │
-│  📅 Calendar    📋 Upcoming Assignments          │
-│                                                  │
-└──────────────────────────────────────────────────┘
-```
-
-### Focus Timer
-```
-┌──────────────────────────────────────────────────┐
-│                                                  │
-│              🎯 Focus Session                    │
-│                                                  │
-│                 24:59                            │
-│              ───────────                         │
-│                                                  │
-│    [15m] [25m] [45m] [60m] [Custom]             │
-│                                                  │
-│         Subject: [Mathematics ▼]                 │
-│                                                  │
-│              [ ⏸️ Pause ]                        │
-│                                                  │
-│         Today's Study: 1h 25m 🟢                 │
-│                                                  │
-└──────────────────────────────────────────────────┘
-```
-
-### Assignment Treemap
-```
-┌──────────────────────────────────────────────────┐
-│                                                  │
-│  ┌────────────┐ ┌──────────────────┐            │
-│  │ 🔴 Math HW │ │ 🟢 Project Report │            │
-│  │   2 days   │ │     14 days      │            │
-│  └────────────┘ │                  │            │
-│  ┌────────────┐ └──────────────────┘            │
-│  │ 🟡 Essay   │ ┌──────────┐                    │
-│  │   5 days   │ │ 🟢 Quiz  │                    │
-│  └────────────┘ │  10 days │                    │
-│                 └──────────┘                    │
-│                                                  │
-└──────────────────────────────────────────────────┘
-```
-
----
-
-## 🛠️ Technology Stack
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| 🐍 Backend | Python + Django | Server-side logic & database |
-| 🎨 Frontend | HTML, CSS, JavaScript | User interface |
-| 💾 Database | SQLite | Data storage |
-| 📊 Charts | Chart.js | Visual graphs |
-| 🎯 Icons | Material Design Icons | Beautiful icons |
-| 🌙 Theme | Custom CSS | Dark theme styling |
-
----
-
-## 📦 Installation Guide
-
-### What You Need
-- Python 3.8 or higher installed on your computer
-- A web browser (Chrome, Firefox, Edge, etc.)
-
-### Step-by-Step Setup
-
-```bash
-# Step 1: Open terminal/command prompt and navigate to project folder
-cd "Mini Project"
-
-# Step 2: Create a virtual environment (keeps things organized)
-python -m venv venv
-
-# Step 3: Activate the virtual environment
-# On Windows:
-venv\Scripts\activate
-# On Mac/Linux:
-source venv/bin/activate
-
-# Step 4: Install required packages
-pip install -r requirements.txt
-
-# Step 5: Set up the database
-python manage.py migrate
-
-# Step 6: Create an admin account
-python manage.py createsuperuser
-# (Follow the prompts to set username and password)
-
-# Step 7: Start the application
-python manage.py runserver
-
-# Step 8: Open your browser and visit:
-# http://127.0.0.1:8000
-```
-
-### 🎉 That's it! You're ready to use FOCUS!
-
----
-
-## 👤 How to Use
-
-### For New Users
-
-1. **Create Your Account**
-   - Click "Sign Up" on the login page
-   - Choose a username and password
-   - Click "Create Account"
-
-2. **Start Studying**
-   - Go to "Study Timer" from the sidebar
-   - Select your subject from the dropdown
-   - Choose how long you want to study (25 min is a good start!)
-   - Click "Start" and focus!
-
-3. **Track Assignments**
-   - Go to "Assignments" from the sidebar
-   - Click "Add Assignment"
-   - Fill in: Title, Subject, Due Date & Time
-   - Watch it appear in your visual treemap!
-
-4. **Take Notes**
-   - Go to "Quick Notes" from the sidebar
-   - Create a folder for your subject
-   - Click "+" to add notes
-   - Pin important notes for quick access (📌)
-
-5. **Check Your Progress**
-   - Visit "Dashboard" anytime
-   - See today's study time
-   - View weekly/monthly charts
-   - Track your study streak!
-
----
-
-## 🔐 For Administrators
-
-If you're an admin, you'll see additional options:
-
-- **Admin Panel** - Overview of all platform statistics
-- **Manage Users** - View, disable, or delete user accounts
-
-Admin accounts see a different sidebar without student features.
-
----
-
-## 🎯 Why the Name "FOCUS"?
-
-```
-F - Focus Timer for distraction-free study
-O - Organize assignments and notes
-C - Chart your progress visually  
-U - Understand your study patterns
-S - Succeed in your academics!
-```
-
----
-
-## 📊 What Makes FOCUS Special?
-
-| Feature | Benefit |
-|---------|---------|
-| 🔴 Live Timer | See timer running even when on other pages |
-| 📊 Visual Treemap | Assignments sized by urgency - big = more time |
-| 📌 Pin Notes | Quick access to important information |
-| 🌙 Dark Theme | Study comfortably at any time |
-| 📱 Responsive | Use on phone, tablet, or computer |
-| 🔥 Streaks | Stay motivated with daily goals |
-
----
-
-## 🎓 About This Project
-
-### Project Information
-- **Project Name:** FOCUS - Study Management Application
-- **Course:** Master of Computer Applications (MCA)
-- **Semester:** 2
-- **Institution:** Marian College Kuttikanam
-- **Project Type:** Mini Project
-
-### Learning Outcomes
-Through this project, I learned:
-- ✅ Web development with Django framework
-- ✅ Database design and management
-- ✅ Frontend development (HTML, CSS, JavaScript)
-- ✅ User authentication and authorization
-- ✅ Responsive design principles
-- ✅ Real-time features with JavaScript
-- ✅ Data visualization with charts
-
----
-
-## 🚀 Future Improvements
-
-Ideas for future versions:
-- 📱 Dedicated mobile app
-- 🔔 Push notifications for deadlines
-- 👥 Study groups and collaboration
-- 🏆 Achievements and badges system
-- 📊 Downloadable study reports
-- ☁️ Cloud sync across devices
-- 🎵 Background study music/sounds
-
----
-
-## 📁 Project Structure
-
-```
-FOCUS/
-├── 📱 CORE APPLICATION
-│   ├── core/                          # Main Django app (all features)
-│   ├── studyflow/                     # Django project configuration
-│   ├── templates/                     # HTML templates
-│   ├── static/                        # CSS, JS, images
-│   └── manage.py                      # Django management script
-│
-├── 📚 DOCUMENTATION
-│   └── docs/                          # All project documentation
-│       ├── QUICK_START.md             # Getting started guide
+This README stays short on purpose so even a beginner can read it in one go and understand **what the project is, why it exists, and how to run it**.
 │       ├── BEGINNER_GUIDE.md          # Beginner-friendly tutorial
 │       ├── HOW_IT_WORKS.md            # Feature explanations
 │       ├── PROJECT_WALKTHROUGH.md     # Complete project tour
