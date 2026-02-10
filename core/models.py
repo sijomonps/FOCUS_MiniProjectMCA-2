@@ -102,6 +102,29 @@ class StudySession(models.Model):
             current_date -= timedelta(days=1)
         
         return streak
+    
+    @classmethod
+    def get_highest_streak(cls, user):
+        """Calculate the highest streak ever achieved by the user"""
+        # Get all unique study dates for the user
+        study_dates = cls.objects.filter(user=user).values_list('date', flat=True).distinct().order_by('date')
+        
+        if not study_dates:
+            return 0
+        
+        study_dates = list(study_dates)
+        max_streak = 1
+        current_streak = 1
+        
+        # Iterate through dates and find longest consecutive streak
+        for i in range(1, len(study_dates)):
+            if study_dates[i] - study_dates[i-1] == timedelta(days=1):
+                current_streak += 1
+                max_streak = max(max_streak, current_streak)
+            else:
+                current_streak = 1
+        
+        return max_streak
 
 
 # Assignment Model

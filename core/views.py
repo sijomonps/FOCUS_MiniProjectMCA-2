@@ -139,6 +139,7 @@ def dashboard_view(request):
     
     # Get study streak
     streak = StudySession.get_study_streak(user)
+    highest_streak = StudySession.get_highest_streak(user)
     
     # Get weekly data for chart
     weekly_data = StudySession.get_weekly_data(user)
@@ -303,6 +304,7 @@ def dashboard_view(request):
         'today_total': today_total,
         'monthly_total_hours': monthly_total_hours,
         'streak': streak,
+        'highest_streak': highest_streak,
         'chart_labels': json.dumps(chart_labels),
         'chart_data': json.dumps(chart_data),
         'chart_labels_monthly': json.dumps(chart_labels_monthly),
@@ -337,6 +339,10 @@ def study_view(request):
     # Combine and sort unique subjects
     all_subjects = sorted(list(set(list(folder_subjects) + list(session_subjects))))
     
+    # Get current and highest streak
+    current_streak = StudySession.get_study_streak(request.user)
+    highest_streak = StudySession.get_highest_streak(request.user)
+    
     # Add greeting message
     now = timezone.now()
     hour = now.hour
@@ -353,6 +359,8 @@ def study_view(request):
     context = {
         'subjects': all_subjects,
         'greeting': greeting,
+        'current_streak': current_streak,
+        'highest_streak': highest_streak,
     }
     
     return render(request, 'core/study.html', context)
@@ -381,13 +389,15 @@ def save_study_session(request):
         # Get updated today's total and streak
         today_total = StudySession.get_today_total(request.user)
         current_streak = StudySession.get_study_streak(request.user)
+        highest_streak = StudySession.get_highest_streak(request.user)
         
         return JsonResponse({
             'success': True,
             'session_id': session.id,
             'message': 'Study session saved successfully!',
             'today_total_minutes': today_total,
-            'current_streak': current_streak
+            'current_streak': current_streak,
+            'highest_streak': highest_streak
         })
     
     except Exception as e:

@@ -644,6 +644,11 @@
                 <div class="stat-card" id="streakStatCard">
                     <div class="stat-value" id="streakStatValue" style="color: var(--color-green);">{{ streak }}</div>
                     <div class="stat-label">Day Streak</div>
+                    {% if highest_streak > 0 %}
+                    <div style="font-size: 0.7rem; color: var(--text-tertiary); margin-top: 4px;">
+                        <i class="mdi mdi-trophy" style="color: #f59e0b;"></i> Best: {{ highest_streak }}
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="stat-card" id="pendingStatCard">
                     <div class="stat-value" id="pendingStatValue">{{ pending_assignments_count }}</div>

@@ -391,7 +391,12 @@
     <p id="sessionSummary">You focused for 25 minutes</p>
     <div id="streakInfo" style="margin: 10px 0; color: #22c55e; font-weight: 500;">
         <i class="mdi mdi-fire" style="margin-right: 4px;"></i>
-        <span id="streakText">Streak: Loading...</span>
+        <span id="streakText">Streak: {{ current_streak }} day{{ current_streak|pluralize }}</span>
+        {% if highest_streak > 0 %}
+        <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">
+            <i class="mdi mdi-trophy" style="color: #f59e0b;"></i> Best: {{ highest_streak }} day{{ highest_streak|pluralize }}
+        </div>
+        {% endif %}
     </div>
     <button onclick="closeComplete()">Continue</button>
     <button onclick="goToDashboard()" style="margin-left: 12px; background: transparent; border: 1px solid #4f46e5; color: #4f46e5;">View Dashboard</button>
@@ -1144,6 +1149,11 @@
                     updateStreakDisplay(data.current_streak);
                 }
                 
+                // Update highest streak if provided and changed
+                if (data.highest_streak !== undefined) {
+                    updateHighestStreakDisplay(data.highest_streak);
+                }
+                
                 // Signal dashboard to refresh when user navigates there
                 localStorage.setItem('dashboardNeedsRefresh', Date.now().toString());
             } else {
@@ -1162,9 +1172,33 @@
         const streakText = document.getElementById('streakText');
         if (streakText) {
             if (streak > 0) {
-                streakText.textContent = `Streak: ${streak} day${streak !== 1 ? 's' : ''}!`;
+                streakText.textContent = `Streak: ${streak} day${streak !== 1 ? 's' : ''}`;
             } else {
                 streakText.textContent = 'Start your streak today!';
+            }
+        }
+        // Note: Highest streak display is kept static from initial page load
+    }
+    
+    // Update highest streak display (called when user beats their record)
+    function updateHighestStreakDisplay(highestStreak) {
+        const streakInfo = document.getElementById('streakInfo');
+        if (!streakInfo) return;
+        
+        // Check if highest streak div already exists
+        let highestStreakDiv = streakInfo.querySelector('.highest-streak-display');
+        
+        if (highestStreak > 0) {
+            if (highestStreakDiv) {
+                // Update existing display
+                highestStreakDiv.innerHTML = `<i class="mdi mdi-trophy" style="color: #f59e0b;"></i> Best: ${highestStreak} day${highestStreak !== 1 ? 's' : ''}`;
+            } else {
+                // Create new display
+                highestStreakDiv = document.createElement('div');
+                highestStreakDiv.className = 'highest-streak-display';
+                highestStreakDiv.style = 'font-size: 0.85rem; color: #94a3b8; margin-top: 4px;';
+                highestStreakDiv.innerHTML = `<i class="mdi mdi-trophy" style="color: #f59e0b;"></i> Best: ${highestStreak} day${highestStreak !== 1 ? 's' : ''}`;
+                streakInfo.appendChild(highestStreakDiv);
             }
         }
     }
