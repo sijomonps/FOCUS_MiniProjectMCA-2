@@ -953,12 +953,12 @@
             if (response.ok) {
                 var list = document.getElementById('subjectsList');
                 var emptyMsg = list.querySelector('.text-tertiary');
-                if (emptyMsg && emptyMsg.parentElement) { emptyMsg.parentElement.remove(); }
+                if (emptyMsg) { emptyMsg.remove(); }
                 var subjectDiv = document.createElement('div');
                 subjectDiv.className = 'subject-tag';
                 subjectDiv.setAttribute('data-subject-id', data.folder_id);
-                subjectDiv.style = 'background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%); padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.9rem; display: flex; align-items: center; gap: 8px;';
-                subjectDiv.innerHTML = '<i class="mdi mdi-book-outline" style="font-size: 1.1rem; color: var(--primary-color);"></i><span style="font-weight: 500;">' + data.folder_name + '</span><button onclick="deleteSubject(' + data.folder_id + ', &quot;' + data.folder_name + '&quot;)" class="subject-delete-btn" style="background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; padding: 2px 4px; border-radius: 50%;" title="Delete subject"><i class="mdi mdi-close" style="font-size: 1rem;"></i></button>';
+                subjectDiv.style = 'background: var(--bg-tertiary); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;';
+                subjectDiv.innerHTML = '<span>' + data.folder_name + '</span><button onclick="deleteSubject(' + data.folder_id + ', \'' + data.folder_name.replace(/'/g, "\\'") + '\')" style="background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 0; line-height: 1; font-size: 0.9rem; display: flex;" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'var(--text-tertiary)\'" title="Remove"><i class="mdi mdi-close-circle-outline"></i></button>';
                 list.appendChild(subjectDiv);
                 input.value = '';
                 showNotification('Subject added!', 'success');
@@ -980,7 +980,7 @@
                 if (el) { el.remove(); }
                 var list = document.getElementById('subjectsList');
                 if (list.children.length === 0) {
-                    list.innerHTML = '<div class="text-tertiary" style="padding: 20px; text-align: center; width: 100%;"><i class="mdi mdi-book-plus-outline" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 8px;"></i><span style="font-size: 0.9rem;">No subjects yet. Add your first subject below!</span></div>';
+                    list.innerHTML = '<div class="text-tertiary" style="font-size: 0.85rem; width: 100%; text-align: center; padding: 12px 0;">No subjects yet — type above to add one</div>';
                 }
                 showNotification('Subject deleted', 'success');
             } else { showNotification(data.error || 'Failed', 'error'); }

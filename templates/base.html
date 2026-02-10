@@ -733,6 +733,11 @@
         if (typeof window.greetingUpdateInterval !== 'undefined') {
             clearInterval(window.greetingUpdateInterval);
         }
+        
+        // Update greeting immediately on page load
+        updateDynamicGreeting();
+        
+        // Then update every minute
         window.greetingUpdateInterval = setInterval(updateDynamicGreeting, 60000);
     </script>
 
