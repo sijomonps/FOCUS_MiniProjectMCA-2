@@ -234,6 +234,35 @@
         color: var(--text-primary);
     }
 
+    /* Picture-in-Picture Button */
+    .pip-btn {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 18px 24px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: none;
+    }
+
+    .pip-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .pip-btn.active {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        background: rgba(79, 70, 229, 0.1);
+    }
+
+    .pip-btn i {
+        font-size: 1.1rem;
+    }
+
     /* Session Complete Message */
     .session-complete {
         position: fixed;
@@ -381,9 +410,16 @@
     <div class="controls">
         <button class="main-btn" id="mainBtn" onclick="toggleTimer()">Start</button>
         <button class="reset-btn" id="resetBtn" onclick="resetTimer()">Reset</button>
+        <button class="pip-btn" id="pipBtn" onclick="togglePiP()" title="Picture-in-Picture (Auto-activates when you switch tabs)">
+            <i class="mdi mdi-picture-in-picture-top-right"></i>
+        </button>
     </div>
 
 </div>
+
+<!-- Hidden canvas for PiP rendering -->
+<canvas id="pipCanvas" width="400" height="200" style="position: fixed; top: -500px; left: 0; z-index: -1;"></canvas>
+<video id="pipVideo" width="400" height="200" style="position: fixed; top: -500px; left: 0; z-index: -1;" muted playsinline></video>
 
 <!-- Session Complete Overlay -->
 <div class="session-complete" id="sessionComplete">
@@ -890,6 +926,11 @@
             timerModeLabel.textContent = 'Stopwatch Running...';
             subjectSelect.disabled = true;
             
+            // Show PiP button when timer starts (if supported)
+            if (pipSupported) {
+                pipBtn.style.display = 'block';
+            }
+            
             saveTimerState();
             startStopwatchLoop();
         } else {
@@ -905,6 +946,11 @@
             mainBtn.classList.add('running');
             timerModeLabel.textContent = 'Focusing...';
             subjectSelect.disabled = true;
+
+            // Show PiP button when timer starts (if supported)
+            if (pipSupported) {
+                pipBtn.style.display = 'block';
+            }
 
             saveTimerState();
             startTimerLoop();
@@ -975,6 +1021,11 @@
         saveTimerState();
         updateGlobalTimer();
         updateTodayStudyDisplay(); // Keep today's study time updated when paused
+        
+        // Hide PiP button when paused
+        if (pipSupported && pipBtn) {
+            pipBtn.style.display = 'none';
+        }
     }
 
     // Reset Timer
@@ -982,6 +1033,12 @@
         clearInterval(timerInterval);
         isRunning = false;
         timerEndTime = null;
+
+        // Exit PiP if active
+        if (typeof pipActive !== 'undefined' && pipActive) {
+            exitPiP();
+        }
+        pipManuallyActivated = false; // Reset flag on reset
 
         // Save session if any time was focused
         let focusedMinutes;
@@ -1014,6 +1071,11 @@
         updateDisplay();
         clearTimerState();
         updateGlobalTimer();
+        
+        // Hide PiP button
+        if (pipSupported && pipBtn) {
+            pipBtn.style.display = 'none';
+        }
     }
 
     // Timer Complete
@@ -1021,6 +1083,16 @@
         clearInterval(timerInterval);
         isRunning = false;
         timerEndTime = null;
+
+        // Exit PiP after a brief delay to show completion
+        if (typeof pipActive !== 'undefined' && pipActive) {
+            setTimeout(() => {
+                exitPiP();
+                pipManuallyActivated = false; // Reset flag after completion
+            }, 2000);
+        } else {
+            pipManuallyActivated = false; // Reset flag if PiP not active
+        }
 
         // Calculate total focused time
         if (sessionStartTime) {
@@ -1282,18 +1354,337 @@
         updateDisplay();
     }
 
-    // Handle visibility change - recalculate time when tab becomes visible
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && isRunning && timerEndTime) {
-            const now = Date.now();
-            remainingTime = Math.max(0, Math.floor((timerEndTime - now) / 1000));
-            updateDisplay();
-            updateGlobalTimer();
+    // Handle visibility change - Auto-enable PiP when tab is hidden, disable when visible
+    document.addEventListener('visibilitychange', async () => {
+        console.log('Tab visibility changed. Hidden:', document.hidden);
+        console.log('  - isRunning:', isRunning);
+        console.log('  - pipSupported:', pipSupported);
+        console.log('  - pipActive:', pipActive);
+        console.log('  - pipManuallyActivated:', pipManuallyActivated);
+        
+        if (document.hidden) {
+            // Tab is hidden - automatically enable PiP if timer is running and PiP is supported
+            if (isRunning && pipSupported && !pipActive) {
+                console.log('=> Auto-enabling PiP (tab hidden)');
+                await enterPiP(true); // Pass true for automatic activation
+            } else {
+                if (!isRunning) console.log('=> Not enabling PiP: timer not running');
+                if (!pipSupported) console.log('=> Not enabling PiP: not supported');
+                if (pipActive) console.log('=> PiP already active');
+            }
+        } else {
+            // Tab is visible - close PiP if it was auto-activated (not manually)
+            if (pipActive && !pipManuallyActivated) {
+                console.log('=> Auto-disabling PiP (tab visible, was auto-activated)');
+                await exitPiP();
+            } else {
+                if (!pipActive) console.log('=> PiP not active');
+                if (pipManuallyActivated) console.log('=> Keeping PiP (manually activated)');
+            }
+            
+            // Recalculate time when tab becomes visible
+            if (isRunning && timerEndTime) {
+                const now = Date.now();
+                remainingTime = Math.max(0, Math.floor((timerEndTime - now) / 1000));
+                updateDisplay();
+                updateGlobalTimer();
 
-            if (remainingTime <= 0) {
-                timerComplete();
+                if (remainingTime <= 0) {
+                    timerComplete();
+                }
             }
         }
     });
+
+    // ============================================
+    // PICTURE-IN-PICTURE FUNCTIONALITY
+    // ============================================
+    
+    let pipActive = false;
+    let pipAnimationFrame = null;
+    let pipManuallyActivated = false; // Track if user manually activated PiP
+    const pipCanvas = document.getElementById('pipCanvas');
+    const pipVideo = document.getElementById('pipVideo');
+    const pipBtn = document.getElementById('pipBtn');
+    const ctx = pipCanvas ? pipCanvas.getContext('2d') : null;
+    let pipSupported = false;
+
+    // Initialize canvas immediately with a test frame
+    if (pipCanvas && ctx) {
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, pipCanvas.width, pipCanvas.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Timer Ready', pipCanvas.width / 2, pipCanvas.height / 2);
+        console.log('Canvas initialized with test frame');
+    }
+
+    // Check if PiP is supported more thoroughly
+    console.log('=== Picture-in-Picture Debug Info ===');
+    console.log('Browser:', navigator.userAgent);
+    console.log('pictureInPictureEnabled:', document.pictureInPictureEnabled);
+    console.log('pipVideo element:', pipVideo ? 'Found' : 'NOT FOUND');
+    console.log('pipCanvas element:', pipCanvas ? 'Found' : 'NOT FOUND');
+    console.log('Canvas context:', ctx ? 'OK' : 'FAILED');
+    
+    if (document.pictureInPictureEnabled && pipVideo && pipCanvas && ctx) {
+        pipSupported = true;
+        console.log('✓ Picture-in-Picture is SUPPORTED');
+        
+        // Test if requestPictureInPicture exists on video element
+        if (typeof pipVideo.requestPictureInPicture === 'function') {
+            console.log('✓ requestPictureInPicture method available');
+        } else {
+            console.log('✗ requestPictureInPicture method NOT available');
+            pipSupported = false;
+        }
+    } else {
+        console.log('✗ Picture-in-Picture is NOT SUPPORTED');
+        if (!document.pictureInPictureEnabled) {
+            console.log('  - pictureInPictureEnabled is false or undefined');
+        }
+        if (!pipVideo) {
+            console.log('  - pipVideo element not found');
+        }
+        if (!pipCanvas) {
+            console.log('  - pipCanvas element not found');
+        }
+        if (!ctx) {
+            console.log('  - Canvas context failed');
+        }
+    }
+    console.log('=====================================');
+
+    // Toggle Picture-in-Picture (manual toggle by user)
+    async function togglePiP() {
+        console.log('togglePiP called, pipActive:', pipActive);
+        if (pipActive) {
+            // Exit PiP
+            pipManuallyActivated = false;
+            await exitPiP();
+        } else {
+            // Enter PiP
+            if (!pipSupported) {
+                alert('Picture-in-Picture is not supported in your browser. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+            pipManuallyActivated = true;
+            await enterPiP();
+        }
+    }
+
+    // Enter Picture-in-Picture mode
+    async function enterPiP(isAutomatic = false) {
+        try {
+            console.log('enterPiP: Starting...', isAutomatic ? '(AUTOMATIC)' : '(MANUAL)');
+            
+            if (!pipCanvas || !pipVideo || !ctx) {
+                throw new Error('PiP elements not found');
+            }
+            
+            // First, draw initial frame to canvas so it has content
+            const width = pipCanvas.width;
+            const height = pipCanvas.height;
+            console.log('enterPiP: Canvas dimensions:', width, 'x', height);
+            
+            // Draw background
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw timer time
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 72px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const timeText = isStopwatchMode ? formatTime(elapsedTime) : formatTime(remainingTime);
+            ctx.fillText(timeText, width / 2, height / 2 - 20);
+            
+            // Draw subject
+            const subject = subjectSelect.value || 'No Subject';
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '20px Arial';
+            ctx.fillText(subject, width / 2, height / 2 + 40);
+            console.log('enterPiP: Initial frame drawn to canvas');
+            
+            // Check if we already have a stream, if not create one
+            if (!pipVideo.srcObject) {
+                const stream = pipCanvas.captureStream(30); // 30 FPS
+                console.log('enterPiP: Canvas stream captured, tracks:', stream.getTracks().length);
+                
+                if (stream.getTracks().length === 0) {
+                    throw new Error('No tracks in canvas stream');
+                }
+                
+                pipVideo.srcObject = stream;
+                console.log('enterPiP: Video srcObject set');
+            }
+            
+            // Ensure video is loaded and playing
+            if (pipVideo.paused) {
+                console.log('enterPiP: Starting video playback...');
+                try {
+                    await pipVideo.play();
+                    console.log('enterPiP: Video playing');
+                } catch (playError) {
+                    console.error('enterPiP: Video play failed:', playError);
+                    // Try to continue anyway
+                }
+            }
+            
+            // Small delay to ensure video is ready
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Request PiP
+            console.log('enterPiP: Requesting Picture-in-Picture...');
+            
+            if (!pipVideo.requestPictureInPicture) {
+                throw new Error('requestPictureInPicture not available');
+            }
+            
+            await pipVideo.requestPictureInPicture();
+            console.log('enterPiP: Picture-in-Picture activated!');
+            
+            pipActive = true;
+            pipBtn.classList.add('active');
+            
+            // Start continuous rendering
+            renderPiPFrame();
+            console.log('enterPiP: Rendering started');
+            
+        } catch (error) {
+            console.error('Failed to enter PiP:', error);
+            console.error('Error name:', error.name);
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+            
+            // Provide user-friendly error messages
+            if (error.name === 'NotAllowedError') {
+                if (!isAutomatic) {
+                    alert('Picture-in-Picture was denied. Please allow it in your browser settings or try clicking the button again.');
+                }
+            } else if (error.name === 'NotSupportedError') {
+                if (!isAutomatic) {
+                    alert('Picture-in-Picture is not supported in this browser. Please use Chrome (version 70+), Edge (79+), or Safari (13.1+).');
+                }
+            } else {
+                if (!isAutomatic) {
+                    alert('Failed to start Picture-in-Picture: ' + error.message);
+                }
+            }
+            
+            // Cleanup on error
+            pipActive = false;
+            pipBtn.classList.remove('active');
+            if (pipVideo.srcObject) {
+                pipVideo.srcObject.getTracks().forEach(track => track.stop());
+                pipVideo.srcObject = null;
+            }
+        }
+    }
+
+    // Exit Picture-in-Picture mode
+    async function exitPiP() {
+        try {
+            console.log('exitPiP: Exiting PiP mode...');
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+                console.log('exitPiP: PiP exited');
+            }
+            
+            pipActive = false;
+            pipBtn.classList.remove('active');
+            
+            // Stop rendering
+            if (pipAnimationFrame) {
+                cancelAnimationFrame(pipAnimationFrame);
+                pipAnimationFrame = null;
+                console.log('exitPiP: Rendering stopped');
+            }
+            
+            // Stop video stream
+            if (pipVideo.srcObject) {
+                pipVideo.srcObject.getTracks().forEach(track => track.stop());
+                pipVideo.srcObject = null;
+                console.log('exitPiP: Video stream stopped');
+            }
+            
+        } catch (error) {
+            console.error('Failed to exit PiP:', error);
+        }
+    }
+
+    // Render timer to canvas for PiP
+    function renderPiPFrame() {
+        if (!pipActive) return;
+        
+        try {
+            const width = pipCanvas.width;
+            const height = pipCanvas.height;
+            
+            // Clear canvas
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw timer time
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 72px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const timeText = isStopwatchMode ? formatTime(elapsedTime) : formatTime(remainingTime);
+            ctx.fillText(timeText, width / 2, height / 2 - 20);
+            
+            // Draw subject
+            const subject = subjectSelect.value || 'No Subject';
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '20px Arial';
+            ctx.fillText(subject, width / 2, height / 2 + 40);
+            
+            // Draw status indicator
+            if (isRunning) {
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(30, 30, 8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ef4444';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(isStopwatchMode ? 'RECORDING' : 'LIVE', 50, 35);
+            } else {
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('PAUSED', 30, 35);
+            }
+            
+            // Continue animation
+            pipAnimationFrame = requestAnimationFrame(renderPiPFrame);
+        } catch (error) {
+            console.error('Error in renderPiPFrame:', error);
+            // Stop rendering on error
+            pipActive = false;
+            if (pipAnimationFrame) {
+                cancelAnimationFrame(pipAnimationFrame);
+                pipAnimationFrame = null;
+            }
+        }
+    }
+
+    // Handle PiP events - cleanup when user exits PiP manually
+    pipVideo.addEventListener('leavepictureinpicture', () => {
+        console.log('User closed PiP window');
+        pipActive = false;
+        pipManuallyActivated = false; // Reset flag when user closes PiP
+        pipBtn.classList.remove('active');
+        if (pipAnimationFrame) {
+            cancelAnimationFrame(pipAnimationFrame);
+            pipAnimationFrame = null;
+        }
+    });
+
 </script>
 {% endblock %}
